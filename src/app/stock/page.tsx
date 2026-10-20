@@ -64,6 +64,11 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
                     <div className="min-w-0">
                       {s.label}
                       {s.sku && <span className="ml-2 text-xs text-muted">{s.sku}</span>}
+                      {(s.status === "trash" || s.status === "deleted") && (
+                        <span className="ml-2 rounded-full border border-line bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-muted">
+                          {s.status === "trash" ? t.stock.trashed : t.stock.deleted}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </td>

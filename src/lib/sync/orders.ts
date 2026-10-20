@@ -15,6 +15,7 @@ interface WooOrder {
   refunds: { total: string }[];
   line_items: {
     id: number;
+    name: string;
     product_id: number;
     variation_id: number;
     quantity: number;
@@ -65,6 +66,7 @@ async function upsertOrders(shop: Shop, wooOrders: WooOrder[], notBefore: Date):
           shopId: shop.id,
           orderId: order.id,
           wooLineId: line.id,
+          name: line.name,
           wooProductId: line.product_id,
           wooVariationId: line.variation_id,
           itemId: itemIdByWooIds.get(`${line.product_id}:${line.variation_id}`) ?? null,
@@ -103,7 +105,8 @@ async function upsertOrders(shop: Shop, wooOrders: WooOrder[], notBefore: Date):
  */
 export async function syncOrders(shop: Shop): Promise<number> {
   if (!shop.baselineAt) throw new Error("Shop has no baseline date: set the starting point first");
-  const baseline = shop.baselineAt;
+  // Sales history can reach back before the baseline.
+  const baseline = shop.historyStart && shop.historyStart < shop.baselineAt ? shop.historyStart : shop.baselineAt;
 
   const wooOrders = await wooGetAll<WooOrder>(shop, "orders", {
     status: "any",

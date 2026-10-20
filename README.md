@@ -40,7 +40,9 @@ multi-shop by design.
   right, a sidebar that stays the same whichever month is open: the shop overview (money in
   the account, VAT and tax set aside, net earnings, withdrawals, stock value, invested,
   ROI) and the owner-share simulator with a live bar of where the account money goes.
-- **Stock** (`/stock`): tracked stock vs. WooCommerce stock (a warning means they differ,
+- **Stock** (`/stock`): 25 items per page with a search on product name, variation or SKU, a
+  photo thumbnail for each item (its own colour's photo, from WordPress's 150x150 copy), a
+  "In the bin" / "Deleted" badge for products that are no longer published, tracked stock vs. WooCommerce stock (a warning means they differ,
   which usually means an unrecorded restock), average cost, stock value; forms to record a
   restock and to set a manual cost.
 - **Ledger** (`/ledger`): every movement of the shop account, and one form to record any
@@ -293,10 +295,16 @@ from the shop, so the shop must already have been connected and synced.
 npm run shop:import-range -- --from 2026-09-01                       # back to where the history begins
 npm run shop:import-range -- --from 2026-09-01 --to 2026-09-30
 npm run shop:import-range -- --from 2026-08-01 --rebuild-closings     # may go back before closed months
+npm run shop:import-range -- --from 2022-01-01 --history-only         # older sales, without cash or stock
 ```
 
 - A period inside the existing history just refreshes those orders.
-- A period that starts **before** the starting date extends the history backwards: the starting
+- **`--history-only`** (checkbox "Sales history only" on Setup) adds older orders as *sales history*:
+  the starting date, the opening deposit, the opening stock and the closed months are untouched.
+  Those months show orders, VAT, cost of goods, tax and net earnings with a "Sales history" badge
+  and **no account balance**, and they stay out of the overview (cash, reserves, ROI). Costs of
+  history lines come from the item's cost estimate (no stock is tracked before the starting date).
+- A period that starts **before** the starting date extends the cash history backwards: the starting
   date and the opening deposit move to `from`, and the opening stock is rebuilt for that date
   (WooCommerce stock now + units sold since, minus restocks you recorded). Costs already frozen
   on existing lines are kept.
@@ -325,6 +333,16 @@ finished month. `GET` works too, for Vercel Cron. Without the secret it answers 
 | `DEV_WOO_URL`, `DEV_WOO_CONSUMER_KEY`, `DEV_WOO_CONSUMER_SECRET` | Used only by `db:seed` |
 | `WOO_URL_REWRITE` | `<public url>=<internal url>`: how the app reaches WooCommerce from inside Docker |
 | `APP_PORT`, `WP_PORT`, `WP_DB_PORT`, `TALLYPRESS_DB_PORT` | Host ports of the Docker services (all 9000+) |
+
+## Products that are gone from the shop
+
+Order lines keep the WooCommerce product and variation they were sold under. Products the
+shop has since **trashed** (and their variations) are brought into the catalogue with status
+"trash" and no stock, so sold lines stay linked; ones **deleted for good** are recorded as
+"deleted" when WooCommerce still knows the id. WooCommerce also drops the product link of a
+line when a product is deleted for good (id 0): those lines are listed by the name they were
+sold under, marked "Deleted". Every counted line gets a purchase cost: from the item's estimate
+(`default_cost_pct` of its price without VAT) or, with no item, of the line's own price.
 
 ## Known limitations
 

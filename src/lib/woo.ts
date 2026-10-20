@@ -81,3 +81,18 @@ export async function mapLimit<T>(list: T[], limit: number, fn: (item: T) => Pro
   };
   await Promise.all(Array.from({ length: Math.min(limit, list.length) }, worker));
 }
+
+/** GET one WooCommerce resource (wc/v3). Returns null when it does not exist (404). */
+export async function wooGetOne<T>(
+  shop: WooCredentials,
+  path: string,
+  fields?: string,
+): Promise<T | null> {
+  const auth = Buffer.from(`${shop.wooConsumerKey}:${shop.wooConsumerSecret}`).toString("base64");
+  const url = new URL(`${resolveBaseUrl(shop.wooUrl)}/wp-json/wc/v3/${path}`);
+  if (fields) url.searchParams.set("_fields", fields);
+  const res = await fetchWithRetry(url, { headers: { Authorization: `Basic ${auth}` }, cache: "no-store" });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`WooCommerce ${res.status} on ${path}: ${(await res.text()).slice(0, 200)}`);
+  return (await res.json()) as T;
+}

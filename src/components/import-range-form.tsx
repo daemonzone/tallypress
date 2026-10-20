@@ -8,12 +8,15 @@ interface Props {
   labels: {
     from: string;
     to: string;
+    historyOnly: string;
+    historyOnlyHelp: string;
     rebuild: string;
     rebuildHelp: string;
     submit: string;
     working: string;
     ok: string; // "{orders}"
     moved: string; // "{date}" "{lots}"
+    historyAdded: string; // "{date}"
     closedMonths: string; // "{months}"
     errors: Record<string, string>;
   };
@@ -36,6 +39,13 @@ export function ImportRangeForm({ labels, action }: Props) {
         </label>
       </div>
       <label className="flex items-start gap-2 text-sm">
+        <input name="historyOnly" type="checkbox" className="mt-1" />
+        <span>
+          {labels.historyOnly}
+          <span className="block text-xs text-muted">{labels.historyOnlyHelp}</span>
+        </span>
+      </label>
+      <label className="flex items-start gap-2 text-sm">
         <input name="rebuild" type="checkbox" className="mt-1" />
         <span>
           {labels.rebuild}
@@ -51,6 +61,7 @@ export function ImportRangeForm({ labels, action }: Props) {
       {result?.ok && (
         <div className="space-y-1 text-sm text-good">
           <p>{labels.ok.replace("{orders}", String(result.orders))}</p>
+          {result.historyFrom && <p>{labels.historyAdded.replace("{date}", result.historyFrom)}</p>}
           {result.newStart && <p>{labels.moved.replace("{date}", result.newStart).replace("{lots}", String(result.lotsRebuilt))}</p>}
           {result.closedMonths.length > 0 && (
             <p>{labels.closedMonths.replace("{months}", result.closedMonths.map((m) => m.slice(0, 7)).join(", "))}</p>

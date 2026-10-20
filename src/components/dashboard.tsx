@@ -91,6 +91,44 @@ function Overview({ report, t, fmt }: { report: Report; t: Dictionary; fmt: Form
   );
 }
 
+function MonthNav({ report, selected, locale, label }: { report: Report; selected: string; locale: string; label: string }) {
+  const short = new Intl.DateTimeFormat(locale, { month: "short", timeZone: "UTC" });
+  const abbr = (key: string) => {
+    const text = short.format(new Date(`${key}T00:00:00Z`)).replace(/\.$/, "");
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  };
+  const byYear = new Map<string, MonthReport[]>();
+  for (const m of report.months) byYear.set(m.key.slice(0, 4), [...(byYear.get(m.key.slice(0, 4)) ?? []), m]);
+
+  return (
+    <nav aria-label={label} className="mb-6 flex flex-col gap-2 text-sm">
+      {[...byYear.entries()].reverse().map(([year, months]) => (
+        <div key={year} className="flex items-center gap-3">
+          <span className="w-11 shrink-0 text-xs font-medium tabular-nums text-muted">{year}</span>
+          <div className="flex flex-wrap gap-1.5">
+            {months.map((x) => (
+              <Link
+                key={x.key}
+                href={monthHref(x.key, report.currentKey)}
+                title={monthLabel(x.key, locale)}
+                aria-label={monthLabel(x.key, locale)}
+                aria-current={x.key === selected ? "page" : undefined}
+                className={`rounded-full border px-3 py-1 transition ${
+                  x.key === selected
+                    ? "border-accent bg-accent-soft font-semibold text-ink"
+                    : `border-line bg-surface text-muted hover:text-ink ${x.history ? "border-dashed" : ""}`
+                }`}
+              >
+                {abbr(x.key)}
+              </Link>
+            ))}
+          </div>
+        </div>
+      ))}
+    </nav>
+  );
+}
+
 /** The month's calculation as a statement: running results in the middle, the outcome in the footer. */
 function GrossToNet({ month: m, t, fmt }: { month: MonthReport; t: Dictionary; fmt: Formatters }) {
   const line = (label: string, value: string, minus = false) => (
@@ -184,7 +222,10 @@ function MonthPanel({
   locale: string;
 }) {
   const f = m.flows;
-  const columns = report.months.slice(-12).map((x) => ({
+  // A window of 12 months that contains the month being viewed (the latest 12 when it is recent).
+  const at = report.months.findIndex((x) => x.key === m.key);
+  const windowEnd = Math.min(report.months.length, Math.max(12, at + 6));
+  const columns = report.months.slice(Math.max(0, windowEnd - 12), windowEnd).map((x) => ({
     key: x.key,
     label: new Intl.DateTimeFormat(locale, { month: "short", year: "2-digit", timeZone: "UTC" }).format(
       new Date(`${x.key}T00:00:00Z`),
@@ -209,7 +250,9 @@ function MonthPanel({
         <div className="text-xs font-medium uppercase tracking-wider text-muted">{t.month.heading}</div>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <h1 className="text-3xl font-semibold capitalize tracking-tight">{monthLabel(m.key, locale)}</h1>
-          {m.closed ? (
+          {m.history ? (
+            <Badge icon={<Icon name="book" className="h-3.5 w-3.5" />}>{t.month.historyBadge}</Badge>
+          ) : m.closed ? (
             <Badge icon={<Icon name="lock" className="h-3.5 w-3.5" />}>{t.month.closed}</Badge>
           ) : (
             <Badge icon={<span className="h-2 w-2 rounded-full bg-good" aria-hidden="true" />}>{t.month.open}</Badge>
@@ -217,23 +260,9 @@ function MonthPanel({
         </div>
       </div>
 
-      <nav aria-label={t.month.months} className="-mx-1 mb-6 flex gap-2 overflow-x-auto px-1 pb-1 text-sm">
-        {[...report.months].reverse().map((x) => (
-          <Link
-            key={x.key}
-            href={monthHref(x.key, report.currentKey)}
-            aria-current={x.key === m.key ? "page" : undefined}
-            className={`whitespace-nowrap rounded-full border px-3 py-1.5 capitalize transition ${
-              x.key === m.key
-                ? "border-accent bg-accent-soft font-semibold text-ink"
-                : "border-line bg-surface text-muted hover:text-ink"
-            }`}
-          >
-            {monthLabel(x.key, locale)}
-          </Link>
-        ))}
-      </nav>
+      <MonthNav report={report} selected={m.key} locale={locale} label={t.month.months} />
 
+      {m.history && <Notice>{t.month.historyNote}</Notice>}
       {m.missingCostLines > 0 && (
         <Notice tone="warn">{t.month.missingCost.replace("{n}", String(m.missingCostLines))}</Notice>
       )}
@@ -279,6 +308,7 @@ function MonthPanel({
         </Section>
       )}
 
+      {!m.history && (
       <Section title={t.month.cashTitle}>
         <KeyValues
           rows={[
@@ -318,6 +348,7 @@ function MonthPanel({
           ]}
         />
       </Section>
+      )}
 
       <Section title={t.month.variantsTitle}>
         {m.items.length === 0 ? (
@@ -331,6 +362,11 @@ function MonthPanel({
                 <td className="whitespace-nowrap py-2.5 pr-3">
                   {i.label}
                   {i.sku && <span className="ml-2 text-xs text-muted">{i.sku}</span>}
+                  {i.itemId == null && (
+                    <span className="ml-2 rounded-full border border-line bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-muted">
+                      {t.stock.deleted}
+                    </span>
+                  )}
                   {i.missingCost > 0 && (
                     <Icon name="alert" className="ml-1.5 inline h-3.5 w-3.5 text-[var(--warn-line)]" />
                   )}

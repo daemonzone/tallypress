@@ -50,6 +50,13 @@
       "when": 1792530232840,
       "tag": "0006_productive_lockjaw",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792531081661,
+      "tag": "0007_old_jazinda",
+      "breakpoints": true
     }
   ]
 }

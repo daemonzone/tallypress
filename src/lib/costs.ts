@@ -1,4 +1,4 @@
-import { and, count, eq, ilike, inArray, isNotNull, isNull, or, sql } from "drizzle-orm";
+import { and, count, eq, gte, ilike, inArray, isNotNull, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { items, orderLines, orders, restockLots, shops } from "@/db/schema";
 
@@ -70,6 +70,8 @@ export function replayItem(lots: LotEvent[], sales: SaleEvent[], manualCost: num
 }
 
 async function loadHistory(shopId: string, itemIds?: string[]) {
+  // Stock is tracked from the baseline: sales before it (sales history) are not part of the stock.
+  const [shopRow] = await db.select({ baselineAt: shops.baselineAt }).from(shops).where(eq(shops.id, shopId));
   const [lots, lines] = await Promise.all([
     db
       .select()
@@ -90,6 +92,7 @@ async function loadHistory(shopId: string, itemIds?: string[]) {
           eq(orderLines.shopId, shopId),
           inArray(orders.status, COUNTED_STATUSES),
           isNotNull(orderLines.itemId),
+          shopRow?.baselineAt ? gte(orders.placedAt, shopRow.baselineAt) : undefined,
           itemIds ? inArray(orderLines.itemId, itemIds) : undefined,
         ),
       ),
@@ -161,14 +164,16 @@ export async function freezeCosts(shopId: string): Promise<number> {
     const pct = Number(shop.defaultCostPct);
     const vat = Number(shop.vatRate);
     const rest = await db
-      .select({ id: orderLines.id, quantity: orderLines.quantity, gross: orderLines.grossTotal })
+      .select({ id: orderLines.id, quantity: orderLines.quantity, gross: orderLines.grossTotal, itemCost: items.manualUnitCost })
       .from(orderLines)
       .innerJoin(orders, eq(orders.id, orderLines.orderId))
+      .leftJoin(items, eq(items.id, orderLines.itemId))
       .where(and(eq(orderLines.shopId, shopId), inArray(orders.status, COUNTED_STATUSES), isNull(orderLines.unitCostSnapshot)));
     for (const l of rest) {
       const qty = Number(l.quantity);
       if (!(qty > 0)) continue;
-      const unit = ((Number(l.gross) / (1 + vat / 100) / qty) * pct) / 100;
+      // Prefer the item's own cost estimate; otherwise the line's own price.
+      const unit = l.itemCost != null ? Number(l.itemCost) : ((Number(l.gross) / (1 + vat / 100) / qty) * pct) / 100;
       await db.update(orderLines).set({ unitCostSnapshot: unit.toFixed(4) }).where(eq(orderLines.id, l.id));
       frozen++;
     }
@@ -181,6 +186,7 @@ export interface ItemState {
   label: string;
   sku: string | null;
   imageUrl: string | null;
+  status: string;
   wooStock: number | null;
   trackedStock: number | null; // null: no purchase history, so stock is not tracked
   avgCost: number | null;
@@ -196,6 +202,7 @@ function toState(item: typeof items.$inferSelect, lots: LotEvent[], sales: SaleE
     label: item.variationLabel ? `${item.productName} – ${item.variationLabel}` : item.productName,
     sku: item.sku,
     imageUrl: item.imageUrl,
+    status: item.status,
     wooStock: item.stockQty == null ? null : Number(item.stockQty),
     trackedStock: lots.length ? r.stock : null,
     avgCost: r.avg,

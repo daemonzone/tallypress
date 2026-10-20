@@ -127,6 +127,7 @@ export async function importPeriod(_prev: ImportRangeResult | null, formData: Fo
     from: String(formData.get("from") ?? ""),
     to: String(formData.get("to") ?? "") || undefined,
     rebuildClosings: formData.get("rebuild") === "on",
+    historyOnly: formData.get("historyOnly") === "on",
   });
   revalidatePath("/", "layout");
   return result;

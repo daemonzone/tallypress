@@ -14,7 +14,7 @@ export async function ensureMonthsClosed(shopId: string): Promise<string[]> {
   const before = await buildReport(shopId);
   if (!before?.hasOpening) return [];
 
-  const due = before.months.filter((m) => !m.closed && m.key < before.currentKey);
+  const due = before.months.filter((m) => !m.closed && !m.history && m.key < before.currentKey);
   if (!due.length) return [];
 
   // Costs must be frozen first, or a closed month would be missing COGS.
@@ -24,7 +24,7 @@ export async function ensureMonthsClosed(shopId: string): Promise<string[]> {
 
   const closed: string[] = [];
   for (const m of report.months) {
-    if (m.closed || m.key >= report.currentKey) continue;
+    if (m.closed || m.history || m.key >= report.currentKey) continue;
     await db
       .insert(monthClosings)
       .values({

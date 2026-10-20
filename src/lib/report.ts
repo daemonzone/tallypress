@@ -35,6 +35,7 @@ const manualFlows = (f: Flows) =>
 export interface MonthReport extends Figures {
   key: string; // first day of the month, "YYYY-MM-01"
   closed: boolean;
+  history: boolean; // before the starting point: sales only, no account balance
   orders: number;
   lateAdjustments: number; // changes to earlier closed months, folded into this one
   missingCostLines: number;
@@ -82,7 +83,17 @@ export async function buildReport(shopId: string): Promise<Report | null> {
   const noTax = { ...profile, brackets: null, incomeTaxRate: 0, socialRate: 0 };
   const monthSql = (col: string) =>
     sql.raw(`to_char(date_trunc('month', ${col} AT TIME ZONE '${tz.replace(/'/g, "")}'), 'YYYY-MM-01')`);
-  const baseline = shop.baselineAt.toISOString();
+  // The data can start before the baseline (sales history); cash and stock only from the baseline.
+  // The history starts at the first real order, not at the date the import was asked from.
+  const [{ first }] = await rowsOf(sql`SELECT min(placed_at) AS first FROM orders WHERE shop_id = ${shopId}`);
+  const firstOrder = first ? new Date(first as string) : null;
+  const dataStart =
+    shop.historyStart && shop.historyStart < shop.baselineAt
+      ? firstOrder && firstOrder > shop.historyStart
+        ? (firstOrder < shop.baselineAt ? firstOrder : shop.baselineAt)
+        : shop.historyStart
+      : shop.baselineAt;
+  const baseline = dataStart.toISOString();
 
   const [orderRows, itemRowsRaw, ledgerRows, closingRows, lotRows] = await Promise.all([
     rowsOf(sql`
@@ -94,7 +105,7 @@ export async function buildReport(shopId: string): Promise<Report | null> {
       GROUP BY 1`),
     rowsOf(sql`
       SELECT ${monthSql("o.placed_at")} AS month, l.item_id, i.sku,
-             coalesce(i.product_name, '?') AS product_name, i.variation_label,
+             coalesce(i.product_name, CASE WHEN l.item_id IS NULL THEN l.name END, '?') AS product_name, i.variation_label,
              sum(l.quantity)::text AS qty, sum(l.gross_total)::text AS gross,
              sum(l.quantity * coalesce(l.unit_cost_snapshot, 0))::text AS cogs,
              (count(*) FILTER (WHERE l.unit_cost_snapshot IS NULL))::int AS missing
@@ -103,7 +114,8 @@ export async function buildReport(shopId: string): Promise<Report | null> {
       LEFT JOIN items i ON i.id = l.item_id
       WHERE l.shop_id = ${shopId} AND o.status IN ('processing', 'completed')
         AND o.placed_at >= ${baseline}::timestamptz
-      GROUP BY 1, l.item_id, i.sku, i.product_name, i.variation_label`),
+      -- lines whose product was deleted for good have no item: keep them apart, by the name they were sold under
+      GROUP BY 1, l.item_id, i.sku, i.product_name, i.variation_label, CASE WHEN l.item_id IS NULL THEN l.name END`),
     rowsOf(sql`
       SELECT ${monthSql("occurred_at")} AS month, kind::text AS kind, sum(amount)::text AS amount
       FROM ledger_entries WHERE shop_id = ${shopId} GROUP BY 1, 2`),
@@ -138,14 +150,15 @@ export async function buildReport(shopId: string): Promise<Report | null> {
   }
 
   const currentKey = monthKeyOf(new Date(), tz);
-  const keys = monthRange(monthKeyOf(shop.baselineAt, tz), currentKey);
+  const keys = monthRange(monthKeyOf(dataStart, tz), currentKey);
+  const baselineKey = monthKeyOf(shop.baselineAt, tz);
 
   // Changes to months that were already closed (late refunds, late orders), not yet absorbed.
   let pendingLate = 0;
   for (const c of closingRows) {
     pendingLate += (ordersByMonth.get(c.month)?.gross ?? 0) - toCents(c.grossTotal) - toCents(c.adjustments);
   }
-  const firstOpenKey = keys.find((k) => !closingByMonth.has(k));
+  const firstOpenKey = keys.find((k) => k >= baselineKey && !closingByMonth.has(k));
 
   const months: MonthReport[] = [];
   let carried = 0;
@@ -207,28 +220,29 @@ export async function buildReport(shopId: string): Promise<Report | null> {
     });
     const shippingTax = share(weights[weights.length - 1]);
 
-    const start = carried;
-    const end = closing
-      ? toCents(closing.balance)
-      : start + flows.sales + manualFlows(flows);
-    carried = end;
+    const history = key < baselineKey;
+    const start = history ? 0 : carried;
+    const end = history ? 0 : closing ? toCents(closing.balance) : start + flows.sales + manualFlows(flows);
+    if (!history) carried = end;
 
     months.push({
       ...f,
       key,
       closed: !!closing,
+      history,
       orders: closing ? closing.ordersCount : live.orders,
       lateAdjustments,
       missingCostLines,
       start,
-      flows,
+      flows: history ? emptyFlows() : flows,
       end,
       items,
       shipping: { ...shippingFig, taxReserve: shippingTax, netEarnings: shippingFig.profit - shippingTax },
     });
   }
 
-  const sum = (pick: (m: MonthReport) => number) => months.reduce((s, m) => s + pick(m), 0);
+  // The overview (cash, reserves, ROI) covers the months from the starting point on, not the sales history.
+  const sum = (pick: (m: MonthReport) => number) => months.filter((m) => !m.history).reduce((s, m) => s + pick(m), 0);
   const openingValue = lotRows
     .filter((l) => l.source === "opening")
     .reduce((s, l) => s + Math.round(Number(l.qty) * Number(l.cost) * 100), 0);

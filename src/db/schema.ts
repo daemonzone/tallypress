@@ -64,6 +64,8 @@ export const shops = pgTable("shops", {
 
   // "Zero time": orders before this instant are ignored.
   baselineAt: timestamp("baseline_at", { withTimezone: true }),
+  // Earlier orders imported for the sales history only: no account balance and no stock before the baseline.
+  historyStart: timestamp("history_start", { withTimezone: true }),
 
   // Set only when a sync run completes; the next incremental sync starts from here.
   lastSyncedAt: timestamp("last_synced_at", { withTimezone: true }),
@@ -82,6 +84,8 @@ export const items = pgTable(
     productName: text("product_name").notNull(),
     variationLabel: text("variation_label"),
     sku: text("sku"),
+    // WooCommerce status: publish, draft, private, trash (in the bin) or deleted (gone from the shop).
+    status: text("status").notNull().default("publish"),
     // Current selling price as listed in WooCommerce (tax included if the shop says so).
     price: numeric("price", { precision: 14, scale: 2 }),
     // Product photo from WooCommerce (a variation's own photo, else its product's).
@@ -125,6 +129,7 @@ export const orderLines = pgTable(
     // What WooCommerce says was sold; kept so a line can be linked to an item later.
     wooProductId: bigint("woo_product_id", { mode: "number" }),
     wooVariationId: bigint("woo_variation_id", { mode: "number" }),
+    name: text("name"), // the line's name as sold, e.g. "Blusa Marina - ROSA"
     itemId: uuid("item_id").references(() => items.id),
     quantity: numeric("quantity", { precision: 14, scale: 3 }).notNull(),
     grossTotal: numeric("gross_total", { precision: 14, scale: 2 }).notNull(),
