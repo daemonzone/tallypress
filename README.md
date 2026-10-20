@@ -283,6 +283,29 @@ Without `SHOP_WIPE=yes` it refuses to run on a shop that already has data. Optio
 `SHOP_LOCALE` (`it`/`en`), `SHOP_TZ`, `SHOP_OWNER_PCT`. The currency is read from the shop.
 Real costs can later replace the estimates on the Stock page.
 
+### Importing a period (without erasing anything)
+
+`npm run shop:import-range` brings in the orders of a period and leaves everything else alone.
+The same thing is available on the **Setup** page ("Import a period"). Products are not re-read
+from the shop, so the shop must already have been connected and synced.
+
+```bash
+npm run shop:import-range -- --from 2026-09-01                       # back to where the history begins
+npm run shop:import-range -- --from 2026-09-01 --to 2026-09-30
+npm run shop:import-range -- --from 2026-08-01 --rebuild-closings     # may go back before closed months
+```
+
+- A period inside the existing history just refreshes those orders.
+- A period that starts **before** the starting date extends the history backwards: the starting
+  date and the opening deposit move to `from`, and the opening stock is rebuilt for that date
+  (WooCommerce stock now + units sold since, minus restocks you recorded). Costs already frozen
+  on existing lines are kept.
+- It must reach the existing history (no gap), and it refuses when months are already closed
+  unless `--rebuild-closings` is given, because closed months would no longer add up; with the
+  flag the closed months are recalculated from the data.
+- Checked against an import made directly from the earlier date: orders, opening stock, the
+  opening deposit and the closed month came out identical.
+
 ### Syncing and closing from outside
 
 ```bash

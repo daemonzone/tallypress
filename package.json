@@ -11,7 +11,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx scripts/seed-dev-shop.ts",
     "typecheck": "next typegen && tsc --noEmit",
-    "shop:connect": "tsx scripts/connect-shop.ts"
+    "shop:connect": "tsx scripts/connect-shop.ts",
+    "shop:import-range": "tsx scripts/import-range.ts"
   },
   "dependencies": {
     "dotenv": "^18.0.8",

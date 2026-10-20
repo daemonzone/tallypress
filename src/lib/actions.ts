@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { items, ledgerEntries, restockLots, shops } from "@/db/schema";
 import { freezeCosts } from "./costs";
+import { importRange, type ImportRangeResult } from "./import-range";
 import { MOVEMENT_TYPES, type MovementState } from "./movements";
 import { recordOpening } from "./opening";
 import { centsToString, parseDecimal } from "./money";
@@ -117,4 +118,16 @@ export async function saveOpening(formData: FormData) {
   await syncShop(shopId);
   await freezeCosts(shopId);
   revalidatePath("/", "layout");
+}
+
+/** Imports the orders of a period without erasing anything (see lib/import-range.ts). */
+export async function importPeriod(_prev: ImportRangeResult | null, formData: FormData): Promise<ImportRangeResult> {
+  const shopId = await getCurrentShopId();
+  const result = await importRange(shopId, {
+    from: String(formData.get("from") ?? ""),
+    to: String(formData.get("to") ?? "") || undefined,
+    rebuildClosings: formData.get("rebuild") === "on",
+  });
+  revalidatePath("/", "layout");
+  return result;
 }

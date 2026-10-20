@@ -207,6 +207,28 @@
     "brackets": "Income tax (yearly brackets)",
     "social": "Social security contributions",
     "upTo": "up to",
-    "above": "above"
+    "above": "above",
+    "range": {
+      "title": "Import a period",
+      "help": "Brings in the orders of a period without erasing anything. If the period starts before your starting date, the starting date moves back and the opening stock is rebuilt for it. Products are not re-read from the shop.",
+      "from": "From",
+      "to": "To (optional)",
+      "rebuild": "Recalculate months that are already closed",
+      "rebuildHelp": "Only needed to go back before a closed month: closed months are rebuilt from the data and their snapshots replaced.",
+      "submit": "Import period",
+      "working": "Importing…",
+      "ok": "Imported {orders} orders.",
+      "moved": "Starting date moved to {date}; opening stock rebuilt for {lots} items.",
+      "closedMonths": "Months closed: {months}.",
+      "errors": {
+        "invalid": "Check the dates: use a valid period that is not in the future.",
+        "not_set_up": "Record the starting point first.",
+        "no_items": "Sync the products from the shop first.",
+        "gap": "The period must reach the existing history: end it at or after your starting date, or leave the end empty.",
+        "closed": "Some months are already closed. Tick the box to recalculate them, or import a period inside the existing history.",
+        "busy": "A sync or import is already running. Try again in a moment.",
+        "failed": "The import failed."
+      }
+    }
   }
 }

@@ -3,7 +3,8 @@ import { db } from "@/db";
 import { items, ledgerEntries, orderLines, orders } from "@/db/schema";
 import { KeyValues, Notice, Section, buttonClass, primaryButtonClass, inputClass } from "@/components/ui";
 import { getDictionary } from "@/i18n";
-import { saveOpening } from "@/lib/actions";
+import { ImportRangeForm } from "@/components/import-range-form";
+import { importPeriod, saveOpening } from "@/lib/actions";
 import { COUNTED_STATUSES } from "@/lib/costs";
 import { getCurrentShop } from "@/lib/shop";
 import { syncNow } from "@/lib/sync/actions";
@@ -113,6 +114,12 @@ export default async function SetupPage() {
           ]}
         />
       </Section>
+
+      {opening && (
+        <Section title={t.setup.range.title} help={t.setup.range.help}>
+          <ImportRangeForm action={importPeriod} labels={t.setup.range} />
+        </Section>
+      )}
 
       <Section title={t.setup.openingTitle}>
         {opening ? (

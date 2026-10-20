@@ -207,6 +207,28 @@
     "brackets": "Imposte sul reddito (scaglioni annui)",
     "social": "Contributi previdenziali",
     "upTo": "fino a",
-    "above": "oltre"
+    "above": "oltre",
+    "range": {
+      "title": "Importa un periodo",
+      "help": "Importa gli ordini di un periodo senza cancellare nulla. Se il periodo parte prima della tua data di inizio, la data di inizio si sposta indietro e il magazzino iniziale viene ricostruito per quella data. I prodotti non vengono riletti dal negozio.",
+      "from": "Dal",
+      "to": "Al (facoltativo)",
+      "rebuild": "Ricalcola i mesi già chiusi",
+      "rebuildHelp": "Serve solo per tornare indietro prima di un mese chiuso: i mesi chiusi vengono ricostruiti dai dati e le loro istantanee sostituite.",
+      "submit": "Importa periodo",
+      "working": "Importazione in corso…",
+      "ok": "Importati {orders} ordini.",
+      "moved": "Data di inizio spostata al {date}; magazzino iniziale ricostruito per {lots} articoli.",
+      "closedMonths": "Mesi chiusi: {months}.",
+      "errors": {
+        "invalid": "Controlla le date: serve un periodo valido e non nel futuro.",
+        "not_set_up": "Registra prima il punto di partenza.",
+        "no_items": "Sincronizza prima i prodotti dal negozio.",
+        "gap": "Il periodo deve raggiungere lo storico esistente: termina alla data di inizio o dopo, oppure lascia vuota la data finale.",
+        "closed": "Alcuni mesi sono già chiusi. Spunta la casella per ricalcolarli, oppure importa un periodo dentro lo storico esistente.",
+        "busy": "È già in corso una sincronizzazione o un import. Riprova tra un momento.",
+        "failed": "Importazione non riuscita."
+      }
+    }
   }
 }
