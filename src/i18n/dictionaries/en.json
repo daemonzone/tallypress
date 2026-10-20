@@ -84,7 +84,7 @@
     "restocks": "Restocks",
     "withdrawals": "Withdrawals",
     "expenses": "Expenses",
-    "end": "Balance at end of month",
+    "end": "Expected balance at month end",
     "variantsTitle": "By product and variation",
     "product": "Product",
     "qty": "Sold",
@@ -101,7 +101,17 @@
     "taxShort": "Tax",
     "earningsShort": "Earnings",
     "opening": "Opening deposit",
-    "adjustments": "Adjustments"
+    "adjustments": "Adjustments",
+    "endInfoLabel": "About the expected balance",
+    "endDisclaimerIntro": "This is an expected balance, not the real balance of your bank account. Tallypress works it out from what it knows: the WooCommerce orders (counted as collected as soon as they are processing or completed) and the movements you record by hand.",
+    "endDisclaimerListTitle": "To be reliable it needs up-to-date manual data. These are not included, or only if you enter them:",
+    "endDisclaimerItems": [
+      "Payments of taxes and contributions (VAT, income tax, social security): here they are only set aside, the real account is debited when you actually pay them.",
+      "Extra e-commerce expenses: payment fees (PayPal, cards), shipping costs you bear, platforms and subscriptions, advertising, packaging.",
+      "Restocks and withdrawals: every purchase of goods and every personal withdrawal must be recorded.",
+      "Real collections: an order is counted even if the payment has not reached the account yet; returns and partial refunds may not be up to date."
+    ],
+    "endDisclaimerOutro": "Compare this figure with your bank statement from time to time: a large gap means some movements are missing."
   },
   "stock": {
     "title": "Stock and purchase prices",

@@ -281,7 +281,27 @@ function MonthPanel({
             { label: t.month.withdrawals, value: fmt.money(f.withdrawal) },
             { label: t.month.expenses, value: fmt.money(f.expense) },
             ...(f.adjustment !== 0 ? [{ label: t.month.adjustments, value: fmt.money(f.adjustment) }] : []),
-            { label: t.month.end, value: fmt.money(m.end), strong: true },
+            {
+              label: t.month.end,
+              value: fmt.money(m.end),
+              strong: true,
+              labelExtra: (
+                <InfoModal label={t.month.endInfoLabel} title={t.month.end} closeLabel={t.common.close}>
+                  <div className="space-y-3 text-sm">
+                    <p>{t.month.endDisclaimerIntro}</p>
+                    <p className="font-medium">{t.month.endDisclaimerListTitle}</p>
+                    <ul className="list-disc space-y-1.5 pl-5 text-muted">
+                      {t.month.endDisclaimerItems.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                    <p className="rounded-lg border border-[var(--warn-line)] bg-[var(--warn-bg)] p-3 text-xs">
+                      {t.month.endDisclaimerOutro}
+                    </p>
+                  </div>
+                </InfoModal>
+              ),
+            },
           ]}
         />
       </Section>

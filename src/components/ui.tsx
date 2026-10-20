@@ -111,7 +111,7 @@ export function StatTile({
 export function KeyValues({
   rows,
 }: {
-  rows: { label: string; value: ReactNode; note?: string; strong?: boolean }[];
+  rows: { label: string; value: ReactNode; note?: string; strong?: boolean; labelExtra?: ReactNode }[];
 }) {
   return (
     <table className="w-full text-left text-sm">
@@ -119,7 +119,10 @@ export function KeyValues({
         {rows.map((r) => (
           <tr key={r.label} className={r.strong ? "font-semibold" : undefined}>
             <th scope="row" className="w-2/3 py-2.5 pr-4 align-top font-normal">
-              <span className={r.strong ? "" : "text-muted"}>{r.label}</span>
+              <span className={`inline-flex items-center gap-1.5 ${r.strong ? "" : "text-muted"}`}>
+                {r.label}
+                {r.labelExtra}
+              </span>
               {r.note && <span className="block text-xs font-normal text-muted">{r.note}</span>}
             </th>
             <td className="py-2.5 text-right align-top tabular-nums">{r.value}</td>

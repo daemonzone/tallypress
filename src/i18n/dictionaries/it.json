@@ -84,7 +84,7 @@
     "restocks": "Riassortimenti",
     "withdrawals": "Prelievi",
     "expenses": "Spese",
-    "end": "Saldo a fine mese",
+    "end": "Saldo previsto a fine mese",
     "variantsTitle": "Per prodotto e variante",
     "product": "Prodotto",
     "qty": "Venduti",
@@ -101,7 +101,17 @@
     "taxShort": "Imposte",
     "earningsShort": "Guadagno",
     "opening": "Versamento iniziale",
-    "adjustments": "Rettifiche"
+    "adjustments": "Rettifiche",
+    "endInfoLabel": "Informazioni sul saldo previsto",
+    "endDisclaimerIntro": "Questo è un saldo previsto, non il saldo reale del tuo conto. Tallypress lo calcola da ciò che conosce: gli ordini di WooCommerce (considerati incassati appena sono in lavorazione o completati) e i movimenti che registri a mano.",
+    "endDisclaimerListTitle": "Per essere affidabile servono dati manuali sempre aggiornati. Questi non sono inclusi, oppure lo sono solo se li inserisci:",
+    "endDisclaimerItems": [
+      "Pagamenti di imposte e contributi (IVA, IRPEF, INPS): qui sono solo accantonati, il conto reale si svuota quando li paghi davvero.",
+      "Spese extra dell'e-commerce: commissioni di pagamento (PayPal, carte), spedizioni a tuo carico, piattaforme e abbonamenti, pubblicità, imballaggi.",
+      "Riassortimenti e prelievi: ogni acquisto di merce e ogni prelievo personale vanno registrati.",
+      "Incassi reali: un ordine è conteggiato anche se il pagamento non è ancora arrivato sul conto; resi e rimborsi parziali possono non essere aggiornati."
+    ],
+    "endDisclaimerOutro": "Confronta ogni tanto questo valore con l'estratto conto della banca: una differenza grande significa che mancano dei movimenti."
   },
   "stock": {
     "title": "Magazzino e prezzi d'acquisto",
