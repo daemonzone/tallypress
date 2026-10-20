@@ -56,8 +56,9 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
         <DataTable head={[t.stock.item, t.stock.woo, t.stock.tracked, t.stock.avg, t.stock.manual, t.stock.value]}>
           {states.map((s) => {
             const mismatch = s.wooStock != null && s.trackedStock != null && s.wooStock !== s.trackedStock;
+            const gone = s.status === "trash" || s.status === "deleted"; // no longer in the shop: greyed out
             return (
-              <tr key={s.id}>
+              <tr key={s.id} className={gone ? "text-muted [&_img]:opacity-50" : undefined}>
                 <td className="py-2 pr-3">
                   <div className="flex items-center gap-3">
                     <Thumb src={s.imageUrl} alt={s.label} />

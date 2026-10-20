@@ -13,7 +13,9 @@
     "typecheck": "next typegen && tsc --noEmit",
     "shop:connect": "tsx scripts/connect-shop.ts",
     "shop:import-range": "tsx scripts/import-range.ts",
-    "shop:images": "tsx scripts/sync-images.ts"
+    "shop:images": "tsx scripts/sync-images.ts",
+    "shop:rebuild-costs": "tsx scripts/rebuild-costs.ts",
+    "shop:estimate-restocks": "tsx scripts/estimate-restocks.ts"
   },
   "dependencies": {
     "dotenv": "^18.0.8",

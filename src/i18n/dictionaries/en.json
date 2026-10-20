@@ -44,7 +44,7 @@
     "roiHelp": "Invested = opening stock value + all restocks.",
     "stockValue": "Stock value",
     "netRemaining": "After taxes and costs",
-    "netRemainingHelp": "Money in the account minus VAT, income tax and the cost of goods sold: opening balance + net earnings.",
+    "netRemainingHelp": "Money in the account, minus the VAT and tax still to pay and the cost of goods sold that has not been bought back yet.",
     "stockTitle": "Warehouse",
     "stockValueHelp": "The goods still on the shelves, valued at what they cost you (not at the selling price).",
     "investedHelp": "Money put into stock: the opening stock plus every restock since. The ROI is measured against it."
@@ -111,13 +111,16 @@
       "Restocks and withdrawals: every purchase of goods and every personal withdrawal must be recorded.",
       "Real collections: an order is counted even if the payment has not reached the account yet; returns and partial refunds may not be up to date."
     ],
-    "endDisclaimerOutro": "Compare this figure with your bank statement from time to time: a large gap means some movements are missing.",
+    "endDisclaimerOutro": "Compare this figure with your bank statement from time to time: a large gap means some movements are missing. Rows marked as estimated (purchases, VAT, taxes) are worked out by Tallypress; replace them with the real movements when you have them.",
     "deposits": "Deposits into the account",
     "vatPayments": "VAT payments",
     "taxPayments": "Tax and contribution payments",
     "otherMovements": "Other movements",
     "historyBadge": "Sales history",
-    "historyNote": "Before the starting point: sales and profit only, with no account balance."
+    "historyNote": "Before {date}, the day Tallypress starts tracking the account balance and the stock. Only sales and estimated profit are shown for this month, with no balance.",
+    "estimatedRestocks": "Estimated goods purchases",
+    "estimatedVatPayments": "VAT paid (estimated)",
+    "estimatedTaxPayments": "Income tax and contributions paid (estimated)"
   },
   "stock": {
     "title": "Stock and purchase prices",

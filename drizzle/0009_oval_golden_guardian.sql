@@ -1,0 +1,1 @@
+ALTER TABLE "ledger_entries" ADD COLUMN "estimated" boolean DEFAULT false NOT NULL;

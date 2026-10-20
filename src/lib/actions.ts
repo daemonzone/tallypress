@@ -79,7 +79,7 @@ export async function setManualCost(formData: FormData) {
   const itemId = String(formData.get("itemId") ?? "");
   const cost = parseDecimal(formData.get("unitCost"));
   if (!(cost >= 0) || !(await ownItem(shopId, itemId))) return;
-  await db.update(items).set({ manualUnitCost: cost.toFixed(4) }).where(eq(items.id, itemId));
+  await db.update(items).set({ manualUnitCost: cost.toFixed(4), costSource: "manual" }).where(eq(items.id, itemId));
   await freezeCosts(shopId);
   revalidatePath("/", "layout");
 }

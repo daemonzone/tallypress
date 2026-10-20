@@ -164,7 +164,7 @@ export async function freezeCosts(shopId: string): Promise<number> {
     const pct = Number(shop.defaultCostPct);
     const vat = Number(shop.vatRate);
     const rest = await db
-      .select({ id: orderLines.id, quantity: orderLines.quantity, gross: orderLines.grossTotal, itemCost: items.manualUnitCost })
+      .select({ id: orderLines.id, quantity: orderLines.quantity, gross: orderLines.grossTotal, base: orderLines.subtotalGross, itemCost: items.manualUnitCost })
       .from(orderLines)
       .innerJoin(orders, eq(orders.id, orderLines.orderId))
       .leftJoin(items, eq(items.id, orderLines.itemId))
@@ -172,8 +172,8 @@ export async function freezeCosts(shopId: string): Promise<number> {
     for (const l of rest) {
       const qty = Number(l.quantity);
       if (!(qty > 0)) continue;
-      // Prefer the item's own cost estimate; otherwise the line's own price.
-      const unit = l.itemCost != null ? Number(l.itemCost) : ((Number(l.gross) / (1 + vat / 100) / qty) * pct) / 100;
+      // Prefer the item's own cost estimate (from its list price); otherwise the line's price before coupons.
+      const unit = l.itemCost != null ? Number(l.itemCost) : ((Number(l.base ?? l.gross) / (1 + vat / 100) / qty) * pct) / 100;
       await db.update(orderLines).set({ unitCostSnapshot: unit.toFixed(4) }).where(eq(orderLines.id, l.id));
       frozen++;
     }

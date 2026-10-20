@@ -13,6 +13,7 @@ interface WooProduct {
   type: string;
   status: string;
   price: string;
+  regular_price: string;
   images: { src: string }[];
   manage_stock: boolean;
   stock_quantity: number | null;
@@ -23,6 +24,7 @@ interface WooVariation {
   sku: string;
   status: string;
   price: string;
+  regular_price: string;
   image: { src: string } | null;
   manage_stock: boolean | "parent";
   stock_quantity: number | null;
@@ -33,8 +35,8 @@ interface WooVariation {
 const UNSOLD_TYPES = new Set(["grouped", "external"]);
 
 // Only what is used, to keep responses small; variations are read a few at a time.
-const PRODUCT_FIELDS = "id,name,sku,type,status,price,images,manage_stock,stock_quantity";
-const VARIATION_FIELDS = "id,sku,status,price,image,manage_stock,stock_quantity,attributes";
+const PRODUCT_FIELDS = "id,name,sku,type,status,price,regular_price,images,manage_stock,stock_quantity";
+const VARIATION_FIELDS = "id,sku,status,price,regular_price,image,manage_stock,stock_quantity,attributes";
 const CONCURRENCY = 4;
 
 const excluded = (column: string) => sql.raw(`excluded.${column}`);
@@ -52,6 +54,7 @@ function estimateCost(shop: Shop, price: string | null): string | null {
 function variationRow(shop: Shop, p: WooProduct, v: WooVariation, status: string): ItemRow {
   const managesStock = !isGone(status) && (v.manage_stock === "parent" ? p.manage_stock : v.manage_stock);
   const price = v.price || p.price || null; // a variation without its own price shows the parent's
+  const regularPrice = v.regular_price || p.regular_price || null;
   return {
     shopId: shop.id,
     wooProductId: p.id,
@@ -61,8 +64,10 @@ function variationRow(shop: Shop, p: WooProduct, v: WooVariation, status: string
     sku: v.sku || null,
     status,
     price,
+    regularPrice,
     imageUrl: v.image?.src ?? p.images?.[0]?.src ?? null,
-    manualUnitCost: estimateCost(shop, price),
+    // The estimate follows the list price, so a sale price does not lower the cost.
+    manualUnitCost: estimateCost(shop, regularPrice ?? price),
     managesStock,
     stockQty: managesStock && v.stock_quantity != null ? String(v.stock_quantity) : null,
   };
@@ -71,6 +76,7 @@ function variationRow(shop: Shop, p: WooProduct, v: WooVariation, status: string
 function productRow(shop: Shop, p: WooProduct, status: string): ItemRow {
   const managesStock = !isGone(status) && p.manage_stock;
   const price = p.price || null;
+  const regularPrice = p.regular_price || null;
   return {
     shopId: shop.id,
     wooProductId: p.id,
@@ -79,8 +85,9 @@ function productRow(shop: Shop, p: WooProduct, status: string): ItemRow {
     sku: p.sku || null,
     status,
     price,
+    regularPrice,
     imageUrl: p.images?.[0]?.src ?? null,
-    manualUnitCost: estimateCost(shop, price),
+    manualUnitCost: estimateCost(shop, regularPrice ?? price),
     managesStock,
     stockQty: managesStock && p.stock_quantity != null ? String(p.stock_quantity) : null,
   };
@@ -101,6 +108,9 @@ async function upsertItems(rows: ItemRow[]): Promise<void> {
           sku: excluded("sku"),
           status: excluded("status"),
           price: excluded("price"),
+          regularPrice: excluded("regular_price"),
+          // An estimated cost follows the list price; a cost entered by hand is left alone.
+          manualUnitCost: sql`CASE WHEN ${items.costSource} = 'estimate' THEN coalesce(excluded.manual_unit_cost, ${items.manualUnitCost}) ELSE ${items.manualUnitCost} END`,
           imageUrl: excluded("image_url"),
           managesStock: excluded("manages_stock"),
           stockQty: excluded("stock_qty"),

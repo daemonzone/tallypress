@@ -44,7 +44,7 @@
     "roiHelp": "Investito = valore del magazzino iniziale + tutti i riassortimenti.",
     "stockValue": "Valore del magazzino",
     "netRemaining": "Al netto delle tasse e costi",
-    "netRemainingHelp": "Soldi sul conto meno IVA, imposte e costo del venduto: giacenza iniziale + guadagno netto.",
+    "netRemainingHelp": "Soldi sul conto, meno l'IVA e le imposte ancora da versare e meno il costo della merce venduta non ancora ricomprata.",
     "stockTitle": "Magazzino",
     "stockValueHelp": "La merce che hai ancora in casa, valutata a quanto ti è costata (non al prezzo di vendita).",
     "investedHelp": "Soldi messi in merce: il magazzino iniziale più tutti i riassortimenti fatti. Il ROI si misura rispetto a questa cifra."
@@ -111,13 +111,16 @@
       "Riassortimenti e prelievi: ogni acquisto di merce e ogni prelievo personale vanno registrati.",
       "Incassi reali: un ordine è conteggiato anche se il pagamento non è ancora arrivato sul conto; resi e rimborsi parziali possono non essere aggiornati."
     ],
-    "endDisclaimerOutro": "Confronta ogni tanto questo valore con l'estratto conto della banca: una differenza grande significa che mancano dei movimenti.",
+    "endDisclaimerOutro": "Confronta ogni tanto questo valore con l'estratto conto della banca: una differenza grande significa che mancano dei movimenti. Le righe segnate come stima (acquisti, IVA, imposte) le calcola Tallypress: sostituiscile con i movimenti veri quando li hai.",
     "deposits": "Versamenti sul conto",
     "vatPayments": "Pagamenti IVA",
     "taxPayments": "Pagamenti imposte e contributi",
     "otherMovements": "Altri movimenti",
     "historyBadge": "Storico vendite",
-    "historyNote": "Prima del punto di partenza: solo vendite e utile, senza saldo del conto."
+    "historyNote": "Mese precedente al {date}, il giorno da cui Tallypress tiene il saldo del conto e il magazzino. Qui trovi solo le vendite e l'utile stimato, senza saldo.",
+    "estimatedRestocks": "Acquisti merce stimati",
+    "estimatedVatPayments": "IVA versata (stima)",
+    "estimatedTaxPayments": "Imposte e contributi versati (stima)"
   },
   "stock": {
     "title": "Magazzino e prezzi d'acquisto",

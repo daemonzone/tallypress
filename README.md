@@ -334,6 +334,28 @@ finished month. `GET` works too, for Vercel Cron. Without the secret it answers 
 | `WOO_URL_REWRITE` | `<public url>=<internal url>`: how the app reaches WooCommerce from inside Docker |
 | `APP_PORT`, `WP_PORT`, `WP_DB_PORT`, `TALLYPRESS_DB_PORT` | Host ports of the Docker services (all 9000+) |
 
+## Estimated purchases, VAT and taxes
+
+WooCommerce knows what comes in, not what leaves the account. Until the real movements are
+recorded, `npm run shop:estimate-restocks` fills the gap with **estimates**, marked as such
+(a row per month in the shop account, "Estimated goods purchases", "VAT paid (estimated)",
+"Income tax and contributions paid (estimated)"):
+
+- **Purchases:** each month the shop is assumed to have bought back what it sold, so the estimated
+  purchase is the month's cost of goods sold (the cost itself is `default_cost_pct` of the list price
+  without VAT). The opening stock is then rebuilt (it shrinks to about today's stock) and every
+  cost and closed month recomputed.
+- **VAT and taxes:** each month's VAT is booked as a VAT payment, and the income tax and
+  contributions its profit adds (IRPEF brackets over the calendar year, plus INPS) as a tax payment,
+  as if paid when they accrue. VAT on purchases is left out: it would raise the purchase outflow and
+  lower the VAT payment by the same amount.
+
+Re-running replaces the previous estimates (`--purchases-only` skips VAT and taxes, `--remove`
+takes them all out). Recorded movements are never touched, and "left after taxes and costs" only
+subtracts the cost of goods sold that has not been bought back yet, so nothing is counted twice.
+These are approximations of steady state: real purchases come in waves and taxes are paid with a
+delay. Replace them with the real movements as you record them.
+
 ## Products that are gone from the shop
 
 Order lines keep the WooCommerce product and variation they were sold under. Products the

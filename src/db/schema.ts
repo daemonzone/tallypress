@@ -88,12 +88,17 @@ export const items = pgTable(
     status: text("status").notNull().default("publish"),
     // Current selling price as listed in WooCommerce (tax included if the shop says so).
     price: numeric("price", { precision: 14, scale: 2 }),
+    // Full list price (before any sale price): the cost estimate is always based on this.
+    regularPrice: numeric("regular_price", { precision: 14, scale: 2 }),
     // Product photo from WooCommerce (a variation's own photo, else its product's).
     imageUrl: text("image_url"),
     managesStock: boolean("manages_stock").notNull().default(false),
     stockQty: numeric("stock_qty", { precision: 14, scale: 3 }),
     // For items without restock lots (e.g. stock not managed): flat manual cost.
     manualUnitCost: numeric("manual_unit_cost", { precision: 14, scale: 4 }),
+    // "estimate": derived from the list price by the shop's default percentage (refreshed on sync);
+    // "manual": entered by hand, never overwritten.
+    costSource: text("cost_source", { enum: ["estimate", "manual"] }).notNull().default("estimate"),
     syncedAt: timestamp("synced_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [unique().on(t.shopId, t.wooProductId, t.wooVariationId)],
@@ -130,6 +135,9 @@ export const orderLines = pgTable(
     wooProductId: bigint("woo_product_id", { mode: "number" }),
     wooVariationId: bigint("woo_variation_id", { mode: "number" }),
     name: text("name"), // the line's name as sold, e.g. "Blusa Marina - ROSA"
+    // Gross value before coupons (what the customer was asked, tax included): the price base for
+    // a line with no item to take a list price from. Discounted sale prices stay in the order only.
+    subtotalGross: numeric("subtotal_gross", { precision: 14, scale: 2 }),
     itemId: uuid("item_id").references(() => items.id),
     quantity: numeric("quantity", { precision: 14, scale: 3 }).notNull(),
     grossTotal: numeric("gross_total", { precision: 14, scale: 2 }).notNull(),
@@ -149,7 +157,7 @@ export const restockLots = pgTable(
     quantity: numeric("quantity", { precision: 14, scale: 3 }).notNull(),
     unitCost: numeric("unit_cost", { precision: 14, scale: 4 }).notNull(), // net of VAT
     purchasedAt: timestamp("purchased_at", { withTimezone: true }).notNull(),
-    source: text("source", { enum: ["opening", "restock", "return"] }).notNull().default("restock"),
+    source: text("source", { enum: ["opening", "restock", "return", "estimate"] }).notNull().default("restock"),
     note: text("note"),
   },
   (t) => [index().on(t.shopId, t.itemId)],
@@ -178,6 +186,8 @@ export const ledgerEntries = pgTable(
     amount: numeric("amount", { precision: 14, scale: 2 }).notNull(),
     occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(),
     restockLotId: uuid("restock_lot_id").references(() => restockLots.id),
+    // Entries computed by Tallypress (estimated purchases), as opposed to ones the owner recorded.
+    estimated: boolean("estimated").notNull().default(false),
     note: text("note"),
   },
   (t) => [index().on(t.shopId, t.occurredAt)],

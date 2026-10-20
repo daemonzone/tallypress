@@ -19,6 +19,8 @@ interface WooOrder {
     product_id: number;
     variation_id: number;
     quantity: number;
+    subtotal: string; // before coupons, excluding tax
+    subtotal_tax: string;
     total: string; // after discounts, excluding tax
     total_tax: string;
   }[];
@@ -73,6 +75,7 @@ async function upsertOrders(shop: Shop, wooOrders: WooOrder[], notBefore: Date):
           quantity: String(line.quantity),
           grossTotal: sumMoney(line.total, line.total_tax),
           taxTotal: line.total_tax,
+          subtotalGross: sumMoney(line.subtotal, line.subtotal_tax),
         };
         await tx
           .insert(orderLines)

@@ -12,7 +12,7 @@ import type { ReactNode } from "react";
 import { Icon, type IconName } from "./icons";
 import { InfoModal } from "./info-modal";
 import { Simulator } from "./simulator";
-import { Badge, Card, DataTable, KeyValues, Notice, Section, StatTile, Td } from "./ui";
+import { Badge, Card, KeyValues, Notice, Section, StatTile } from "./ui";
 
 export async function Dashboard({ monthKey }: { monthKey?: string }) {
   const { locale, t } = await getDictionary();
@@ -91,40 +91,61 @@ function Overview({ report, t, fmt }: { report: Report; t: Dictionary; fmt: Form
   );
 }
 
+/**
+ * Two rows that never scroll: the years on top, and below them only the months of the selected
+ * year. Picking another year opens the same month of that year (or the nearest one it has).
+ */
 function MonthNav({ report, selected, locale, label }: { report: Report; selected: string; locale: string; label: string }) {
   const short = new Intl.DateTimeFormat(locale, { month: "short", timeZone: "UTC" });
   const abbr = (key: string) => {
     const text = short.format(new Date(`${key}T00:00:00Z`)).replace(/\.$/, "");
     return text.charAt(0).toUpperCase() + text.slice(1);
   };
-  const byYear = new Map<string, MonthReport[]>();
-  for (const m of report.months) byYear.set(m.key.slice(0, 4), [...(byYear.get(m.key.slice(0, 4)) ?? []), m]);
+  const selectedYear = selected.slice(0, 4);
+  const monthOfYear = selected.slice(5, 7);
+  const years = [...new Set(report.months.map((m) => m.key.slice(0, 4)))];
+  const monthsOf = (year: string) => report.months.filter((m) => m.key.slice(0, 4) === year);
+
+  /** Same month in `year`, else the first month at or after it, else the last one. */
+  const target = (year: string) => {
+    const months = monthsOf(year);
+    return (months.find((m) => m.key.slice(5, 7) >= monthOfYear) ?? months.at(-1)!).key;
+  };
+  const chip = (active: boolean, dashed = false) =>
+    `rounded-full border px-3 py-1 transition ${
+      active
+        ? "border-accent bg-accent-soft font-semibold text-ink"
+        : `border-line bg-surface text-muted hover:text-ink ${dashed ? "border-dashed" : ""}`
+    }`;
 
   return (
     <nav aria-label={label} className="mb-6 flex flex-col gap-2 text-sm">
-      {[...byYear.entries()].reverse().map(([year, months]) => (
-        <div key={year} className="flex items-center gap-3">
-          <span className="w-11 shrink-0 text-xs font-medium tabular-nums text-muted">{year}</span>
-          <div className="flex flex-wrap gap-1.5">
-            {months.map((x) => (
-              <Link
-                key={x.key}
-                href={monthHref(x.key, report.currentKey)}
-                title={monthLabel(x.key, locale)}
-                aria-label={monthLabel(x.key, locale)}
-                aria-current={x.key === selected ? "page" : undefined}
-                className={`rounded-full border px-3 py-1 transition ${
-                  x.key === selected
-                    ? "border-accent bg-accent-soft font-semibold text-ink"
-                    : `border-line bg-surface text-muted hover:text-ink ${x.history ? "border-dashed" : ""}`
-                }`}
-              >
-                {abbr(x.key)}
-              </Link>
-            ))}
-          </div>
-        </div>
-      ))}
+      <div className="flex flex-wrap gap-1.5">
+        {years.map((year) => (
+          <Link
+            key={year}
+            href={monthHref(target(year), report.currentKey)}
+            aria-current={year === selectedYear ? "true" : undefined}
+            className={`${chip(year === selectedYear)} tabular-nums`}
+          >
+            {year}
+          </Link>
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {monthsOf(selectedYear).map((x) => (
+          <Link
+            key={x.key}
+            href={monthHref(x.key, report.currentKey)}
+            title={monthLabel(x.key, locale)}
+            aria-label={monthLabel(x.key, locale)}
+            aria-current={x.key === selected ? "page" : undefined}
+            className={chip(x.key === selected, x.history)}
+          >
+            {abbr(x.key)}
+          </Link>
+        ))}
+      </div>
     </nav>
   );
 }
@@ -262,7 +283,14 @@ function MonthPanel({
 
       <MonthNav report={report} selected={m.key} locale={locale} label={t.month.months} />
 
-      {m.history && <Notice>{t.month.historyNote}</Notice>}
+      {m.history && (
+        <Notice>
+          {t.month.historyNote.replace(
+            "{date}",
+            new Intl.DateTimeFormat(locale, { dateStyle: "long", timeZone: "UTC" }).format(new Date(`${report.startsOn}T00:00:00Z`)),
+          )}
+        </Notice>
+      )}
       {m.missingCostLines > 0 && (
         <Notice tone="warn">{t.month.missingCost.replace("{n}", String(m.missingCostLines))}</Notice>
       )}
@@ -318,9 +346,12 @@ function MonthPanel({
             ...(f.opening !== 0 ? [{ label: t.month.opening, value: fmt.money(f.opening) }] : []),
             ...(f.deposit !== 0 ? [{ label: t.month.deposits, value: fmt.money(f.deposit) }] : []),
             { label: t.month.restocks, value: fmt.money(f.restock) },
+            ...(f.estimatedRestock !== 0 ? [{ label: t.month.estimatedRestocks, value: fmt.money(f.estimatedRestock) }] : []),
             { label: t.month.withdrawals, value: fmt.money(f.withdrawal) },
             { label: t.month.expenses, value: fmt.money(f.expense) },
+            ...(f.estimatedVatPayment !== 0 ? [{ label: t.month.estimatedVatPayments, value: fmt.money(f.estimatedVatPayment) }] : []),
             ...(f.vatPayment !== 0 ? [{ label: t.month.vatPayments, value: fmt.money(f.vatPayment) }] : []),
+            ...(f.estimatedTaxPayment !== 0 ? [{ label: t.month.estimatedTaxPayments, value: fmt.money(f.estimatedTaxPayment) }] : []),
             ...(f.taxPayment !== 0 ? [{ label: t.month.taxPayments, value: fmt.money(f.taxPayment) }] : []),
             ...(f.adjustment !== 0 ? [{ label: t.month.adjustments, value: fmt.money(f.adjustment) }] : []),
             ...(f.other !== 0 ? [{ label: t.month.otherMovements, value: fmt.money(f.other) }] : []),
@@ -350,59 +381,6 @@ function MonthPanel({
       </Section>
       )}
 
-      <Section title={t.month.variantsTitle}>
-        {m.items.length === 0 ? (
-          <p className="text-sm text-muted">{t.month.noData}</p>
-        ) : (
-          <DataTable
-            head={[t.month.product, t.month.qty, t.month.grossShort, t.month.vat, t.month.netRevenueShort, t.month.cogsShort, t.month.taxShort, t.month.earningsShort]}
-          >
-            {m.items.map((i) => (
-              <tr key={i.itemId ?? i.label}>
-                <td className="whitespace-nowrap py-2.5 pr-3">
-                  {i.label}
-                  {i.sku && <span className="ml-2 text-xs text-muted">{i.sku}</span>}
-                  {i.itemId == null && (
-                    <span className="ml-2 rounded-full border border-line bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-muted">
-                      {t.stock.deleted}
-                    </span>
-                  )}
-                  {i.missingCost > 0 && (
-                    <Icon name="alert" className="ml-1.5 inline h-3.5 w-3.5 text-[var(--warn-line)]" />
-                  )}
-                </td>
-                <Td>{fmt.num(i.qty)}</Td>
-                <Td>{fmt.money(i.gross)}</Td>
-                <Td>{fmt.money(i.vat)}</Td>
-                <Td>{fmt.money(i.netRevenue)}</Td>
-                <Td>{fmt.money(i.cogs)}</Td>
-                <Td>{fmt.money(i.taxReserve)}</Td>
-                <Td>{fmt.money(i.netEarnings)}</Td>
-              </tr>
-            ))}
-            <tr className="text-muted">
-              <td className="py-2.5 pr-3">{t.month.shipping}</td>
-              <Td />
-              <Td>{fmt.money(m.shipping.gross)}</Td>
-              <Td>{fmt.money(m.shipping.vat)}</Td>
-              <Td>{fmt.money(m.shipping.netRevenue)}</Td>
-              <Td>{fmt.money(0)}</Td>
-              <Td>{fmt.money(m.shipping.taxReserve)}</Td>
-              <Td>{fmt.money(m.shipping.netEarnings)}</Td>
-            </tr>
-            <tr className="border-t-2 border-line font-semibold">
-              <td className="py-2.5 pr-3">{t.common.total}</td>
-              <Td strong>{fmt.num(m.items.reduce((s, i) => s + i.qty, 0))}</Td>
-              <Td strong>{fmt.money(m.gross)}</Td>
-              <Td strong>{fmt.money(m.vat)}</Td>
-              <Td strong>{fmt.money(m.netRevenue)}</Td>
-              <Td strong>{fmt.money(m.cogs)}</Td>
-              <Td strong>{fmt.money(m.taxReserve)}</Td>
-              <Td strong>{fmt.money(m.netEarnings)}</Td>
-            </tr>
-          </DataTable>
-        )}
-      </Section>
     </>
   );
 }

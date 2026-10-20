@@ -1,10 +1,10 @@
-import { and, count, eq, gte, inArray, lte, sql } from "drizzle-orm";
+import { and, count, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { items, ledgerEntries, monthClosings, orderLines, orders, restockLots, shops } from "@/db/schema";
+import { items, ledgerEntries, monthClosings, restockLots, shops } from "@/db/schema";
 import { ensureMonthsClosed } from "./closing";
-import { COUNTED_STATUSES, freezeCosts, relinkLines } from "./costs";
+import { freezeCosts, relinkLines } from "./costs";
 import { withShopLock } from "./lock";
-import { hasOpening } from "./opening";
+import { computeOpeningLots, hasOpening } from "./opening";
 import { syncMissingItems } from "./sync/items";
 import { importOrdersBetween } from "./sync/orders";
 
@@ -93,38 +93,7 @@ export async function importRange(
     }
 
     // ---- extend the cash history backwards: rebuild the opening position at the new start
-    const asOf = shop.lastSyncedAt; // WooCommerce stock was read at the last sync
-    const soldRows = await db
-      .select({ itemId: orderLines.itemId, qty: sql<string>`sum(${orderLines.quantity})` })
-      .from(orderLines)
-      .innerJoin(orders, eq(orders.id, orderLines.orderId))
-      .where(
-        and(
-          eq(orderLines.shopId, shopId),
-          inArray(orders.status, COUNTED_STATUSES),
-          gte(orders.placedAt, from),
-          asOf ? lte(orders.placedAt, asOf) : undefined,
-        ),
-      )
-      .groupBy(orderLines.itemId);
-    const sold = new Map(soldRows.filter((r) => r.itemId).map((r) => [r.itemId!, Number(r.qty)]));
-
-    const lots = await db.select().from(restockLots).where(eq(restockLots.shopId, shopId));
-    const oldOpeningCost = new Map(lots.filter((l) => l.source === "opening").map((l) => [l.itemId, Number(l.unitCost)]));
-    const restocked = new Map<string, number>();
-    for (const l of lots.filter((l) => l.source !== "opening")) {
-      restocked.set(l.itemId, (restocked.get(l.itemId) ?? 0) + Number(l.quantity));
-    }
-
-    const itemRows = await db.select().from(items).where(eq(items.shopId, shopId));
-    const newLots = itemRows.flatMap((item) => {
-      if (!item.managesStock || item.stockQty == null) return [];
-      const quantity = Number(item.stockQty) + (sold.get(item.id) ?? 0) - (restocked.get(item.id) ?? 0);
-      const unitCost = oldOpeningCost.get(item.id) ?? (item.manualUnitCost == null ? null : Number(item.manualUnitCost));
-      return quantity > 0 && unitCost != null
-        ? [{ shopId, itemId: item.id, quantity: String(quantity), unitCost: unitCost.toFixed(4), purchasedAt: from, source: "opening" as const }]
-        : [];
-    });
+    const newLots = await computeOpeningLots(shopId, from, shop.lastSyncedAt);
 
     await db.transaction(async (tx) => {
       if (input.rebuildClosings) await tx.delete(monthClosings).where(eq(monthClosings.shopId, shopId));

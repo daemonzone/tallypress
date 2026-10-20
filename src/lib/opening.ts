@@ -1,6 +1,7 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { items, ledgerEntries, restockLots, shops } from "@/db/schema";
+import { items, ledgerEntries, orderLines, orders, restockLots, shops } from "@/db/schema";
+import { COUNTED_STATUSES } from "./costs";
 import { centsToString } from "./money";
 
 export interface OpeningLot {
@@ -68,4 +69,56 @@ export async function recordOpening(shopId: string, input: OpeningInput): Promis
     });
   });
   return true;
+}
+
+/**
+ * The opening stock for a given start date, per item: what WooCommerce holds now, plus what was
+ * sold since `from`, minus what was restocked since (recorded or estimated). `asOf` is when the
+ * WooCommerce stock was read (the last sync); later orders are not part of that stock.
+ * The unit cost is the item's previous opening cost, else its cost estimate.
+ */
+export async function computeOpeningLots(shopId: string, from: Date, asOf: Date | null) {
+  const soldRows = await db
+    .select({ itemId: orderLines.itemId, qty: sql<string>`sum(${orderLines.quantity})` })
+    .from(orderLines)
+    .innerJoin(orders, eq(orders.id, orderLines.orderId))
+    .where(
+      and(
+        eq(orderLines.shopId, shopId),
+        inArray(orders.status, COUNTED_STATUSES),
+        gte(orders.placedAt, from),
+        asOf ? lte(orders.placedAt, asOf) : undefined,
+      ),
+    )
+    .groupBy(orderLines.itemId);
+  const sold = new Map(soldRows.filter((r) => r.itemId).map((r) => [r.itemId!, Number(r.qty)]));
+
+  const lots = await db.select().from(restockLots).where(eq(restockLots.shopId, shopId));
+  const oldOpeningCost = new Map(lots.filter((l) => l.source === "opening").map((l) => [l.itemId, Number(l.unitCost)]));
+  const restocked = new Map<string, number>();
+  for (const l of lots.filter((l) => l.source !== "opening")) {
+    restocked.set(l.itemId, (restocked.get(l.itemId) ?? 0) + Number(l.quantity));
+  }
+
+  const itemRows = await db.select().from(items).where(eq(items.shopId, shopId));
+  return itemRows.flatMap((item) => {
+    if (!item.managesStock || item.stockQty == null) return [];
+    const quantity = Number(item.stockQty) + (sold.get(item.id) ?? 0) - (restocked.get(item.id) ?? 0);
+    const unitCost = oldOpeningCost.get(item.id) ?? (item.manualUnitCost == null ? null : Number(item.manualUnitCost));
+    return quantity > 0 && unitCost != null
+      ? [{ shopId, itemId: item.id, quantity: String(quantity), unitCost: unitCost.toFixed(4), purchasedAt: from, source: "opening" as const }]
+      : [];
+  });
+}
+
+/** Replaces the opening lots with freshly computed ones at the shop's current starting date. */
+export async function rebuildOpeningLots(shopId: string): Promise<number> {
+  const [shop] = await db.select().from(shops).where(eq(shops.id, shopId));
+  if (!shop?.baselineAt) throw new Error("The shop has no starting point");
+  const newLots = await computeOpeningLots(shopId, shop.baselineAt, shop.lastSyncedAt);
+  await db.transaction(async (tx) => {
+    await tx.delete(restockLots).where(and(eq(restockLots.shopId, shopId), eq(restockLots.source, "opening")));
+    for (let i = 0; i < newLots.length; i += 500) await tx.insert(restockLots).values(newLots.slice(i, i + 500));
+  });
+  return newLots.length;
 }

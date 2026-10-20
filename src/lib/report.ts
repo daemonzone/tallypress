@@ -5,6 +5,7 @@ import { figures, monthKeyOf, monthRange, profileOf, toCents, type Figures } fro
 
 export interface ItemRow extends Figures {
   itemId: string | null;
+  status: string | null; // WooCommerce status of the item (trash, deleted...), null when the line has no item
   label: string;
   sku: string | null;
   qty: number;
@@ -16,21 +17,24 @@ export interface Flows {
   opening: number; // the starting deposit on the shop account
   deposit: number; // later money paid into the account
   restock: number;
+  estimatedRestock: number; // purchases estimated by Tallypress, not recorded by the owner
   withdrawal: number;
   expense: number;
   vatPayment: number;
+  estimatedVatPayment: number; // VAT payments estimated by Tallypress
   taxPayment: number;
+  estimatedTaxPayment: number; // income tax / contribution payments estimated by Tallypress
   adjustment: number; // manual corrections
   other: number;
 }
 
 const emptyFlows = (): Flows => ({
-  sales: 0, opening: 0, deposit: 0, restock: 0, withdrawal: 0, expense: 0, vatPayment: 0, taxPayment: 0, adjustment: 0, other: 0,
+  sales: 0, opening: 0, deposit: 0, restock: 0, estimatedRestock: 0, withdrawal: 0, expense: 0, vatPayment: 0, estimatedVatPayment: 0, taxPayment: 0, estimatedTaxPayment: 0, adjustment: 0, other: 0,
 });
 
 /** Everything that moves the account apart from sales. */
 const manualFlows = (f: Flows) =>
-  f.opening + f.deposit + f.restock + f.withdrawal + f.expense + f.vatPayment + f.taxPayment + f.adjustment + f.other;
+  f.opening + f.deposit + f.restock + f.estimatedRestock + f.withdrawal + f.expense + f.vatPayment + f.estimatedVatPayment + f.taxPayment + f.estimatedTaxPayment + f.adjustment + f.other;
 
 export interface MonthReport extends Figures {
   key: string; // first day of the month, "YYYY-MM-01"
@@ -65,6 +69,7 @@ export interface Report {
   shopId: string;
   currency: string;
   currentKey: string;
+  startsOn: string; // "YYYY-MM-DD": the day account balance and stock are tracked from
   hasOpening: boolean;
   months: MonthReport[];
   overview: Overview;
@@ -104,7 +109,7 @@ export async function buildReport(shopId: string): Promise<Report | null> {
         AND o.placed_at >= ${baseline}::timestamptz
       GROUP BY 1`),
     rowsOf(sql`
-      SELECT ${monthSql("o.placed_at")} AS month, l.item_id, i.sku,
+      SELECT ${monthSql("o.placed_at")} AS month, l.item_id, i.sku, i.status AS item_status,
              coalesce(i.product_name, CASE WHEN l.item_id IS NULL THEN l.name END, '?') AS product_name, i.variation_label,
              sum(l.quantity)::text AS qty, sum(l.gross_total)::text AS gross,
              sum(l.quantity * coalesce(l.unit_cost_snapshot, 0))::text AS cogs,
@@ -115,10 +120,10 @@ export async function buildReport(shopId: string): Promise<Report | null> {
       WHERE l.shop_id = ${shopId} AND o.status IN ('processing', 'completed')
         AND o.placed_at >= ${baseline}::timestamptz
       -- lines whose product was deleted for good have no item: keep them apart, by the name they were sold under
-      GROUP BY 1, l.item_id, i.sku, i.product_name, i.variation_label, CASE WHEN l.item_id IS NULL THEN l.name END`),
+      GROUP BY 1, l.item_id, i.sku, i.status, i.product_name, i.variation_label, CASE WHEN l.item_id IS NULL THEN l.name END`),
     rowsOf(sql`
-      SELECT ${monthSql("occurred_at")} AS month, kind::text AS kind, sum(amount)::text AS amount
-      FROM ledger_entries WHERE shop_id = ${shopId} GROUP BY 1, 2`),
+      SELECT ${monthSql("occurred_at")} AS month, kind::text AS kind, estimated, sum(amount)::text AS amount
+      FROM ledger_entries WHERE shop_id = ${shopId} GROUP BY 1, 2, 3`),
     db.select().from(monthClosings).where(eq(monthClosings.shopId, shopId)),
     db
       .select({ qty: restockLots.quantity, cost: restockLots.unitCost, source: restockLots.source })
@@ -135,12 +140,20 @@ export async function buildReport(shopId: string): Promise<Report | null> {
   for (const r of ledgerRows) {
     const f = flowsByMonth.get(r.month as string) ?? emptyFlows();
     const amount = toCents(r.amount);
-    if (r.kind === "restock") f.restock += amount;
+    if (r.kind === "restock") {
+      if (r.estimated) f.estimatedRestock += amount;
+      else f.restock += amount;
+    }
     else if (r.kind === "withdrawal") f.withdrawal += amount;
     else if (r.kind === "expense") f.expense += amount;
     else if (r.kind === "deposit") f.deposit += amount;
-    else if (r.kind === "vat_payment") f.vatPayment += amount;
-    else if (r.kind === "tax_payment") f.taxPayment += amount;
+    else if (r.kind === "vat_payment") {
+      if (r.estimated) f.estimatedVatPayment += amount;
+      else f.vatPayment += amount;
+    } else if (r.kind === "tax_payment") {
+      if (r.estimated) f.estimatedTaxPayment += amount;
+      else f.taxPayment += amount;
+    }
     else if (r.kind === "opening_balance") {
       f.opening += amount;
       hasOpening = true;
@@ -181,6 +194,7 @@ export async function buildReport(shopId: string): Promise<Report | null> {
         return {
           ...figures(gross, toCents(r.cogs), noTax),
           itemId: (r.item_id as string) ?? null,
+          status: (r.item_status as string) ?? null,
           label,
           sku: (r.sku as string) ?? null,
           qty: Number(r.qty),
@@ -246,23 +260,26 @@ export async function buildReport(shopId: string): Promise<Report | null> {
   const openingValue = lotRows
     .filter((l) => l.source === "opening")
     .reduce((s, l) => s + Math.round(Number(l.qty) * Number(l.cost) * 100), 0);
-  const invested = openingValue - sum((m) => m.flows.restock);
+  const spentOnRestocks = -sum((m) => m.flows.restock + m.flows.estimatedRestock);
+  const invested = openingValue + spentOnRestocks;
   const netEarnings = sum((m) => m.netEarnings);
 
-  const vatDue = Math.max(sum((m) => m.vat) + sum((m) => m.flows.vatPayment), 0);
-  const taxDue = Math.max(sum((m) => m.taxReserve) + sum((m) => m.flows.taxPayment), 0);
+  const vatDue = Math.max(sum((m) => m.vat) + sum((m) => m.flows.vatPayment + m.flows.estimatedVatPayment), 0);
+  const taxDue = Math.max(sum((m) => m.taxReserve) + sum((m) => m.flows.taxPayment + m.flows.estimatedTaxPayment), 0);
 
   return {
     shopId,
     currency: shop.currency,
     currentKey,
+    startsOn: shop.baselineAt.toISOString().slice(0, 10),
     hasOpening,
     months,
     overview: {
       cash: months.at(-1)?.end ?? 0,
       cogs: sum((m) => m.cogs),
       // Payments settle what was set aside, so they must not be subtracted twice.
-      netRemaining: (months.at(-1)?.end ?? 0) - vatDue - taxDue - sum((m) => m.cogs),
+      // Only the part of the cost of goods sold that has not been bought back yet is still to be spent.
+      netRemaining: (months.at(-1)?.end ?? 0) - vatDue - taxDue - Math.max(sum((m) => m.cogs) - spentOnRestocks, 0),
       vatReserve: sum((m) => m.vat),
       taxReserve: sum((m) => m.taxReserve),
       vatDue,
