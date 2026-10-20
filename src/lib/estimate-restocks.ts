@@ -33,12 +33,13 @@ async function clearEstimates(shopId: string): Promise<number> {
  * units sold. Because those purchases are now known, the opening stock is rebuilt (it shrinks to
  * about today's stock) and every cost and closed month is recomputed.
  *
- * VAT AND TAXES (unless `payments: false`). The VAT of each month's sales is booked as a VAT payment in
- * the FOLLOWING month (so the last month's VAT is still due), and the income tax and contributions its profit adds (IRPEF brackets and INPS, as the shop's
- * tax profile computes them over the calendar year) as a tax payment, as if paid in the month
- * they accrue. This is steady-state: payments made in a year mostly settle earlier income, but if
- * income is stable they come out about the same. The VAT on purchases is left out on purpose: it would
- * raise the purchase outflow and lower the VAT payment by the same amount.
+ * VAT AND TAXES (unless `payments: false`). The VAT of each month's sales is paid in the FOLLOWING
+ * month (so the last month's VAT is still due; the first month pays the VAT of the month before the
+ * starting point). Income tax and contributions (IRPEF brackets and INPS, as the shop's tax profile
+ * computes them over the calendar year) are paid with a delay: the tax of the previous year comes out
+ * in two instalments, June and November. What accrues in the current year is not paid yet. VAT on
+ * purchases is left out on purpose: it would raise the purchase outflow and lower the VAT
+ * payment by the same amount.
  *
  * Idempotent: earlier estimates are replaced. They are marked as estimated, never mixed with
  * restocks the owner recorded, and `removeEstimatedRestocks` takes them all out again.
@@ -107,27 +108,53 @@ export async function estimateRestocks(shopId: string, opts: { payments?: boolea
   let closedMonths = rebuilt.closedMonths.length;
   if (opts.payments !== false) {
     const report = await buildReport(shopId);
-    const cash = report?.months.filter((x) => !x.history) ?? [];
-    for (const [i, m] of cash.entries()) {
-      // VAT is paid the month after: this month pays the previous month's VAT, so the VAT of the
-      // current month stays due. (The VAT of the month before the starting point is not counted.)
-      const vatPaid = i > 0 ? cash[i - 1].vat : 0;
-      for (const [kind, amount, note] of [
-        ["vat_payment", vatPaid, "IVA stimata (vendite del mese precedente)"],
-        ["tax_payment", m.taxReserve, "Imposte e contributi stimati (IRPEF + INPS sull'utile del mese)"],
-      ] as const) {
-        if (amount <= 0) continue;
-        if (kind === "vat_payment") vat += amount;
-        else tax += amount;
-        await db.insert(ledgerEntries).values({
-          shopId,
-          kind,
-          amount: (-amount / 100).toFixed(2),
-          occurredAt: monthStart(m.key) as unknown as Date,
-          estimated: true,
-          note,
-        });
+    const all = report?.months ?? [];
+    const cash = all.filter((x) => !x.history);
+    // Income tax and contributions accrued per calendar year, history years included.
+    const yearTax = new Map<string, number>();
+    for (const m of all) yearTax.set(m.key.slice(0, 4), (yearTax.get(m.key.slice(0, 4)) ?? 0) + Math.max(m.taxReserve, 0));
+
+    type Entry = { what: "vat" | "tax"; kind: "vat_payment" | "prior_payment"; amount: number; key: string; note: string };
+    const entries: Entry[] = [];
+
+    // VAT is paid the month after the sales. The first cash month therefore pays the VAT of the
+    // month before the starting point (sales history): an obligation from an earlier period.
+    for (const m of cash) {
+      const prev = all[all.findIndex((x) => x.key === m.key) - 1];
+      if (!prev || prev.vat <= 0) continue;
+      entries.push(
+        prev.history
+          ? { what: "vat", kind: "prior_payment", amount: prev.vat, key: m.key, note: `IVA stimata di ${prev.key.slice(0, 7)} (periodo precedente al punto di partenza)` }
+          : { what: "vat", kind: "vat_payment", amount: prev.vat, key: m.key, note: "IVA stimata (vendite del mese precedente)" },
+      );
+    }
+
+    // Income tax and contributions are paid with a delay: the tax of year Y-1 comes out in two
+    // equal instalments, June and November of year Y. The tax accrued in the current year is not
+    // paid yet (it stays "still to pay"), and an instalment still in the future is not booked.
+    // These payments belong to an earlier period, so they do not settle what is set aside now.
+    for (const year of new Set(cash.map((m) => m.key.slice(0, 4)))) {
+      const owed = yearTax.get(String(Number(year) - 1)) ?? 0;
+      if (owed <= 0) continue;
+      const first = Math.round(owed / 2);
+      for (const [mm, amount, label] of [["06", first, "rata di giugno"], ["11", owed - first, "rata di novembre"]] as const) {
+        const key = `${year}-${mm}-01`;
+        if (key > (report?.currentKey ?? "") || !cash.some((m) => m.key === key)) continue;
+        entries.push({ what: "tax", kind: "prior_payment", amount, key, note: `Imposte ${Number(year) - 1} stimate (IRPEF + INPS), ${label}` });
       }
+    }
+
+    for (const e of entries) {
+      if (e.what === "vat") vat += e.amount;
+      else tax += e.amount;
+      await db.insert(ledgerEntries).values({
+        shopId,
+        kind: e.kind,
+        amount: (-e.amount / 100).toFixed(2),
+        occurredAt: monthStart(e.key) as unknown as Date,
+        estimated: true,
+        note: e.note,
+      });
     }
     // The flows of the months changed: close them again.
     await db.delete(monthClosings).where(eq(monthClosings.shopId, shopId));

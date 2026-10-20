@@ -24,17 +24,19 @@ export interface Flows {
   estimatedVatPayment: number; // VAT payments estimated by Tallypress
   taxPayment: number;
   estimatedTaxPayment: number; // income tax / contribution payments estimated by Tallypress
+  priorPayment: number; // VAT / taxes paid for periods before the starting point
+  estimatedPriorPayment: number;
   adjustment: number; // manual corrections
   other: number;
 }
 
 const emptyFlows = (): Flows => ({
-  sales: 0, opening: 0, deposit: 0, restock: 0, estimatedRestock: 0, withdrawal: 0, expense: 0, vatPayment: 0, estimatedVatPayment: 0, taxPayment: 0, estimatedTaxPayment: 0, adjustment: 0, other: 0,
+  sales: 0, opening: 0, deposit: 0, restock: 0, estimatedRestock: 0, withdrawal: 0, expense: 0, vatPayment: 0, estimatedVatPayment: 0, taxPayment: 0, estimatedTaxPayment: 0, priorPayment: 0, estimatedPriorPayment: 0, adjustment: 0, other: 0,
 });
 
 /** Everything that moves the account apart from sales. */
 const manualFlows = (f: Flows) =>
-  f.opening + f.deposit + f.restock + f.estimatedRestock + f.withdrawal + f.expense + f.vatPayment + f.estimatedVatPayment + f.taxPayment + f.estimatedTaxPayment + f.adjustment + f.other;
+  f.opening + f.deposit + f.restock + f.estimatedRestock + f.withdrawal + f.expense + f.vatPayment + f.estimatedVatPayment + f.taxPayment + f.estimatedTaxPayment + f.priorPayment + f.estimatedPriorPayment + f.adjustment + f.other;
 
 export interface MonthReport extends Figures {
   key: string; // first day of the month, "YYYY-MM-01"
@@ -153,6 +155,9 @@ export async function buildReport(shopId: string): Promise<Report | null> {
     } else if (r.kind === "tax_payment") {
       if (r.estimated) f.estimatedTaxPayment += amount;
       else f.taxPayment += amount;
+    } else if (r.kind === "prior_payment") {
+      if (r.estimated) f.estimatedPriorPayment += amount;
+      else f.priorPayment += amount;
     }
     else if (r.kind === "opening_balance") {
       f.opening += amount;

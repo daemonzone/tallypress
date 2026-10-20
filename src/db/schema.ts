@@ -172,6 +172,7 @@ export const ledgerKinds = pgEnum("ledger_kind", [
   "deposit", // money paid into the shop account
   "vat_payment", // VAT actually paid (settles the VAT set aside)
   "tax_payment", // income tax / social contributions actually paid
+  "prior_payment", // VAT or taxes paid now for a period BEFORE the starting point (does not settle what is set aside)
   "other", // anything else, always with a description
 ]);
 

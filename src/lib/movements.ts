@@ -18,6 +18,7 @@ export const MOVEMENT_TYPES: readonly {
   { value: "expense", kind: "expense", sign: -1, needsNote: false },
   { value: "vat_payment", kind: "vat_payment", sign: -1, needsNote: false },
   { value: "tax_payment", kind: "tax_payment", sign: -1, needsNote: false },
+  { value: "prior_payment", kind: "prior_payment", sign: -1, needsNote: false },
   { value: "adjustment_in", kind: "adjustment", sign: 1, needsNote: false },
   { value: "adjustment_out", kind: "adjustment", sign: -1, needsNote: false },
   { value: "other_in", kind: "other", sign: 1, needsNote: true },

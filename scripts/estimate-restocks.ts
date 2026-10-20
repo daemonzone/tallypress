@@ -17,7 +17,7 @@ async function main() {
   const r = await estimateRestocks(shopId, { payments: !process.argv.includes("--purchases-only") });
   console.log(
     `Estimated purchases: ${(r.total / 100).toFixed(2)} over ${r.months} months (${r.lots} item lots); ` +
-      `VAT ${(r.vat / 100).toFixed(2)}, taxes ${(r.tax / 100).toFixed(2)}; ` +
+      `VAT paid ${(r.vat / 100).toFixed(2)}, earlier-year taxes paid ${(r.tax / 100).toFixed(2)}; ` +
       `opening stock rebuilt for ${r.openingLots} items; months closed again: ${r.closedMonths}.`,
   );
 }

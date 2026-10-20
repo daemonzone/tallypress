@@ -1,12 +1,13 @@
 // Plain functions so both server and client components can use them.
 
 export function formatters(locale: string, currency: string) {
-  const cur = new Intl.NumberFormat(locale, { style: "currency", currency });
-  const num = new Intl.NumberFormat(locale, { maximumFractionDigits: 3 });
+  const cur = new Intl.NumberFormat(locale, { style: "currency", currency, useGrouping: "always" });
+  const num = new Intl.NumberFormat(locale, { maximumFractionDigits: 3, useGrouping: "always" });
   const pct = new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 1 });
   return {
     money: (cents: number) => cur.format((cents || 0) / 100), // `|| 0` turns -0 into 0
     num: (n: number) => num.format(n),
+    int: (n: number) => num.format(Math.round(n)),
     pct: (ratio: number) => pct.format(ratio),
   };
 }

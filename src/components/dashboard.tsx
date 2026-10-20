@@ -315,7 +315,7 @@ function MonthPanel({
             note={m.netEarnings < 0 ? t.month.loss : undefined}
           />
           <div className="flex gap-8">
-            <StatTile label={t.month.orders} icon="bag" value={m.orders} />
+            <StatTile label={t.month.orders} icon="bag" value={fmt.int(m.orders)} />
             <StatTile
               label={t.month.gross}
               icon="wallet"
@@ -353,6 +353,8 @@ function MonthPanel({
             ...(f.vatPayment !== 0 ? [{ label: t.month.vatPayments, value: fmt.money(f.vatPayment) }] : []),
             ...(f.estimatedTaxPayment !== 0 ? [{ label: t.month.estimatedTaxPayments, value: fmt.money(f.estimatedTaxPayment) }] : []),
             ...(f.taxPayment !== 0 ? [{ label: t.month.taxPayments, value: fmt.money(f.taxPayment) }] : []),
+            ...(f.estimatedPriorPayment !== 0 ? [{ label: t.month.estimatedPriorPayments, value: fmt.money(f.estimatedPriorPayment) }] : []),
+            ...(f.priorPayment !== 0 ? [{ label: t.month.priorPayments, value: fmt.money(f.priorPayment) }] : []),
             ...(f.adjustment !== 0 ? [{ label: t.month.adjustments, value: fmt.money(f.adjustment) }] : []),
             ...(f.other !== 0 ? [{ label: t.month.otherMovements, value: fmt.money(f.other) }] : []),
             {

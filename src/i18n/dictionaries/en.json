@@ -120,7 +120,9 @@
     "historyNote": "Before {date}, the day Tallypress starts tracking the account balance and the stock. Only sales and estimated profit are shown for this month, with no balance.",
     "estimatedRestocks": "Estimated goods purchases",
     "estimatedVatPayments": "VAT paid (estimated)",
-    "estimatedTaxPayments": "Income tax and contributions paid (estimated)"
+    "estimatedTaxPayments": "Income tax and contributions paid (estimated)",
+    "priorPayments": "Payments for earlier periods",
+    "estimatedPriorPayments": "Payments for earlier periods (estimated)"
   },
   "stock": {
     "title": "Stock and purchase prices",
@@ -162,7 +164,8 @@
       "deposit": "Deposit",
       "vat_payment": "VAT payment",
       "tax_payment": "Tax payment",
-      "other": "Other"
+      "other": "Other",
+      "prior_payment": "Earlier period payment"
     },
     "empty": "No movements yet.",
     "salesNote": "Sales are not listed here: they come from WooCommerce orders.",
@@ -177,7 +180,8 @@
       "adjustment_in": "Adjustment, increase (in)",
       "adjustment_out": "Adjustment, decrease (out)",
       "other_in": "Other (in)",
-      "other_out": "Other (out)"
+      "other_out": "Other (out)",
+      "prior_payment": "VAT / taxes for an earlier period (out)"
     },
     "form": {
       "type": "Type",
@@ -190,7 +194,11 @@
       "noteMissing": "Add a description for this type.",
       "inflow": "adds to the account",
       "outflow": "takes from the account"
-    }
+    },
+    "searchPlaceholder": "Search notes or type",
+    "results": "{n} movements",
+    "noResults": "No movements match your search.",
+    "estimated": "Estimated"
   },
   "setup": {
     "shopTitle": "Shop",

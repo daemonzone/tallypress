@@ -1,14 +1,13 @@
 import { formatters } from "@/components/format";
-import Link from "next/link";
-import { Icon } from "@/components/icons";
+import { Pager, SearchBox } from "@/components/pager";
 import { Thumb } from "@/components/thumb";
-import { buttonClass, primaryButtonClass, DataTable, inputClass, Notice, Section, Td } from "@/components/ui";
+import { primaryButtonClass, DataTable, inputClass, Notice, Section, Td } from "@/components/ui";
 import { getDictionary } from "@/i18n";
 import { addRestock, setManualCost } from "@/lib/actions";
 import { getItemStatePage } from "@/lib/costs";
 import { getCurrentShop } from "@/lib/shop";
 
-const PER_PAGE = 25;
+const PER_PAGE = 20;
 
 export default async function StockPage({ searchParams }: PageProps<"/stock">) {
   const { locale, t } = await getDictionary();
@@ -22,7 +21,6 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
     page: Number(typeof sp.page === "string" ? sp.page : 1) || 1,
     perPage: PER_PAGE,
   });
-  const href = (p: number) => `/stock?${new URLSearchParams({ ...(q ? { q } : {}), page: String(p) })}`;
   const fmt = formatters(locale, shop.currency);
   const money = (n: number | null) => (n == null ? t.common.none : fmt.money(Math.round(n * 100)));
 
@@ -32,23 +30,7 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
     <>
       <Section
         title={t.stock.title}
-        aside={
-          <form action="/stock" method="get" role="search" className="flex items-center gap-2">
-            <input
-              name="q"
-              type="search"
-              defaultValue={q}
-              placeholder={t.stock.searchPlaceholder}
-              aria-label={t.stock.searchPlaceholder}
-              maxLength={80}
-              className={`${inputClass} w-56`}
-            />
-            <button type="submit" className={buttonClass}>
-              <Icon name="search" className="h-4 w-4" />
-              {t.stock.searchButton}
-            </button>
-          </form>
-        }
+        aside={<SearchBox action="/stock" q={q} placeholder={t.stock.searchPlaceholder} button={t.stock.searchButton} />}
       >
         {states.length === 0 ? (
           <p className="text-sm text-muted">{t.stock.noResults}</p>
@@ -90,27 +72,7 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
           })}
         </DataTable>
         )}
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm">
-          <span className="text-muted">
-            {t.stock.results.replace("{n}", String(total))}
-            {q && <> · “{q}” <Link href="/stock" className="underline">{t.stock.clearSearch}</Link></>}
-          </span>
-          {pages > 1 && (
-            <nav aria-label={t.stock.pagination} className="flex items-center gap-2">
-              {page > 1 ? (
-                <Link href={href(page - 1)} className={buttonClass}>← {t.stock.prev}</Link>
-              ) : (
-                <span className={`${buttonClass} pointer-events-none opacity-40`}>← {t.stock.prev}</span>
-              )}
-              <span className="px-1 tabular-nums">{t.stock.pageOf.replace("{p}", String(page)).replace("{pages}", String(pages))}</span>
-              {page < pages ? (
-                <Link href={href(page + 1)} className={buttonClass}>{t.stock.next} →</Link>
-              ) : (
-                <span className={`${buttonClass} pointer-events-none opacity-40`}>{t.stock.next} →</span>
-              )}
-            </nav>
-          )}
-        </div>
+        <Pager basePath="/stock" q={q} page={page} pages={pages} total={total} locale={locale} labels={t.stock} />
         {states.length > 0 && <p className="mt-3 text-xs text-muted">⚠ {t.stock.mismatch}</p>}
       </Section>
 

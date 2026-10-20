@@ -120,7 +120,9 @@
     "historyNote": "Mese precedente al {date}, il giorno da cui Tallypress tiene il saldo del conto e il magazzino. Qui trovi solo le vendite e l'utile stimato, senza saldo.",
     "estimatedRestocks": "Acquisti merce stimati",
     "estimatedVatPayments": "IVA versata (stima)",
-    "estimatedTaxPayments": "Imposte e contributi versati (stima)"
+    "estimatedTaxPayments": "Imposte e contributi versati (stima)",
+    "priorPayments": "Pagamenti di periodi precedenti",
+    "estimatedPriorPayments": "Pagamenti di periodi precedenti (stima)"
   },
   "stock": {
     "title": "Magazzino e prezzi d'acquisto",
@@ -162,7 +164,8 @@
       "deposit": "Versamento",
       "vat_payment": "Pagamento IVA",
       "tax_payment": "Pagamento imposte",
-      "other": "Altro"
+      "other": "Altro",
+      "prior_payment": "Pagamento periodo precedente"
     },
     "empty": "Ancora nessun movimento.",
     "salesNote": "Le vendite non sono elencate qui: arrivano dagli ordini WooCommerce.",
@@ -177,7 +180,8 @@
       "adjustment_in": "Rettifica in aumento (entrata)",
       "adjustment_out": "Rettifica in diminuzione (uscita)",
       "other_in": "Altro (entrata)",
-      "other_out": "Altro (uscita)"
+      "other_out": "Altro (uscita)",
+      "prior_payment": "IVA / imposte di un periodo precedente (uscita)"
     },
     "form": {
       "type": "Tipo",
@@ -190,7 +194,11 @@
       "noteMissing": "Aggiungi una descrizione per questo tipo.",
       "inflow": "aggiunge soldi al conto",
       "outflow": "toglie soldi dal conto"
-    }
+    },
+    "searchPlaceholder": "Cerca nelle note o per tipo",
+    "results": "{n} movimenti",
+    "noResults": "Nessun movimento corrisponde alla ricerca.",
+    "estimated": "Stima"
   },
   "setup": {
     "shopTitle": "Negozio",

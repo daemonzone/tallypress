@@ -42,7 +42,7 @@ export default async function SetupPage() {
   }
 
   const dateFmt = new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: shop.timezone });
-  const money = new Intl.NumberFormat(locale, { style: "currency", currency: shop.currency, maximumFractionDigits: 0 });
+  const money = new Intl.NumberFormat(locale, { style: "currency", currency: shop.currency, maximumFractionDigits: 0, useGrouping: "always" });
   const baselineValue = shop.baselineAt?.toISOString().slice(0, 10) ?? new Date().toISOString().slice(0, 10);
 
   return (
