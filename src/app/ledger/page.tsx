@@ -2,7 +2,7 @@ import { desc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { ledgerEntries } from "@/db/schema";
 import { formatters } from "@/components/format";
-import { buttonClass, DataTable, inputClass, Notice, Section, Td } from "@/components/ui";
+import { primaryButtonClass, DataTable, inputClass, Notice, Section, Td } from "@/components/ui";
 import { getDictionary } from "@/i18n";
 import { addWithdrawal } from "@/lib/actions";
 import { toCents } from "@/lib/money";
@@ -53,7 +53,7 @@ export default async function LedgerPage() {
             {t.common.note}
             <input name="note" type="text" maxLength={200} className={inputClass} />
           </label>
-          <button type="submit" className={`${buttonClass} self-start`}>
+          <button type="submit" className={`${primaryButtonClass} self-start`}>
             {t.common.add}
           </button>
         </form>

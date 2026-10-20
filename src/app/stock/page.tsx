@@ -1,5 +1,5 @@
 import { formatters } from "@/components/format";
-import { buttonClass, DataTable, inputClass, Notice, Section, Td } from "@/components/ui";
+import { primaryButtonClass, DataTable, inputClass, Notice, Section, Td } from "@/components/ui";
 import { getDictionary } from "@/i18n";
 import { addRestock, setManualCost } from "@/lib/actions";
 import { getItemStates } from "@/lib/costs";
@@ -60,7 +60,7 @@ export default async function StockPage() {
               {t.stock.unitCost}
               <input name="unitCost" type="number" min="0" step="0.01" required className={inputClass} />
             </label>
-            <button type="submit" className={`${buttonClass} self-start`}>
+            <button type="submit" className={`${primaryButtonClass} self-start`}>
               {t.common.add}
             </button>
           </form>
@@ -74,7 +74,7 @@ export default async function StockPage() {
               {t.stock.unitCost}
               <input name="unitCost" type="number" min="0" step="0.01" required className={inputClass} />
             </label>
-            <button type="submit" className={`${buttonClass} self-start`}>
+            <button type="submit" className={`${primaryButtonClass} self-start`}>
               {t.common.save}
             </button>
           </form>

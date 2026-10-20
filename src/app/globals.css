@@ -1,26 +1,92 @@
 @import "tailwindcss";
 
+/* Design tokens. Chart colours (--viz-*) are the validated categorical palette: each
+   one always stands for the same thing (blue = what is yours, aqua = VAT, yellow =
+   income tax, orange = cost of goods, magenta = personal share). */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  color-scheme: light;
+  --bg: #f3f2ee;
+  --surface: #fcfcfb;
+  --surface-2: #f0efec;
+  --line: #e2e0d9;
+  --ink: #171716;
+  --muted: #5f5e59;
+  --accent: #2a78d6;
+  --accent-ink: #ffffff;
+  --accent-soft: #e3eefb;
+  --good: #0a7a0a;
+  --bad: #c43232;
+  --warn-bg: #fff6e0;
+  --warn-line: #e6b34d;
+  --bad-bg: #fdecec;
+  --viz-1: #2a78d6;
+  --viz-2: #eb6834;
+  --viz-3: #1baf7a;
+  --viz-4: #eda100;
+  --viz-5: #e87ba4;
+  --viz-ink-1: #ffffff;
+  --viz-ink-2: #0b0b0b;
+  --viz-ink-3: #0b0b0b;
+  --viz-ink-4: #0b0b0b;
+  --viz-ink-5: #0b0b0b;
+  --viz-neutral: #cfcdc5;
+  --shadow-card: 0 1px 2px rgb(20 20 10 / 0.05), 0 8px 24px -12px rgb(20 20 10 / 0.14);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    color-scheme: dark;
+    --bg: #121211;
+    --surface: #1a1a19;
+    --surface-2: #242422;
+    --line: #34342f;
+    --ink: #f0efec;
+    --muted: #a9a89f;
+    --accent: #3987e5;
+    --accent-ink: #0b0b0b;
+    --accent-soft: #16263a;
+    --good: #3fbf3f;
+    --bad: #ee7373;
+    --warn-bg: #2b2412;
+    --warn-line: #8a6a1c;
+    --bad-bg: #2f1717;
+    --viz-1: #3987e5;
+    --viz-2: #d95926;
+    --viz-3: #199e70;
+    --viz-4: #c98500;
+    --viz-5: #d55181;
+    --viz-ink-1: #0b0b0b;
+    --viz-neutral: #4a4a45;
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px -12px rgb(0 0 0 / 0.6);
   }
 }
 
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-good: var(--good);
+  --color-bad: var(--bad);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --shadow-card: var(--shadow-card);
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  background:
+    radial-gradient(900px 320px at 50% -120px, var(--accent-soft), transparent 70%),
+    var(--bg);
+  background-repeat: no-repeat;
+  color: var(--ink);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+::selection {
+  background: var(--accent-soft);
 }

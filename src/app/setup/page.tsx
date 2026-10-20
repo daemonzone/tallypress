@@ -1,7 +1,7 @@
 import { and, count, eq, gte, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { items, ledgerEntries, orderLines, orders } from "@/db/schema";
-import { KeyValues, Notice, Section, buttonClass, inputClass } from "@/components/ui";
+import { KeyValues, Notice, Section, buttonClass, primaryButtonClass, inputClass } from "@/components/ui";
 import { getDictionary } from "@/i18n";
 import { saveOpening } from "@/lib/actions";
 import { COUNTED_STATUSES } from "@/lib/costs";
@@ -154,7 +154,7 @@ export default async function SetupPage() {
             <p className="text-xs opacity-60">
               {t.setup.suggested}. {t.setup.openingWarn}
             </p>
-            <button type="submit" className={`${buttonClass} self-start`}>
+            <button type="submit" className={`${primaryButtonClass} self-start`}>
               {t.setup.openingSave}
             </button>
           </form>

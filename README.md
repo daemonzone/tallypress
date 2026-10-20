@@ -33,14 +33,36 @@ multi-shop by design.
 
 ## The pages
 
-- **Panel** (`/`, `/month/YYYY-MM`): the current month plus the overview and simulator;
-  month tabs open earlier months (closed ones show their frozen figures).
-- **Stock** (`/stock`): tracked stock vs. WooCommerce stock (a ⚠ means they differ, which
-  usually means an unrecorded restock), average cost, stock value; forms to record a
+- **Panel** (`/`, `/month/YYYY-MM`): two columns. On the left, the month: its name with an
+  open/closed badge, month tabs, the net-earnings figure, a bar showing where the gross
+  total goes (net earnings, cost of goods, VAT, income tax), net earnings by month, the
+  gross-to-net detail, the shop account for the month and the per-product table. On the
+  right, a sidebar that stays the same whichever month is open: the shop overview (money in
+  the account, VAT and tax set aside, net earnings, withdrawals, stock value, invested,
+  ROI) and the owner-share simulator with a live bar of where the account money goes.
+- **Stock** (`/stock`): tracked stock vs. WooCommerce stock (a warning means they differ,
+  which usually means an unrecorded restock), average cost, stock value; forms to record a
   restock and to set a manual cost.
 - **Ledger** (`/ledger`): every movement of the shop account, and a withdrawal form.
 - **Setup** (`/setup`): shop tax profile, WooCommerce sync status and the "Sync now"
   button, and the one-time starting-point form.
+
+The language switch (IT / EN) in the header changes the language on click and always shows
+the active one. It sets a cookie; without one, the shop's default language is used.
+
+## Look and feel
+
+- Light and dark themes follow the system setting. Colours are tokens in
+  `src/app/globals.css`; layout is responsive down to phone width (the sidebar moves below
+  the month, the navigation collapses to icons, wide tables scroll inside their card).
+- Charts are small server-rendered SVG/HTML components (`src/components/charts.tsx`) using a
+  validated categorical palette, and each colour keeps one meaning everywhere: blue = what
+  is yours (net earnings, money available to restock), orange = cost of goods, aqua = VAT,
+  yellow = income tax, magenta = personal share. Every chart has a legend with the amounts
+  as text, so colour is never the only channel.
+- **Logo:** four tally strokes crossed by the fifth, on a blue tile; the wordmark pairs a
+  bold "Tally" with a light "press". Files: `src/app/icon.svg` (favicon),
+  `public/logo.svg` (mark + wordmark), `src/components/logo.tsx` (in the header).
 
 ## How the money is calculated
 
@@ -139,7 +161,7 @@ restock.
 ```
 src/
   app/                 pages: / , month/[month], stock, ledger, setup; api/cron/sync, api/health
-  components/          dashboard, simulator (client), nav, shared table/form UI
+  components/          dashboard, charts, simulator (client), nav, logo, icons, shared UI kit
   db/                  schema + client
   i18n/                dictionaries (en, it), locale lookup, language action
   lib/

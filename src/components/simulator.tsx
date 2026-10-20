@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { StackedBar, VIZ } from "./charts";
 import { formatters } from "./format";
+import { Icon } from "./icons";
 import { buttonClass, inputClass } from "./ui";
 
 interface Props {
@@ -26,6 +28,9 @@ interface Props {
     shortfall: string;
     saveDefault: string;
     default: string;
+    allocTitle: string;
+    vat: string;
+    tax: string;
   };
   saveAction: (formData: FormData) => void | Promise<void>;
 }
@@ -36,26 +41,26 @@ interface Props {
  */
 export function Simulator({ locale, currency, defaultPct, net, withdrawn, cash, vat, tax, labels, saveAction }: Props) {
   const [pct, setPct] = useState(defaultPct);
-  const { money } = formatters(locale, currency);
+  const { money, pct: pctFmt } = formatters(locale, currency);
 
   const allowance = Math.round((Math.max(net, 0) * pct) / 100);
   const remaining = Math.max(allowance - withdrawn, 0);
   const restock = cash - vat - tax - remaining;
 
-  const rows: [string, string, boolean?][] = [
-    [labels.allowance, money(allowance)],
-    [labels.withdrawn, money(withdrawn)],
-    [labels.remaining, money(remaining)],
-    [restock < 0 ? labels.shortfall : labels.restock, money(Math.abs(restock)), true],
+  const segments = [
+    { key: "available", label: labels.restock, value: Math.max(restock, 0), slot: VIZ.mine, display: money(Math.max(restock, 0)) },
+    { key: "vat", label: labels.vat, value: vat, slot: VIZ.vat, display: money(vat) },
+    { key: "tax", label: labels.tax, value: tax, slot: VIZ.tax, display: money(tax) },
+    { key: "personal", label: labels.remaining, value: remaining, slot: VIZ.personal, display: money(remaining) },
   ];
 
   return (
-    <div className="rounded border border-black/20 p-4 dark:border-white/20">
-      <h3 className="font-medium">{labels.title}</h3>
-      <p className="mb-3 text-xs opacity-70">{labels.help}</p>
+    <div className="rounded-2xl border border-line bg-surface p-5 shadow-card">
+      <h3 className="text-base font-semibold tracking-tight">{labels.title}</h3>
+      <p className="mb-4 mt-0.5 text-xs text-muted">{labels.help}</p>
 
-      <form action={saveAction} className="mb-4 flex flex-wrap items-center gap-3">
-        <label htmlFor="pct" className="text-sm">
+      <form action={saveAction} className="mb-5">
+        <label htmlFor="pct" className="mb-2 block text-sm text-muted">
           {labels.pct}
         </label>
         <input
@@ -65,44 +70,63 @@ export function Simulator({ locale, currency, defaultPct, net, withdrawn, cash, 
           step={1}
           value={pct}
           onChange={(e) => setPct(Number(e.target.value))}
-          className="w-40"
+          className="mb-3 h-2 w-full cursor-pointer accent-[var(--accent)]"
           aria-label={labels.pct}
         />
-        <input
-          id="pct"
-          name="pct"
-          type="number"
-          min={0}
-          max={100}
-          step="0.5"
-          value={pct}
-          onChange={(e) => setPct(Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
-          className={`${inputClass} w-20 text-right`}
-        />
-        <span className="text-sm">%</span>
-        <button type="submit" className={buttonClass} disabled={pct === defaultPct}>
-          {labels.saveDefault}
-        </button>
-        <span className="text-xs opacity-60">
+        <div className="flex items-center gap-2">
+          <input
+            id="pct"
+            name="pct"
+            type="number"
+            min={0}
+            max={100}
+            step="0.5"
+            value={pct}
+            onChange={(e) => setPct(Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
+            className={`${inputClass} w-20 text-right`}
+          />
+          <span className="text-sm text-muted">%</span>
+          <button type="submit" className={`${buttonClass} ml-auto`} disabled={pct === defaultPct}>
+            {labels.saveDefault}
+          </button>
+        </div>
+        <p className="mt-1.5 text-xs text-muted">
           {labels.default}: {defaultPct}%
-        </span>
+        </p>
       </form>
 
-      <table className="w-full text-sm">
-        <tbody className="divide-y divide-black/10 dark:divide-white/10">
-          {rows.map(([label, value, strong]) => (
-            <tr key={label} className={strong ? "font-semibold" : undefined}>
-              <th scope="row" className="py-2 pr-4 text-left font-normal">
+      <div className="mb-5 rounded-xl bg-surface-2 p-4">
+        <div className="text-xs font-medium text-muted">
+          {restock < 0 ? labels.shortfall : labels.restock}
+        </div>
+        <div
+          className={`mt-1 flex items-center gap-2 text-3xl font-semibold tracking-tight ${restock < 0 ? "text-bad" : ""}`}
+        >
+          {restock < 0 && <Icon name="alert" className="h-6 w-6" />}
+          {money(Math.abs(restock))}
+        </div>
+        <p className="mt-1 text-xs text-muted">{labels.restockHelp}</p>
+      </div>
+
+      <h4 className="mb-2 text-sm font-medium">{labels.allocTitle}</h4>
+      <StackedBar segments={segments} title={labels.allocTitle} percent={pctFmt} compact />
+
+      <table className="mt-4 w-full text-sm">
+        <tbody className="divide-y divide-line">
+          {[
+            [labels.allowance, money(allowance)],
+            [labels.withdrawn, money(withdrawn)],
+            [labels.remaining, money(remaining)],
+          ].map(([label, value]) => (
+            <tr key={label}>
+              <th scope="row" className="py-2 pr-4 text-left font-normal text-muted">
                 {label}
               </th>
-              <td className={`py-2 text-right tabular-nums ${strong && restock < 0 ? "text-red-600 dark:text-red-400" : ""}`}>
-                {value}
-              </td>
+              <td className="py-2 text-right tabular-nums">{value}</td>
             </tr>
           ))}
         </tbody>
       </table>
-      <p className="mt-2 text-xs opacity-60">{labels.restockHelp}</p>
     </div>
   );
 }

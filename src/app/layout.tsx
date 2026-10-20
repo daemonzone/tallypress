@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
 import { LanguageSelector } from "@/components/language-selector";
+import { Logo } from "@/components/logo";
 import { Nav } from "@/components/nav";
 import { getDictionary } from "@/i18n";
 import { getCurrentShop } from "@/lib/shop";
@@ -31,24 +33,24 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <header className="border-b border-black/10 dark:border-white/10">
-          <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-4 px-4 py-4">
-            <div>
-              <div className="text-xl font-semibold">{t.app.name}</div>
-              <div className="text-xs opacity-70">{shop?.name ?? t.app.tagline}</div>
-            </div>
+        <header className="sticky top-0 z-20 border-b border-line bg-bg/80 backdrop-blur">
+          <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 py-3">
+            <Link href="/" className="flex flex-col leading-tight" aria-label={t.app.name}>
+              <Logo name={t.app.name} />
+              <span className="mt-0.5 pl-[46px] text-xs text-muted">{shop?.name ?? t.app.tagline}</span>
+            </Link>
             <Nav
               links={[
-                { href: "/", label: t.nav.panel },
-                { href: "/stock", label: t.nav.stock },
-                { href: "/ledger", label: t.nav.ledger },
-                { href: "/setup", label: t.nav.setup },
+                { href: "/", label: t.nav.panel, icon: "grid" },
+                { href: "/stock", label: t.nav.stock, icon: "box" },
+                { href: "/ledger", label: t.nav.ledger, icon: "book" },
+                { href: "/setup", label: t.nav.setup, icon: "sliders" },
               ]}
             />
             <LanguageSelector current={locale} t={t} />
           </div>
         </header>
-        <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">{children}</main>
+        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">{children}</main>
       </body>
     </html>
   );

@@ -1,27 +1,49 @@
 import type { ReactNode } from "react";
+import { Icon, type IconName } from "./icons";
 
 export const inputClass =
-  "rounded border border-black/20 bg-transparent px-2 py-1 text-sm dark:border-white/20";
+  "rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink shadow-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30";
 export const buttonClass =
-  "rounded border border-black/30 px-3 py-1 text-sm hover:bg-black/5 dark:border-white/30 dark:hover:bg-white/10";
+  "inline-flex items-center gap-2 rounded-lg border border-line bg-surface px-3.5 py-2 text-sm font-medium shadow-sm transition hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-50";
+export const primaryButtonClass =
+  "inline-flex items-center gap-2 rounded-lg bg-accent px-3.5 py-2 text-sm font-medium text-accent-ink shadow-sm transition hover:brightness-110";
+
+export function Card({
+  children,
+  className = "",
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={`rounded-2xl border border-line bg-surface p-5 shadow-card ${className}`}>
+      {children}
+    </div>
+  );
+}
 
 export function Section({
   title,
   children,
   aside,
+  help,
 }: {
   title: string;
   children: ReactNode;
   aside?: ReactNode;
+  help?: string;
 }) {
   return (
-    <section className="mb-10">
-      <div className="mb-3 flex items-center justify-between gap-4">
-        <h2 className="text-lg font-semibold">{title}</h2>
+    <Card className="mb-6">
+      <div className="mb-4 flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-base font-semibold tracking-tight">{title}</h2>
+          {help && <p className="mt-0.5 text-xs text-muted">{help}</p>}
+        </div>
         {aside}
       </div>
       {children}
-    </section>
+    </Card>
   );
 }
 
@@ -32,8 +54,54 @@ export function Notice({
   tone?: "info" | "warn" | "error";
   children: ReactNode;
 }) {
-  const border = { info: "border-black/20 dark:border-white/20", warn: "border-amber-500/60", error: "border-red-500/60" }[tone];
-  return <p className={`mb-4 rounded border ${border} p-3 text-sm`}>{children}</p>;
+  const style = {
+    info: "border-line bg-surface-2",
+    warn: "border-[var(--warn-line)] bg-[var(--warn-bg)]",
+    error: "border-bad/50 bg-[var(--bad-bg)]",
+  }[tone];
+  return (
+    <p className={`mb-4 flex items-start gap-2.5 rounded-xl border p-3 text-sm ${style}`}>
+      {tone !== "info" && <Icon name="alert" className="mt-0.5 h-4 w-4 shrink-0" />}
+      <span>{children}</span>
+    </p>
+  );
+}
+
+export function Badge({ children, icon }: { children: ReactNode; icon?: ReactNode }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface-2 px-2.5 py-1 text-xs font-medium">
+      {icon}
+      {children}
+    </span>
+  );
+}
+
+/** A labelled figure. `hero` is the one big number a view leads with. */
+export function StatTile({
+  label,
+  value,
+  icon,
+  note,
+  hero,
+}: {
+  label: string;
+  value: ReactNode;
+  icon?: IconName;
+  note?: ReactNode;
+  hero?: boolean;
+}) {
+  return (
+    <div>
+      <div className="flex items-center gap-1.5 text-xs font-medium text-muted">
+        {icon && <Icon name={icon} className="h-3.5 w-3.5" />}
+        {label}
+      </div>
+      <div className={hero ? "mt-1 text-5xl font-semibold tracking-tight" : "mt-1 text-2xl font-semibold tracking-tight"}>
+        {value}
+      </div>
+      {note && <div className="mt-1 text-xs text-muted">{note}</div>}
+    </div>
+  );
 }
 
 /** Label/value rows. `strong` rows are emphasised (totals). */
@@ -44,14 +112,14 @@ export function KeyValues({
 }) {
   return (
     <table className="w-full text-left text-sm">
-      <tbody className="divide-y divide-black/10 dark:divide-white/10">
+      <tbody className="divide-y divide-line">
         {rows.map((r) => (
           <tr key={r.label} className={r.strong ? "font-semibold" : undefined}>
-            <th scope="row" className="w-2/3 py-2 pr-4 font-normal">
-              {r.label}
-              {r.note && <span className="block text-xs opacity-60">{r.note}</span>}
+            <th scope="row" className="w-2/3 py-2.5 pr-4 font-normal">
+              <span className={r.strong ? "" : "text-muted"}>{r.label}</span>
+              {r.note && <span className="block text-xs font-normal text-muted">{r.note}</span>}
             </th>
-            <td className="py-2 text-right tabular-nums">{r.value}</td>
+            <td className="py-2.5 text-right tabular-nums">{r.value}</td>
           </tr>
         ))}
       </tbody>
@@ -69,10 +137,10 @@ export function DataTable({
   numericFrom?: number;
 }) {
   return (
-    <div className="overflow-x-auto">
+    <div className="-mx-1 overflow-x-auto px-1">
       <table className="w-full min-w-[40rem] text-left text-sm">
         <thead>
-          <tr className="border-b border-black/30 dark:border-white/30">
+          <tr className="border-b border-line text-xs uppercase tracking-wide text-muted">
             {head.map((h, i) => (
               <th key={h} className={`py-2 pr-3 font-medium ${i >= numericFrom ? "text-right" : ""}`}>
                 {h}
@@ -80,12 +148,22 @@ export function DataTable({
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-black/10 dark:divide-white/10">{children}</tbody>
+        <tbody className="divide-y divide-line [&>tr:hover]:bg-surface-2/60">{children}</tbody>
       </table>
     </div>
   );
 }
 
-export const Td = ({ children, strong, className = "" }: { children?: ReactNode; strong?: boolean; className?: string }) => (
-  <td className={`py-2 pr-3 text-right tabular-nums ${strong ? "font-semibold" : ""} ${className}`}>{children}</td>
+export const Td = ({
+  children,
+  strong,
+  className = "",
+}: {
+  children?: ReactNode;
+  strong?: boolean;
+  className?: string;
+}) => (
+  <td className={`py-2.5 pr-3 text-right tabular-nums ${strong ? "font-semibold" : ""} ${className}`}>
+    {children}
+  </td>
 );

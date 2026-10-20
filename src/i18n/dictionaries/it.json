@@ -34,7 +34,7 @@
     "openingLink": "Vai alle Impostazioni"
   },
   "overview": {
-    "title": "Situazione del negozio, ad oggi",
+    "title": "Situazione del negozio",
     "cash": "Soldi sul conto del negozio",
     "vat": "Accantonato per l'IVA",
     "tax": "Accantonato per le imposte",
@@ -42,7 +42,8 @@
     "withdrawn": "Già prelevato",
     "invested": "Investito in magazzino",
     "roi": "ROI (guadagno netto ÷ investito)",
-    "roiHelp": "Investito = valore del magazzino iniziale + tutti i riassortimenti."
+    "roiHelp": "Investito = valore del magazzino iniziale + tutti i riassortimenti.",
+    "stockValue": "Valore del magazzino"
   },
   "simulator": {
     "title": "Quanto posso spendere? (simulazione)",
@@ -55,7 +56,8 @@
     "restockHelp": "Soldi sul conto, meno IVA e imposte accantonate, meno la quota personale ancora da prelevare.",
     "shortfall": "Ammanco",
     "saveDefault": "Salva come predefinita",
-    "default": "Predefinita"
+    "default": "Predefinita",
+    "allocTitle": "Dove va il denaro sul conto"
   },
   "month": {
     "heading": "Mese",
@@ -85,7 +87,16 @@
     "qty": "Venduti",
     "shipping": "Spedizioni, rimborsi e rettifiche",
     "noData": "Ancora nessun ordine in questo mese.",
-    "months": "Mesi"
+    "months": "Mesi",
+    "breakdownTitle": "Dove va il totale lordo",
+    "trendTitle": "Guadagno netto per mese",
+    "loss": "Questo mese i costi superano i ricavi netti.",
+    "detail": "Dal lordo al netto",
+    "grossShort": "Lordo",
+    "netRevenueShort": "Netto IVA",
+    "cogsShort": "Costo",
+    "taxShort": "Imposte",
+    "earningsShort": "Guadagno"
   },
   "stock": {
     "title": "Magazzino e prezzi d'acquisto",

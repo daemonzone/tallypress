@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 190 40" role="img" aria-label="Tallypress">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3987e5"/>
+      <stop offset="1" stop-color="#184f95"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(2 4) scale(1.0)">
+    <rect width="32" height="32" rx="8" fill="url(#g)"/>
+    <path d="M9 8v16M14 8v16M19 8v16M24 8v16" stroke="#fff" stroke-width="2.3" stroke-linecap="round" fill="none"/>
+    <path d="M5.5 21.5L26.5 10.5" stroke="#eda100" stroke-width="2.6" stroke-linecap="round"/>
+  </g>
+  <text x="44" y="27" font-family="Geist, Inter, system-ui, sans-serif" font-size="22" fill="#171716" letter-spacing="-0.4">
+    <tspan font-weight="700">Tally</tspan><tspan font-weight="300" fill-opacity="0.7">press</tspan>
+  </text>
+</svg>
