@@ -1,4 +1,5 @@
 <?php
+require_once '/scripts/lib.php';
 // Demo clothing shop: 22% IVA included in prices, variable + simple products,
 // and orders spread over the previous and current month in various statuses.
 
@@ -25,38 +26,8 @@ WC_Tax::_insert_tax_rate([
     'tax_rate_class'    => '',
 ]);
 
-function hl_size_attribute(array $sizes): WC_Product_Attribute {
-    $a = new WC_Product_Attribute();
-    $a->set_name('Size');
-    $a->set_options($sizes);
-    $a->set_visible(true);
-    $a->set_variation(true);
-    return $a;
-}
-
-function hl_variable_product(string $name, string $sku, array $priceBySize, int $stock): void {
-    $p = new WC_Product_Variable();
-    $p->set_name($name);
-    $p->set_sku($sku);
-    $p->set_status('publish');
-    $p->set_attributes([hl_size_attribute(array_keys($priceBySize))]);
-    $id = $p->save();
-
-    foreach ($priceBySize as $size => $price) {
-        $v = new WC_Product_Variation();
-        $v->set_parent_id($id);
-        $v->set_attributes(['size' => $size]);
-        $v->set_sku("{$sku}-{$size}");
-        $v->set_regular_price((string) $price);
-        $v->set_manage_stock(true);
-        $v->set_stock_quantity($stock);
-        $v->save();
-    }
-    WC_Product_Variable::sync($id);
-}
-
-hl_variable_product('Wool Blazer', 'BLZ', ['S' => 129, 'M' => 129, 'L' => 135], 10);
-hl_variable_product('Linen Shirt', 'SHT', ['M' => 59, 'L' => 59], 15);
+tp_variable_product('Wool Blazer', 'BLZ', ['S' => 129, 'M' => 129, 'L' => 135], 10);
+tp_variable_product('Linen Shirt', 'SHT', ['M' => 59, 'L' => 59], 15);
 
 $scarf = new WC_Product_Simple();
 $scarf->set_name('Cashmere Scarf');
