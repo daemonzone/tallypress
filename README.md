@@ -345,9 +345,9 @@ recorded, `npm run shop:estimate-restocks` fills the gap with **estimates**, mar
   purchase is the month's cost of goods sold (the cost itself is `default_cost_pct` of the list price
   without VAT). The opening stock is then rebuilt (it shrinks to about today's stock) and every
   cost and closed month recomputed.
-- **VAT and taxes:** each month's VAT is booked as a VAT payment, and the income tax and
-  contributions its profit adds (IRPEF brackets over the calendar year, plus INPS) as a tax payment,
-  as if paid when they accrue. VAT on purchases is left out: it would raise the purchase outflow and
+- **VAT and taxes:** each month's VAT is booked as a VAT payment **in the following month** (so the
+  latest month's VAT is still due), and the income tax and contributions a month's profit adds (IRPEF brackets over the calendar year, plus INPS) as a tax payment,
+  as a tax payment in the same month. VAT on purchases is left out: it would raise the purchase outflow and
   lower the VAT payment by the same amount.
 
 Re-running replaces the previous estimates (`--purchases-only` skips VAT and taxes, `--remove`

@@ -33,8 +33,8 @@ async function clearEstimates(shopId: string): Promise<number> {
  * units sold. Because those purchases are now known, the opening stock is rebuilt (it shrinks to
  * about today's stock) and every cost and closed month is recomputed.
  *
- * VAT AND TAXES (unless `payments: false`). Each month, the VAT of its sales is booked as a VAT
- * payment and the income tax and contributions its profit adds (IRPEF brackets and INPS, as the shop's
+ * VAT AND TAXES (unless `payments: false`). The VAT of each month's sales is booked as a VAT payment in
+ * the FOLLOWING month (so the last month's VAT is still due), and the income tax and contributions its profit adds (IRPEF brackets and INPS, as the shop's
  * tax profile computes them over the calendar year) as a tax payment, as if paid in the month
  * they accrue. This is steady-state: payments made in a year mostly settle earlier income, but if
  * income is stable they come out about the same. The VAT on purchases is left out on purpose: it would
@@ -107,9 +107,13 @@ export async function estimateRestocks(shopId: string, opts: { payments?: boolea
   let closedMonths = rebuilt.closedMonths.length;
   if (opts.payments !== false) {
     const report = await buildReport(shopId);
-    for (const m of report?.months.filter((x) => !x.history) ?? []) {
+    const cash = report?.months.filter((x) => !x.history) ?? [];
+    for (const [i, m] of cash.entries()) {
+      // VAT is paid the month after: this month pays the previous month's VAT, so the VAT of the
+      // current month stays due. (The VAT of the month before the starting point is not counted.)
+      const vatPaid = i > 0 ? cash[i - 1].vat : 0;
       for (const [kind, amount, note] of [
-        ["vat_payment", m.vat, "IVA stimata (vendite del mese)"],
+        ["vat_payment", vatPaid, "IVA stimata (vendite del mese precedente)"],
         ["tax_payment", m.taxReserve, "Imposte e contributi stimati (IRPEF + INPS sull'utile del mese)"],
       ] as const) {
         if (amount <= 0) continue;
