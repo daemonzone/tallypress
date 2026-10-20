@@ -8,6 +8,9 @@
 //   SHOP_TAX='{"vatRate":22,"brackets":[{"upTo":28000,"rate":23},{"upTo":null,"rate":43}],"socialRate":26.07}' \
 //   npm run shop:connect
 //
+// SHOP_RESUME=yes skips the wipe, the settings and the download and only records the starting
+// point on the data already imported (use it when a previous run stopped at the last step).
+//
 // The credentials come from the environment only; they end up in the database (see the
 // README's note on secrets) and nowhere in the repository.
 import "dotenv/config";
@@ -61,48 +64,55 @@ async function main() {
   if (!res.ok) throw new Error(`Could not read the shop's currency: HTTP ${res.status}`);
   const currency = String(((await res.json()) as { value: string }).value);
 
-  // Wipe: only this app's copy, never the WooCommerce site (the key is read-only anyway).
-  const [{ n: existing }] = await db.select({ n: count() }).from(orders).where(eq(orders.shopId, shopId));
-  const [{ n: ledger }] = await db.select({ n: count() }).from(ledgerEntries).where(eq(ledgerEntries.shopId, shopId));
-  if ((existing > 0 || ledger > 0) && env("SHOP_WIPE") !== "yes") {
-    throw new Error(`The shop already has ${existing} orders and ${ledger} ledger entries. Set SHOP_WIPE=yes to erase them.`);
+  const resume = env("SHOP_RESUME") === "yes";
+  if (resume) {
+    const [{ n }] = await db.select({ n: count() }).from(orders).where(eq(orders.shopId, shopId));
+    if (!n) throw new Error("SHOP_RESUME needs data already imported: nothing found, run the full import first");
+    console.log(`Resuming on the ${n} orders already in the database.`);
+  } else {
+    // Wipe: only this app's copy, never the WooCommerce site (the key is read-only anyway).
+    const [{ n: existing }] = await db.select({ n: count() }).from(orders).where(eq(orders.shopId, shopId));
+    const [{ n: ledger }] = await db.select({ n: count() }).from(ledgerEntries).where(eq(ledgerEntries.shopId, shopId));
+    if ((existing > 0 || ledger > 0) && env("SHOP_WIPE") !== "yes") {
+      throw new Error(`The shop already has ${existing} orders and ${ledger} ledger entries. Set SHOP_WIPE=yes to erase them.`);
+    }
+    await db.transaction(async (tx) => {
+      await tx.delete(monthClosings).where(eq(monthClosings.shopId, shopId));
+      await tx.delete(ledgerEntries).where(eq(ledgerEntries.shopId, shopId));
+      await tx.delete(restockLots).where(eq(restockLots.shopId, shopId));
+      await tx.delete(orderLines).where(eq(orderLines.shopId, shopId));
+      await tx.delete(orders).where(eq(orders.shopId, shopId));
+      await tx.delete(items).where(eq(items.shopId, shopId));
+    });
+    console.log(`Erased ${existing} orders and ${ledger} ledger entries (and products, lots, closings).`);
+
+    const settings = {
+      name: env("SHOP_NAME") ?? new URL(wooUrl).hostname.replace(/^www\./, ""),
+      active: true,
+      wooUrl,
+      wooConsumerKey: key,
+      wooConsumerSecret: secret,
+      currency,
+      defaultLocale: (env("SHOP_LOCALE") === "en" ? "en" : "it") as "en" | "it",
+      timezone: env("SHOP_TZ") ?? "Europe/Rome",
+      vatRate: String(tax.vatRate ?? 0),
+      incomeTaxRate: String(tax.incomeTaxRate ?? 0),
+      incomeTaxBrackets: tax.brackets ?? null,
+      socialSecurityRate: String(tax.socialRate ?? 0),
+      taxBase: tax.taxBase ?? "profit",
+      ...(env("SHOP_OWNER_PCT") ? { ownerSharePct: env("SHOP_OWNER_PCT")! } : {}),
+      baselineAt,
+      lastSyncedAt: null,
+      lastSyncError: null,
+    };
+    await db.insert(shops).values({ id: shopId, ...settings }).onConflictDoUpdate({ target: shops.id, set: settings });
+    console.log(`Shop set to ${wooUrl} (${currency}, starts ${start}).`);
+
+    console.log("Syncing products and orders from WooCommerce...");
+    const result = await syncShop(shopId);
+    if (!result.ok) throw new Error(`Sync failed: ${result.error}`);
+    console.log(`Synced ${result.items} items and ${result.orders} orders.`);
   }
-  await db.transaction(async (tx) => {
-    await tx.delete(monthClosings).where(eq(monthClosings.shopId, shopId));
-    await tx.delete(ledgerEntries).where(eq(ledgerEntries.shopId, shopId));
-    await tx.delete(restockLots).where(eq(restockLots.shopId, shopId));
-    await tx.delete(orderLines).where(eq(orderLines.shopId, shopId));
-    await tx.delete(orders).where(eq(orders.shopId, shopId));
-    await tx.delete(items).where(eq(items.shopId, shopId));
-  });
-  console.log(`Erased ${existing} orders and ${ledger} ledger entries (and products, lots, closings).`);
-
-  const settings = {
-    name: env("SHOP_NAME") ?? new URL(wooUrl).hostname.replace(/^www\./, ""),
-    active: true,
-    wooUrl,
-    wooConsumerKey: key,
-    wooConsumerSecret: secret,
-    currency,
-    defaultLocale: (env("SHOP_LOCALE") === "en" ? "en" : "it") as "en" | "it",
-    timezone: env("SHOP_TZ") ?? "Europe/Rome",
-    vatRate: String(tax.vatRate ?? 0),
-    incomeTaxRate: String(tax.incomeTaxRate ?? 0),
-    incomeTaxBrackets: tax.brackets ?? null,
-    socialSecurityRate: String(tax.socialRate ?? 0),
-    taxBase: tax.taxBase ?? "profit",
-    ...(env("SHOP_OWNER_PCT") ? { ownerSharePct: env("SHOP_OWNER_PCT")! } : {}),
-    baselineAt,
-    lastSyncedAt: null,
-    lastSyncError: null,
-  };
-  await db.insert(shops).values({ id: shopId, ...settings }).onConflictDoUpdate({ target: shops.id, set: settings });
-  console.log(`Shop set to ${wooUrl} (${currency}, starts ${start}).`);
-
-  console.log("Syncing products and orders from WooCommerce...");
-  const result = await syncShop(shopId);
-  if (!result.ok) throw new Error(`Sync failed: ${result.error}`);
-  console.log(`Synced ${result.items} items and ${result.orders} orders.`);
 
   // Opening stock = what WooCommerce holds now + what sold since the start date.
   const sold = new Map<string, number>();
@@ -135,7 +145,12 @@ async function main() {
   }
 
   const recorded = await recordOpening(shopId, { baselineAt, balanceCents, lots, manualCosts, resetSync: false });
-  if (!recorded) throw new Error("The shop already had a starting point after the wipe");
+  if (!recorded) {
+    throw new Error(
+      "The shop already has a starting point (an opening balance entry exists), so nothing was recorded. " +
+        "Remove that entry or run the full import with SHOP_WIPE=yes.",
+    );
+  }
   await freezeCosts(shopId);
   await ensureMonthsClosed(shopId);
 

@@ -45,7 +45,7 @@ export async function Dashboard({ monthKey }: { monthKey?: string }) {
   const fmt = formatters(locale, report.currency);
 
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 lg:grid-cols-[minmax(0,1fr)_21.5rem]">
+    <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 lg:grid-cols-[minmax(0,1fr)_23.5rem]">
       <div className="min-w-0">
         <MonthPanel month={selected} report={report} t={t} fmt={fmt} locale={locale} />
       </div>
@@ -83,17 +83,9 @@ function Overview({ report, t, fmt }: { report: Report; t: Dictionary; fmt: Form
           note={t.overview.netRemainingHelp}
         />
       </div>
-      <div className="mt-4 border-t border-line pt-1">
-        <KeyValues
-          rows={[
-            {
-              label: t.overview.roi,
-              value: o.roi == null ? t.common.none : fmt.pct(o.roi),
-              note: t.overview.roiHelp,
-              strong: true,
-            },
-          ]}
-        />
+      <div className="mt-4 flex items-baseline justify-between gap-3 border-t border-line pt-3 text-sm font-semibold">
+        <span className="whitespace-nowrap">{t.overview.roi}</span>
+        <span className="tabular-nums">{o.roi == null ? t.common.none : fmt.pct(o.roi)}</span>
       </div>
     </Card>
   );
@@ -154,7 +146,7 @@ function BigRow({ label, icon, value, note }: { label: string; icon: IconName; v
           <Icon name={icon} className="h-3.5 w-3.5 shrink-0" />
           {label}
         </div>
-        <div className="shrink-0 text-2xl font-semibold tracking-tight tabular-nums">{value}</div>
+        <div className="shrink-0 text-xl font-semibold tracking-tight tabular-nums">{value}</div>
       </div>
       {note && <p className="mt-1 text-xs text-muted">{note}</p>}
     </div>
