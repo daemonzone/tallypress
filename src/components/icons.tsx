@@ -61,6 +61,7 @@ const paths: Record<string, ReactNode> = {
       <path d="M20 20v-5h-5" />
     </>
   ),
+  chevron: <path d="M6 9l6 6 6-6" />,
   alert: (
     <>
       <path d="M12 3l10 18H2L12 3z" />

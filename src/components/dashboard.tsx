@@ -73,14 +73,16 @@ function Overview({ report, stockValue, t, fmt }: { report: Report; stockValue: 
       <h3 className="mb-4 text-base font-semibold tracking-tight">{t.overview.title}</h3>
       <StatTile label={t.overview.cash} value={fmt.money(o.cash)} icon="wallet" />
       <div className="mt-4">
+        <StatTile
+          label={t.overview.netRemaining}
+          value={<span className={o.netRemaining < 0 ? "text-bad" : ""}>{fmt.money(o.netRemaining)}</span>}
+          icon="shield"
+          note={t.overview.netRemainingHelp}
+        />
+      </div>
+      <div className="mt-4 border-t border-line pt-1">
         <KeyValues
           rows={[
-            { label: t.overview.vat, value: fmt.money(o.vatReserve) },
-            { label: t.overview.tax, value: fmt.money(o.taxReserve) },
-            { label: t.overview.net, value: fmt.money(o.netEarnings), strong: true },
-            { label: t.overview.withdrawn, value: fmt.money(o.withdrawn) },
-            { label: t.overview.stockValue, value: fmt.money(stockValue) },
-            { label: t.overview.invested, value: fmt.money(o.invested) },
             {
               label: t.overview.roi,
               value: o.roi == null ? t.common.none : fmt.pct(o.roi),
@@ -90,6 +92,25 @@ function Overview({ report, stockValue, t, fmt }: { report: Report; stockValue: 
           ]}
         />
       </div>
+      <details className="group border-t border-line pt-3">
+        <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-medium [&::-webkit-details-marker]:hidden">
+          {t.overview.details}
+          <Icon name="chevron" className="h-4 w-4 text-muted transition group-open:rotate-180" />
+        </summary>
+        <div className="mt-2">
+          <KeyValues
+            rows={[
+              { label: t.overview.vat, value: fmt.money(o.vatReserve) },
+              { label: t.overview.tax, value: fmt.money(o.taxReserve) },
+              { label: t.overview.cogs, value: fmt.money(o.cogs) },
+              { label: t.overview.net, value: fmt.money(o.netEarnings), strong: true },
+              { label: t.overview.withdrawn, value: fmt.money(o.withdrawn) },
+              { label: t.overview.stockValue, value: fmt.money(stockValue) },
+              { label: t.overview.invested, value: fmt.money(o.invested) },
+            ]}
+          />
+        </div>
+      </details>
     </Card>
   );
 }

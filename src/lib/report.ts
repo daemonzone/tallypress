@@ -34,6 +34,9 @@ export interface MonthReport extends Figures {
 
 export interface Overview {
   cash: number;
+  cogs: number; // purchase cost of everything sold so far
+  /** What is left after VAT, income tax and the cost of the goods sold: opening balance + net earnings (+ manual movements). */
+  netRemaining: number;
   vatReserve: number;
   taxReserve: number;
   netEarnings: number;
@@ -219,6 +222,8 @@ export async function buildReport(shopId: string): Promise<Report | null> {
     months,
     overview: {
       cash: months.at(-1)?.end ?? 0,
+      cogs: sum((m) => m.cogs),
+      netRemaining: (months.at(-1)?.end ?? 0) - sum((m) => m.vat) - sum((m) => m.taxReserve) - sum((m) => m.cogs),
       vatReserve: sum((m) => m.vat),
       taxReserve: sum((m) => m.taxReserve),
       netEarnings,
