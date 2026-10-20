@@ -49,7 +49,7 @@ export async function Dashboard({ monthKey }: { monthKey?: string }) {
         <MonthPanel month={selected} report={report} t={t} fmt={fmt} locale={locale} />
       </div>
       <aside className="flex flex-col gap-6 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pb-1 lg:pr-1 lg:[scrollbar-width:thin]">
-        <Overview report={report} stockValue={stockValue} t={t} fmt={fmt} />
+        <Overview report={report} t={t} fmt={fmt} />
         <Simulator
           locale={locale}
           currency={report.currency}
@@ -62,12 +62,13 @@ export async function Dashboard({ monthKey }: { monthKey?: string }) {
           labels={{ ...t.simulator, vat: t.overview.vat, tax: t.overview.tax }}
           saveAction={saveOwnerShare}
         />
+        <StockBox stockValue={stockValue} invested={report.overview.invested} t={t} fmt={fmt} />
       </aside>
     </div>
   );
 }
 
-function Overview({ report, stockValue, t, fmt }: { report: Report; stockValue: number; t: Dictionary; fmt: Formatters }) {
+function Overview({ report, t, fmt }: { report: Report; t: Dictionary; fmt: Formatters }) {
   const o = report.overview;
   return (
     <Card>
@@ -93,25 +94,6 @@ function Overview({ report, stockValue, t, fmt }: { report: Report; stockValue: 
           ]}
         />
       </div>
-      <details className="group border-t border-line pt-3">
-        <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-medium [&::-webkit-details-marker]:hidden">
-          {t.overview.details}
-          <Icon name="chevron" className="h-4 w-4 text-muted transition group-open:rotate-180" />
-        </summary>
-        <div className="mt-2">
-          <KeyValues
-            rows={[
-              { label: t.overview.vat, value: fmt.money(o.vatReserve) },
-              { label: t.overview.tax, value: fmt.money(o.taxReserve) },
-              { label: t.overview.cogs, value: fmt.money(o.cogs) },
-              { label: t.overview.net, value: fmt.money(o.netEarnings), strong: true },
-              { label: t.overview.withdrawn, value: fmt.money(o.withdrawn) },
-              { label: t.overview.stockValue, value: fmt.money(stockValue) },
-              { label: t.overview.invested, value: fmt.money(o.invested) },
-            ]}
-          />
-        </div>
-      </details>
     </Card>
   );
 }
@@ -159,6 +141,23 @@ function GrossToNet({ month: m, t, fmt }: { month: MonthReport; t: Dictionary; f
         </div>
       </div>
     </div>
+  );
+}
+
+function StockBox({ stockValue, invested, t, fmt }: { stockValue: number; invested: number; t: Dictionary; fmt: Formatters }) {
+  return (
+    <Card>
+      <h3 className="mb-2 flex items-center gap-2 text-base font-semibold tracking-tight">
+        <Icon name="box" className="h-4 w-4 text-muted" />
+        {t.overview.stockTitle}
+      </h3>
+      <KeyValues
+        rows={[
+          { label: t.overview.stockValue, value: fmt.money(stockValue), note: t.overview.stockValueHelp },
+          { label: t.overview.invested, value: fmt.money(invested), note: t.overview.investedHelp },
+        ]}
+      />
+    </Card>
   );
 }
 
