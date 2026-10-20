@@ -1,4 +1,5 @@
-// Creates (or refreshes) the fixed dev shop pointing at the Docker WooCommerce.
+// Creates the fixed dev shop pointing at the Docker WooCommerce. Existing shops are left
+// untouched, so restarting the stack never resets settings changed in the app.
 import "dotenv/config";
 import { db } from "../src/db";
 import { shops } from "../src/db/schema";
@@ -26,8 +27,12 @@ const now = new Date();
 const baselineAt = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 2, 1));
 
 async function main() {
-  await db.insert(shops).values({ id, baselineAt, ...config }).onConflictDoUpdate({ target: shops.id, set: config });
-  console.log(`Dev shop ready: ${id}`);
+  const created = await db
+    .insert(shops)
+    .values({ id, baselineAt, ...config })
+    .onConflictDoNothing()
+    .returning({ id: shops.id });
+  console.log(created.length ? `Dev shop created: ${id}` : `Dev shop already exists: ${id} (left untouched)`);
   process.exit(0);
 }
 

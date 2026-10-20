@@ -3,6 +3,7 @@
 #   docker compose up -d        -> postgres + WordPress/WooCommerce (seeded on first run)
 #   docker compose logs -f wp-setup
 #
+# Tallypress:  http://localhost:9000
 # Shop admin:  http://localhost:9080/wp-admin   (admin / admin)
 # Postgres:    postgres://tallypress:tallypress@localhost:9432/tallypress
 # MariaDB:     mysql://wordpress:wordpress@localhost:9306/wordpress   (root / root)
@@ -10,6 +11,50 @@
 name: tallypress
 
 services:
+  # The web UI. Built from ./Dockerfile; waits for the database and the migrations.
+  app:
+    build:
+      context: .
+      target: runner
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      wordpress:
+        condition: service_started
+    ports:
+      - "${APP_PORT:-9000}:9000"
+    environment:
+      DATABASE_URL: postgres://tallypress:tallypress@postgres:5432/tallypress
+      DEFAULT_SHOP_ID: "00000000-0000-4000-8000-000000000001"
+      CRON_SECRET: dev-cron-secret
+      # The shop is saved as http://localhost:9080 (what you open in a browser);
+      # from inside this network the same site is just http://wordpress.
+      WOO_URL_REWRITE: "http://localhost:${WP_PORT:-9080}=http://wordpress"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:9000/api/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 10s
+    restart: unless-stopped
+
+  # One-shot: applies migrations and creates the dev shop if it does not exist yet.
+  migrate:
+    build:
+      context: .
+      target: build
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["sh", "-c", "npm run db:migrate && npm run db:seed"]
+    environment:
+      DATABASE_URL: postgres://tallypress:tallypress@postgres:5432/tallypress
+      DEFAULT_SHOP_ID: "00000000-0000-4000-8000-000000000001"
+      DEV_WOO_URL: "http://localhost:${WP_PORT:-9080}"
+      DEV_WOO_CONSUMER_KEY: ck_tallypress_dev_0001
+      DEV_WOO_CONSUMER_SECRET: cs_tallypress_dev_0001
+    restart: "no"
+
   postgres:
     image: postgres:17-alpine
     environment:

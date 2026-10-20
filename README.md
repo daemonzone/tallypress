@@ -107,8 +107,9 @@ restock.
 
 ## Architecture
 
-- **Next.js 16** (App Router), React 19, Tailwind 4, TypeScript. Dev server on **port 9000**.
-  Cache Components are off on purpose: every page reads live data.
+- **Next.js 16** (App Router), React 19, Tailwind 4, TypeScript, on **port 9000**, also
+  packaged as a Docker image (standalone output, ~225 MB, non-root). Cache Components are
+  off on purpose: every page reads live data.
 - **Postgres** through **Drizzle ORM** (`pg` driver). Plain Postgres; no Timescale needed.
   Neon works with the same connection string.
 - **WooCommerce REST API** (`wc/v3`) with a read-only key. WooCommerce is the source of
@@ -137,7 +138,7 @@ restock.
 
 ```
 src/
-  app/                 pages: / , month/[month], stock, ledger, setup, api/cron/sync
+  app/                 pages: / , month/[month], stock, ledger, setup; api/cron/sync, api/health
   components/          dashboard, simulator (client), nav, shared table/form UI
   db/                  schema + client
   i18n/                dictionaries (en, it), locale lookup, language action
@@ -151,26 +152,45 @@ src/
     actions.ts         server actions: restock, withdrawal, manual cost, share, starting point
     shop.ts            getCurrentShopId() / getCurrentShop()
 docker/wordpress/      dev WooCommerce install and seed scripts
+Dockerfile             multi-stage image: deps, build (also runs migrations), runner
 drizzle/               SQL migrations
 scripts/               dev seed (creates the dev shop)
 ```
 
-## Running it locally
+## Running it
 
-Requirements: Docker, Node 24.
+Requirements: Docker (and Node 24 only if you want to develop outside a container).
+
+### Everything in Docker (one command)
 
 ```bash
 cp .env.example .env
-docker compose up -d      # Postgres :9432, WordPress/WooCommerce :9080, MariaDB :9306
-npm install
-npm run db:migrate        # apply migrations
-npm run db:seed           # create the dev shop (id = DEFAULT_SHOP_ID)
-npm run dev               # http://localhost:9000
+docker compose up -d
 ```
 
-Then open **Setup**, press **Sync now**, and fill in the starting point (date, bank
-balance, and a purchase price for each item; quantities are pre-filled from WooCommerce).
-The panel appears once that is saved.
+Open **http://localhost:9000**. The stack starts in order: Postgres, then `migrate`
+(applies migrations and creates the dev shop if it does not exist; an existing shop is
+never touched), then the app. The first start also installs WooCommerce and seeds a demo
+shop, which takes a minute or two (it downloads WooCommerce). `docker compose ps` shows
+the app as `healthy` when it is ready.
+
+Then open **Setup**, press **Sync now**, and fill in the starting point (date, bank balance
+and a purchase price for each item; quantities are pre-filled from WooCommerce). The panel
+appears once that is saved.
+
+After changing the code: `docker compose up -d --build app`.
+
+### Developing on the host instead
+
+Run the backing services in Docker and the app with Node:
+
+```bash
+cp .env.example .env
+docker compose up -d postgres wordpress wp-db wp-setup
+npm install
+npm run db:migrate && npm run db:seed
+npm run dev               # http://localhost:9000 (stop the app container first)
+```
 
 | Service | URL |
 |---|---|
@@ -178,6 +198,12 @@ The panel appears once that is saved.
 | WooCommerce shop / admin | http://localhost:9080 , `/wp-admin` (`admin` / `admin`) |
 | Postgres (Tallypress) | `postgres://tallypress:tallypress@localhost:9432/tallypress` |
 | MariaDB (WordPress) | `mysql://wordpress:wordpress@localhost:9306/wordpress` (root / `root`) |
+
+All host ports are 9000 or above and can be changed in `.env`.
+
+The shop is saved with the address you use in a browser (`http://localhost:9080`). Inside
+the app container that address is not reachable, so compose sets
+`WOO_URL_REWRITE=http://localhost:9080=http://wordpress` to map it to the internal one.
 
 The `wp-setup` container installs WooCommerce on first start and seeds a demo shop: IVA
 22% included in prices, variable and simple products, orders in several statuses across
@@ -189,7 +215,8 @@ docker compose run --rm --no-deps -T --entrypoint sh wp-setup \
   -c 'wp --path=/var/www/html eval-file /scripts/add-products.php'
 ```
 
-`docker compose down -v` wipes the stack; `up -d` reinstalls and reseeds it.
+`docker compose down -v` wipes everything (including your Tallypress data); `up -d`
+rebuilds it from scratch.
 
 ### Useful commands
 
@@ -198,7 +225,7 @@ docker compose run --rm --no-deps -T --entrypoint sh wp-setup \
 | `npm run dev` / `build` / `start` | Dev server, production build, production server (port 9000) |
 | `npm run db:generate` | Create a migration after editing `src/db/schema.ts` |
 | `npm run db:migrate` | Apply migrations |
-| `npm run db:seed` | Create or refresh the dev shop |
+| `npm run db:seed` | Create the dev shop if missing (never overwrites) |
 | `npm run typecheck` / `lint` | Type-check (generates route types first) / ESLint |
 
 ### Syncing and closing from outside
@@ -218,7 +245,8 @@ finished month. `GET` works too, for Vercel Cron. Without the secret it answers 
 | `DEFAULT_SHOP_ID` | The shop every request is scoped to for now |
 | `CRON_SECRET` | Bearer token for `/api/cron/sync` |
 | `DEV_WOO_URL`, `DEV_WOO_CONSUMER_KEY`, `DEV_WOO_CONSUMER_SECRET` | Used only by `db:seed` |
-| `WP_PORT`, `WP_DB_PORT`, `TALLYPRESS_DB_PORT` | Host ports of the Docker services (all 9000+) |
+| `WOO_URL_REWRITE` | `<public url>=<internal url>`: how the app reaches WooCommerce from inside Docker |
+| `APP_PORT`, `WP_PORT`, `WP_DB_PORT`, `TALLYPRESS_DB_PORT` | Host ports of the Docker services (all 9000+) |
 
 ## Known limitations
 

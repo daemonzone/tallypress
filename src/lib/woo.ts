@@ -5,6 +5,16 @@ type WooCredentials = Pick<
   "wooUrl" | "wooConsumerKey" | "wooConsumerSecret"
 >;
 
+/**
+ * In Docker the shop's public address (http://localhost:9080) is not reachable from
+ * the app container. WOO_URL_REWRITE="<public url>=<internal url>" maps one to the other.
+ */
+function resolveBaseUrl(url: string): string {
+  const trimmed = url.replace(/\/$/, "");
+  const [from, to] = (process.env.WOO_URL_REWRITE ?? "").split("=");
+  return from && to && trimmed === from.replace(/\/$/, "") ? to.replace(/\/$/, "") : trimmed;
+}
+
 /** GET every page of a WooCommerce REST collection (wc/v3). */
 export async function wooGetAll<T>(
   shop: WooCredentials,
@@ -15,7 +25,7 @@ export async function wooGetAll<T>(
   const out: T[] = [];
 
   for (let page = 1; ; page++) {
-    const url = new URL(`${shop.wooUrl.replace(/\/$/, "")}/wp-json/wc/v3/${path}`);
+    const url = new URL(`${resolveBaseUrl(shop.wooUrl)}/wp-json/wc/v3/${path}`);
     for (const [k, v] of Object.entries({ ...params, per_page: 100, page })) {
       url.searchParams.set(k, String(v));
     }
