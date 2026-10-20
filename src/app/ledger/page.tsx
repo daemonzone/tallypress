@@ -2,9 +2,11 @@ import { desc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { ledgerEntries } from "@/db/schema";
 import { formatters } from "@/components/format";
-import { primaryButtonClass, DataTable, inputClass, Notice, Section, Td } from "@/components/ui";
+import { MovementForm } from "@/components/movement-form";
+import { DataTable, Notice, Section, Td } from "@/components/ui";
 import { getDictionary } from "@/i18n";
-import { addWithdrawal } from "@/lib/actions";
+import { addMovement } from "@/lib/actions";
+import { MOVEMENT_TYPES } from "@/lib/movements";
 import { toCents } from "@/lib/money";
 import { getCurrentShop } from "@/lib/shop";
 
@@ -33,7 +35,7 @@ export default async function LedgerPage() {
               <tr key={e.id}>
                 <td className="py-2 pr-3">{date.format(e.occurredAt)}</td>
                 <td className="py-2 pr-3">{t.ledger.kinds[e.kind]}</td>
-                <Td>{fmt.money(toCents(e.amount))}</Td>
+                <Td className={toCents(e.amount) < 0 ? "" : "text-good"}>{fmt.money(toCents(e.amount))}</Td>
                 <td className="py-2 pr-3 text-right opacity-70">{e.note ?? ""}</td>
               </tr>
             ))}
@@ -42,21 +44,17 @@ export default async function LedgerPage() {
         <p className="mt-2 text-xs opacity-60">{t.ledger.salesNote}</p>
       </Section>
 
-      <Section title={t.ledger.withdrawTitle}>
-        <p className="mb-3 text-xs opacity-70">{t.ledger.withdrawHelp}</p>
-        <form action={addWithdrawal} className="flex max-w-md flex-col gap-3">
-          <label className="flex flex-col gap-1 text-sm">
-            {t.common.amount}
-            <input name="amount" type="number" min="0.01" step="0.01" required className={inputClass} />
-          </label>
-          <label className="flex flex-col gap-1 text-sm">
-            {t.common.note}
-            <input name="note" type="text" maxLength={200} className={inputClass} />
-          </label>
-          <button type="submit" className={`${primaryButtonClass} self-start`}>
-            {t.common.add}
-          </button>
-        </form>
+      <Section title={t.ledger.movementTitle} help={t.ledger.movementHelp}>
+        <MovementForm
+          action={addMovement}
+          types={MOVEMENT_TYPES.map((m) => ({
+            value: m.value,
+            sign: m.sign,
+            needsNote: m.needsNote,
+            label: t.ledger.types[m.value as keyof typeof t.ledger.types],
+          }))}
+          labels={t.ledger.form}
+        />
       </Section>
     </>
   );

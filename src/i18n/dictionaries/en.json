@@ -111,7 +111,11 @@
       "Restocks and withdrawals: every purchase of goods and every personal withdrawal must be recorded.",
       "Real collections: an order is counted even if the payment has not reached the account yet; returns and partial refunds may not be up to date."
     ],
-    "endDisclaimerOutro": "Compare this figure with your bank statement from time to time: a large gap means some movements are missing."
+    "endDisclaimerOutro": "Compare this figure with your bank statement from time to time: a large gap means some movements are missing.",
+    "deposits": "Deposits into the account",
+    "vatPayments": "VAT payments",
+    "taxPayments": "Tax and contribution payments",
+    "otherMovements": "Other movements"
   },
   "stock": {
     "title": "Stock and purchase prices",
@@ -137,12 +141,39 @@
       "restock": "Restock",
       "withdrawal": "Withdrawal",
       "expense": "Expense",
-      "adjustment": "Adjustment"
+      "adjustment": "Adjustment",
+      "deposit": "Deposit",
+      "vat_payment": "VAT payment",
+      "tax_payment": "Tax payment",
+      "other": "Other"
     },
-    "withdrawTitle": "Record a withdrawal",
-    "withdrawHelp": "For example your salary or personal expenses. It is booked today.",
     "empty": "No movements yet.",
-    "salesNote": "Sales are not listed here: they come from WooCommerce orders."
+    "salesNote": "Sales are not listed here: they come from WooCommerce orders.",
+    "movementTitle": "Record a movement",
+    "movementHelp": "Booked today. The amount is always positive: the type decides whether it adds to or takes from the shop account.",
+    "types": {
+      "deposit": "Money paid into the account (in)",
+      "withdrawal": "Personal withdrawal (out)",
+      "expense": "Expense (out)",
+      "vat_payment": "VAT payment (out)",
+      "tax_payment": "Income tax / contributions payment (out)",
+      "adjustment_in": "Adjustment, increase (in)",
+      "adjustment_out": "Adjustment, decrease (out)",
+      "other_in": "Other (in)",
+      "other_out": "Other (out)"
+    },
+    "form": {
+      "type": "Type",
+      "amount": "Amount",
+      "noteOptional": "Description (optional)",
+      "noteRequired": "Description (required)",
+      "submit": "Record movement",
+      "ok": "Movement recorded.",
+      "invalid": "Enter an amount greater than zero.",
+      "noteMissing": "Add a description for this type.",
+      "inflow": "adds to the account",
+      "outflow": "takes from the account"
+    }
   },
   "setup": {
     "shopTitle": "Shop",

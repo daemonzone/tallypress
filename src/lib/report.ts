@@ -13,12 +13,24 @@ export interface ItemRow extends Figures {
 
 export interface Flows {
   sales: number;
+  opening: number; // the starting deposit on the shop account
+  deposit: number; // later money paid into the account
   restock: number;
   withdrawal: number;
   expense: number;
-  opening: number; // the starting deposit on the shop account
+  vatPayment: number;
+  taxPayment: number;
   adjustment: number; // manual corrections
+  other: number;
 }
+
+const emptyFlows = (): Flows => ({
+  sales: 0, opening: 0, deposit: 0, restock: 0, withdrawal: 0, expense: 0, vatPayment: 0, taxPayment: 0, adjustment: 0, other: 0,
+});
+
+/** Everything that moves the account apart from sales. */
+const manualFlows = (f: Flows) =>
+  f.opening + f.deposit + f.restock + f.withdrawal + f.expense + f.vatPayment + f.taxPayment + f.adjustment + f.other;
 
 export interface MonthReport extends Figures {
   key: string; // first day of the month, "YYYY-MM-01"
@@ -38,8 +50,10 @@ export interface Overview {
   cogs: number; // purchase cost of everything sold so far
   /** What is left after VAT, income tax and the cost of the goods sold: opening balance + net earnings (+ manual movements). */
   netRemaining: number;
-  vatReserve: number;
-  taxReserve: number;
+  vatReserve: number; // all VAT set aside since the start
+  taxReserve: number; // all income tax and contributions set aside since the start
+  vatDue: number; // what is still to be paid: set aside minus payments recorded
+  taxDue: number;
   netEarnings: number;
   withdrawn: number;
   invested: number; // opening stock value + restock spend
@@ -107,15 +121,19 @@ export async function buildReport(shopId: string): Promise<Report | null> {
   const flowsByMonth = new Map<string, Flows>();
   let hasOpening = false;
   for (const r of ledgerRows) {
-    const f = flowsByMonth.get(r.month as string) ?? { sales: 0, opening: 0, restock: 0, withdrawal: 0, expense: 0, adjustment: 0 };
+    const f = flowsByMonth.get(r.month as string) ?? emptyFlows();
     const amount = toCents(r.amount);
     if (r.kind === "restock") f.restock += amount;
     else if (r.kind === "withdrawal") f.withdrawal += amount;
     else if (r.kind === "expense") f.expense += amount;
+    else if (r.kind === "deposit") f.deposit += amount;
+    else if (r.kind === "vat_payment") f.vatPayment += amount;
+    else if (r.kind === "tax_payment") f.taxPayment += amount;
     else if (r.kind === "opening_balance") {
       f.opening += amount;
       hasOpening = true;
-    } else f.adjustment += amount;
+    } else if (r.kind === "other") f.other += amount;
+    else f.adjustment += amount;
     flowsByMonth.set(r.month as string, f);
   }
 
@@ -140,7 +158,7 @@ export async function buildReport(shopId: string): Promise<Report | null> {
     }
     const closing = closingByMonth.get(key);
     const live = ordersByMonth.get(key) ?? { orders: 0, gross: 0 };
-    const flows = { ...(flowsByMonth.get(key) ?? { sales: 0, opening: 0, restock: 0, withdrawal: 0, expense: 0, adjustment: 0 }) };
+    const flows = { ...(flowsByMonth.get(key) ?? emptyFlows()) };
 
     const items: ItemRow[] = itemRowsRaw
       .filter((r) => r.month === key)
@@ -192,7 +210,7 @@ export async function buildReport(shopId: string): Promise<Report | null> {
     const start = carried;
     const end = closing
       ? toCents(closing.balance)
-      : start + flows.sales + flows.opening + flows.restock + flows.withdrawal + flows.expense + flows.adjustment;
+      : start + flows.sales + manualFlows(flows);
     carried = end;
 
     months.push({
@@ -217,6 +235,9 @@ export async function buildReport(shopId: string): Promise<Report | null> {
   const invested = openingValue - sum((m) => m.flows.restock);
   const netEarnings = sum((m) => m.netEarnings);
 
+  const vatDue = Math.max(sum((m) => m.vat) + sum((m) => m.flows.vatPayment), 0);
+  const taxDue = Math.max(sum((m) => m.taxReserve) + sum((m) => m.flows.taxPayment), 0);
+
   return {
     shopId,
     currency: shop.currency,
@@ -226,9 +247,12 @@ export async function buildReport(shopId: string): Promise<Report | null> {
     overview: {
       cash: months.at(-1)?.end ?? 0,
       cogs: sum((m) => m.cogs),
-      netRemaining: (months.at(-1)?.end ?? 0) - sum((m) => m.vat) - sum((m) => m.taxReserve) - sum((m) => m.cogs),
+      // Payments settle what was set aside, so they must not be subtracted twice.
+      netRemaining: (months.at(-1)?.end ?? 0) - vatDue - taxDue - sum((m) => m.cogs),
       vatReserve: sum((m) => m.vat),
       taxReserve: sum((m) => m.taxReserve),
+      vatDue,
+      taxDue,
       netEarnings,
       withdrawn: -sum((m) => m.flows.withdrawal),
       invested,

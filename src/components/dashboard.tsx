@@ -8,7 +8,8 @@ import { buildReport, type MonthReport, type Report } from "@/lib/report";
 import { getCurrentShop } from "@/lib/shop";
 import { MonthColumns, StackedBar, VIZ } from "./charts";
 import { formatters, monthHref, monthLabel, type Formatters } from "./format";
-import { Icon } from "./icons";
+import type { ReactNode } from "react";
+import { Icon, type IconName } from "./icons";
 import { InfoModal } from "./info-modal";
 import { Simulator } from "./simulator";
 import { Badge, Card, DataTable, KeyValues, Notice, Section, StatTile, Td } from "./ui";
@@ -57,8 +58,8 @@ export async function Dashboard({ monthKey }: { monthKey?: string }) {
           net={report.overview.netEarnings}
           withdrawn={report.overview.withdrawn}
           cash={report.overview.cash}
-          vat={report.overview.vatReserve}
-          tax={report.overview.taxReserve}
+          vat={report.overview.vatDue}
+          tax={report.overview.taxDue}
           labels={{ ...t.simulator, vat: t.overview.vat, tax: t.overview.tax }}
           saveAction={saveOwnerShare}
         />
@@ -73,12 +74,12 @@ function Overview({ report, t, fmt }: { report: Report; t: Dictionary; fmt: Form
   return (
     <Card>
       <h3 className="mb-4 text-base font-semibold tracking-tight">{t.overview.title}</h3>
-      <StatTile label={t.overview.cash} value={fmt.money(o.cash)} icon="wallet" />
+      <BigRow label={t.overview.cash} icon="wallet" value={fmt.money(o.cash)} />
       <div className="mt-4">
-        <StatTile
+        <BigRow
           label={t.overview.netRemaining}
-          value={<span className={o.netRemaining < 0 ? "text-bad" : ""}>{fmt.money(o.netRemaining)}</span>}
           icon="shield"
+          value={<span className={o.netRemaining < 0 ? "text-bad" : ""}>{fmt.money(o.netRemaining)}</span>}
           note={t.overview.netRemainingHelp}
         />
       </div>
@@ -140,6 +141,22 @@ function GrossToNet({ month: m, t, fmt }: { month: MonthReport; t: Dictionary; f
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+/** A key figure with its label on the left and the number right-aligned, like the rows below it. */
+function BigRow({ label, icon, value, note }: { label: string; icon: IconName; value: ReactNode; note?: string }) {
+  return (
+    <div>
+      <div className="flex items-baseline justify-between gap-4">
+        <div className="flex items-center gap-1.5 text-sm text-muted">
+          <Icon name={icon} className="h-3.5 w-3.5 shrink-0" />
+          {label}
+        </div>
+        <div className="shrink-0 text-2xl font-semibold tracking-tight tabular-nums">{value}</div>
+      </div>
+      {note && <p className="mt-1 text-xs text-muted">{note}</p>}
     </div>
   );
 }
@@ -277,10 +294,14 @@ function MonthPanel({
             { label: t.month.sales, value: fmt.money(f.sales) },
             // Shown only when there is something in them (the deposit lands in the first month).
             ...(f.opening !== 0 ? [{ label: t.month.opening, value: fmt.money(f.opening) }] : []),
+            ...(f.deposit !== 0 ? [{ label: t.month.deposits, value: fmt.money(f.deposit) }] : []),
             { label: t.month.restocks, value: fmt.money(f.restock) },
             { label: t.month.withdrawals, value: fmt.money(f.withdrawal) },
             { label: t.month.expenses, value: fmt.money(f.expense) },
+            ...(f.vatPayment !== 0 ? [{ label: t.month.vatPayments, value: fmt.money(f.vatPayment) }] : []),
+            ...(f.taxPayment !== 0 ? [{ label: t.month.taxPayments, value: fmt.money(f.taxPayment) }] : []),
             ...(f.adjustment !== 0 ? [{ label: t.month.adjustments, value: fmt.money(f.adjustment) }] : []),
+            ...(f.other !== 0 ? [{ label: t.month.otherMovements, value: fmt.money(f.other) }] : []),
             {
               label: t.month.end,
               value: fmt.money(m.end),

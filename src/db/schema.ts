@@ -148,6 +148,10 @@ export const ledgerKinds = pgEnum("ledger_kind", [
   "withdrawal",
   "expense",
   "adjustment",
+  "deposit", // money paid into the shop account
+  "vat_payment", // VAT actually paid (settles the VAT set aside)
+  "tax_payment", // income tax / social contributions actually paid
+  "other", // anything else, always with a description
 ]);
 
 // Manual money movements of the shop "bank". Sales come from orders, not from here.

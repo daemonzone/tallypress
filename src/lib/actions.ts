@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { items, ledgerEntries, restockLots, shops } from "@/db/schema";
 import { freezeCosts } from "./costs";
+import { MOVEMENT_TYPES, type MovementState } from "./movements";
 import { recordOpening } from "./opening";
 import { centsToString, parseDecimal } from "./money";
 import { getCurrentShopId } from "./shop";
@@ -53,18 +54,23 @@ export async function addRestock(formData: FormData) {
   revalidatePath("/", "layout");
 }
 
-export async function addWithdrawal(formData: FormData) {
+export async function addMovement(_prev: MovementState, formData: FormData): Promise<MovementState> {
   const shopId = await getCurrentShopId();
+  const type = MOVEMENT_TYPES.find((t) => t.value === formData.get("type"));
   const amount = parseDecimal(formData.get("amount"));
-  if (!(amount > 0)) return;
+  const note = String(formData.get("note") ?? "").trim().slice(0, 200);
+  if (!type || !(amount > 0)) return { status: "invalid" };
+  if (type.needsNote && !note) return { status: "note" };
+
   await db.insert(ledgerEntries).values({
     shopId,
-    kind: "withdrawal",
-    amount: centsToString(-Math.round(amount * 100)),
+    kind: type.kind,
+    amount: centsToString(type.sign * Math.round(amount * 100)),
     occurredAt: new Date(),
-    note: String(formData.get("note") ?? "").trim() || null,
+    note: note || null,
   });
   revalidatePath("/", "layout");
+  return { status: "ok" };
 }
 
 export async function setManualCost(formData: FormData) {

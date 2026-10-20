@@ -43,7 +43,14 @@ multi-shop by design.
 - **Stock** (`/stock`): tracked stock vs. WooCommerce stock (a warning means they differ,
   which usually means an unrecorded restock), average cost, stock value; forms to record a
   restock and to set a manual cost.
-- **Ledger** (`/ledger`): every movement of the shop account, and a withdrawal form.
+- **Ledger** (`/ledger`): every movement of the shop account, and one form to record any
+  manual movement. The amount is always positive and the type decides the direction:
+  deposit into the account (in), personal withdrawal, expense, VAT payment, income-tax /
+  contributions payment, adjustment up or down, and "other" in or out (the description is
+  required for "other"). Movements are booked today, so a closed month never changes.
+  **VAT and tax payments settle what was set aside**: they lower the account but not the
+  "left after taxes and costs" figure a second time, and the VAT / tax amounts still to pay
+  shrink accordingly. Do not record them as expenses.
 - **Setup** (`/setup`): shop tax profile, WooCommerce sync status and the "Sync now"
   button, and the one-time starting-point form.
 

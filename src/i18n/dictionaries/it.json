@@ -111,7 +111,11 @@
       "Riassortimenti e prelievi: ogni acquisto di merce e ogni prelievo personale vanno registrati.",
       "Incassi reali: un ordine è conteggiato anche se il pagamento non è ancora arrivato sul conto; resi e rimborsi parziali possono non essere aggiornati."
     ],
-    "endDisclaimerOutro": "Confronta ogni tanto questo valore con l'estratto conto della banca: una differenza grande significa che mancano dei movimenti."
+    "endDisclaimerOutro": "Confronta ogni tanto questo valore con l'estratto conto della banca: una differenza grande significa che mancano dei movimenti.",
+    "deposits": "Versamenti sul conto",
+    "vatPayments": "Pagamenti IVA",
+    "taxPayments": "Pagamenti imposte e contributi",
+    "otherMovements": "Altri movimenti"
   },
   "stock": {
     "title": "Magazzino e prezzi d'acquisto",
@@ -137,12 +141,39 @@
       "restock": "Riassortimento",
       "withdrawal": "Prelievo",
       "expense": "Spesa",
-      "adjustment": "Rettifica"
+      "adjustment": "Rettifica",
+      "deposit": "Versamento",
+      "vat_payment": "Pagamento IVA",
+      "tax_payment": "Pagamento imposte",
+      "other": "Altro"
     },
-    "withdrawTitle": "Registra un prelievo",
-    "withdrawHelp": "Ad esempio il tuo stipendio o spese personali. Viene registrato oggi.",
     "empty": "Ancora nessun movimento.",
-    "salesNote": "Le vendite non sono elencate qui: arrivano dagli ordini WooCommerce."
+    "salesNote": "Le vendite non sono elencate qui: arrivano dagli ordini WooCommerce.",
+    "movementTitle": "Registra un movimento",
+    "movementHelp": "Viene registrato oggi. L'importo è sempre positivo: è il tipo a decidere se aggiunge o toglie soldi dal conto del negozio.",
+    "types": {
+      "deposit": "Versamento sul conto (entrata)",
+      "withdrawal": "Prelievo personale (uscita)",
+      "expense": "Spesa (uscita)",
+      "vat_payment": "Pagamento IVA (uscita)",
+      "tax_payment": "Pagamento imposte / contributi (uscita)",
+      "adjustment_in": "Rettifica in aumento (entrata)",
+      "adjustment_out": "Rettifica in diminuzione (uscita)",
+      "other_in": "Altro (entrata)",
+      "other_out": "Altro (uscita)"
+    },
+    "form": {
+      "type": "Tipo",
+      "amount": "Importo",
+      "noteOptional": "Descrizione (facoltativa)",
+      "noteRequired": "Descrizione (obbligatoria)",
+      "submit": "Registra movimento",
+      "ok": "Movimento registrato.",
+      "invalid": "Inserisci un importo maggiore di zero.",
+      "noteMissing": "Aggiungi una descrizione per questo tipo.",
+      "inflow": "aggiunge soldi al conto",
+      "outflow": "toglie soldi dal conto"
+    }
   },
   "setup": {
     "shopTitle": "Negozio",
