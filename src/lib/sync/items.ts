@@ -10,6 +10,7 @@ interface WooProduct {
   name: string;
   sku: string;
   type: string;
+  price: string;
   manage_stock: boolean;
   stock_quantity: number | null;
 }
@@ -17,6 +18,7 @@ interface WooProduct {
 interface WooVariation {
   id: number;
   sku: string;
+  price: string;
   manage_stock: boolean | "parent";
   stock_quantity: number | null;
   attributes: { name: string; option: string }[];
@@ -46,6 +48,7 @@ export async function syncItems(shop: Shop): Promise<number> {
           productName: p.name,
           variationLabel: v.attributes.map((a) => a.option).join(" / ") || null,
           sku: v.sku || null,
+          price: v.price || p.price || null, // a variation without its own price shows the parent's
           managesStock,
           stockQty: managesStock && v.stock_quantity != null ? String(v.stock_quantity) : null,
         });
@@ -57,6 +60,7 @@ export async function syncItems(shop: Shop): Promise<number> {
         wooVariationId: 0,
         productName: p.name,
         sku: p.sku || null,
+        price: p.price || null,
         managesStock: p.manage_stock,
         stockQty: p.manage_stock && p.stock_quantity != null ? String(p.stock_quantity) : null,
       });
@@ -74,6 +78,7 @@ export async function syncItems(shop: Shop): Promise<number> {
           productName: excluded("product_name"),
           variationLabel: excluded("variation_label"),
           sku: excluded("sku"),
+          price: excluded("price"),
           managesStock: excluded("manages_stock"),
           stockQty: excluded("stock_qty"),
           syncedAt: new Date(),

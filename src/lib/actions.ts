@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { items, ledgerEntries, restockLots, shops } from "@/db/schema";
 import { freezeCosts } from "./costs";
+import { recordOpening } from "./opening";
 import { centsToString, parseDecimal } from "./money";
 import { getCurrentShopId } from "./shop";
 import { syncShop } from "./sync";
@@ -84,17 +85,8 @@ export async function saveOwnerShare(formData: FormData) {
   revalidatePath("/", "layout");
 }
 
-/**
- * Records the "zero time": baseline date, starting bank balance and opening stock with
- * purchase prices. Allowed once; the first ledger entry marks the shop as opened.
- */
 export async function saveOpening(formData: FormData) {
   const shopId = await getCurrentShopId();
-  const [existing] = await db
-    .select({ id: ledgerEntries.id })
-    .from(ledgerEntries)
-    .where(and(eq(ledgerEntries.shopId, shopId), eq(ledgerEntries.kind, "opening_balance")));
-  if (existing) return;
 
   const baselineRaw = String(formData.get("baseline") ?? "");
   const balance = parseDecimal(formData.get("balance"));
@@ -106,23 +98,15 @@ export async function saveOpening(formData: FormData) {
     const quantity = parseDecimal(formData.get(`qty:${id}`));
     const unitCost = parseDecimal(formData.get(`cost:${id}`));
     // Stock without a price is skipped: that item then shows up as "cost missing".
-    return quantity > 0 && unitCost >= 0
-      ? [{ shopId, itemId: id, quantity: String(quantity), unitCost: unitCost.toFixed(4), purchasedAt: baselineAt, source: "opening" as const }]
-      : [];
+    return quantity > 0 && unitCost >= 0 ? [{ itemId: id, quantity, unitCost }] : [];
   });
 
-  await db.transaction(async (tx) => {
-    // A new baseline may reach further back than anything synced so far.
-    await tx.update(shops).set({ baselineAt, lastSyncedAt: null }).where(eq(shops.id, shopId));
-    if (lots.length) await tx.insert(restockLots).values(lots);
-    await tx.insert(ledgerEntries).values({
-      shopId,
-      kind: "opening_balance",
-      amount: centsToString(Math.round(balance * 100)),
-      occurredAt: baselineAt,
-      note: "Starting point",
-    });
+  const recorded = await recordOpening(shopId, {
+    baselineAt,
+    balanceCents: Math.round(balance * 100),
+    lots,
   });
+  if (!recorded) return;
 
   await syncShop(shopId);
   await freezeCosts(shopId);

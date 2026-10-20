@@ -85,10 +85,16 @@ tax reserve  = income tax % × (profit, or net of VAT if the profile says "reven
 net earnings = profit - tax reserve
 ```
 
-The tax profile is a setting per shop: VAT %, income-tax %, and whether the income tax is
-applied to profit (ordinary regime: purchases are deductible) or to revenue (flat regime).
-Income tax is *set aside*, not paid: it shows up as a reserve so the owner never counts it
-as spendable.
+The tax profile is a setting per shop: VAT %, how the income tax is computed, and whether
+it applies to profit (ordinary regime: purchases are deductible) or to revenue (flat
+regime). Income tax can be a flat rate, or **progressive yearly brackets** (for example
+IRPEF 23% up to 28,000 €, 33% up to 50,000 €, 43% above) plus a flat **social-security**
+percentage of profit (for example INPS 26.07%). With brackets, a month's reserve is the
+extra tax that month's profit adds to the *calendar year so far*, so the brackets apply to
+the yearly total and the monthly reserves add up exactly to the annual figure; a loss
+month can release some reserve. Income tax is *set aside*, not paid: it shows up as a
+reserve so the owner never counts it as spendable. The per-product rows get a share of the
+month's reserve in proportion to their profit.
 
 **Purchase cost: moving average.** Each item keeps restock lots (quantity, unit cost
 without VAT). The average blends in at every purchase and a sale leaves it unchanged:
@@ -250,6 +256,26 @@ rebuilds it from scratch.
 | `npm run db:seed` | Create the dev shop if missing (never overwrites) |
 | `npm run typecheck` / `lint` | Type-check (generates route types first) / ESLint |
 
+### Connecting a real shop
+
+`npm run shop:connect` points the shop at a real WooCommerce site. It **erases the shop's data in
+Tallypress** (never the WooCommerce site: the key is read-only), stores the connection and
+tax profile, syncs everything since the start date, then records the starting point: bank
+balance, opening stock (WooCommerce's current stock plus what sold since the start date) and
+a purchase cost for each item, derived as a percentage of its selling price without VAT.
+Credentials are read from the environment only.
+
+```bash
+SHOP_URL=https://example.com SHOP_KEY=ck_... SHOP_SECRET=cs_... \
+SHOP_NAME="My Shop" SHOP_START=2026-10-01 SHOP_BALANCE=2000 SHOP_COST_PCT=30 SHOP_WIPE=yes \
+SHOP_TAX='{"vatRate":22,"brackets":[{"upTo":28000,"rate":23},{"upTo":50000,"rate":33},{"upTo":null,"rate":43}],"socialRate":26.07,"taxBase":"profit"}' \
+npm run shop:connect
+```
+
+Without `SHOP_WIPE=yes` it refuses to run on a shop that already has data. Optional:
+`SHOP_LOCALE` (`it`/`en`), `SHOP_TZ`, `SHOP_OWNER_PCT`. The currency is read from the shop.
+Real costs can later replace the estimates on the Stock page.
+
 ### Syncing and closing from outside
 
 ```bash
@@ -287,9 +313,10 @@ These are deliberate MVP simplifications or gaps, not hidden behaviour.
 - **Refunds reduce the collected amount only.** They do not reduce the cost of goods or put
   stock back, and per-variation rows are shown before refunds (refunds land in the
   "shipping, refunds and adjustments" row).
-- **Income-tax reserve is clamped per month** (never negative), so monthly reserves can
-  exceed what a yearly calculation would give. A flat rate such as 56% is a conservative
-  ceiling, not a real tax computation: confirm the figures with an accountant.
+- **The tax reserve is an estimate, not a tax return.** It applies the bracket and
+  contribution rates you configure to profit from the start date (not the whole year, if you
+  start mid-year) and ignores deductions, minimum contributions and the deductibility of
+  social contributions. Confirm the figures with an accountant.
 - **Late changes to closed months** are folded into the first open month as an adjustment
   of the collected amount; their effect on cost of goods is not recomputed.
 - **Products are re-read in full on every sync** (cheap, idempotent, no duplicates);

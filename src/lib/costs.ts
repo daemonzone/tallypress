@@ -146,7 +146,7 @@ export interface ItemState {
   label: string;
   sku: string | null;
   wooStock: number | null;
-  trackedStock: number;
+  trackedStock: number | null; // null: no purchase history, so stock is not tracked
   avgCost: number | null;
   manualCost: number | null;
   stockValue: number;
@@ -160,13 +160,14 @@ export async function getItemStates(shopId: string): Promise<ItemState[]> {
   return itemRows
     .map((item) => {
       const manual = item.manualUnitCost == null ? null : Number(item.manualUnitCost);
-      const r = replayItem(lotsByItem.get(item.id) ?? [], salesByItem.get(item.id) ?? [], manual);
+      const lots = lotsByItem.get(item.id) ?? [];
+      const r = replayItem(lots, salesByItem.get(item.id) ?? [], manual);
       return {
         id: item.id,
         label: item.variationLabel ? `${item.productName} – ${item.variationLabel}` : item.productName,
         sku: item.sku,
         wooStock: item.stockQty == null ? null : Number(item.stockQty),
-        trackedStock: r.stock,
+        trackedStock: lots.length ? r.stock : null,
         avgCost: r.avg,
         manualCost: manual,
         stockValue: r.stock > 0 && r.avg != null ? r.stock * r.avg : 0,

@@ -21,7 +21,7 @@ export default async function StockPage() {
       <Section title={t.stock.title}>
         <DataTable head={[t.stock.item, t.stock.woo, t.stock.tracked, t.stock.avg, t.stock.manual, t.stock.value]}>
           {states.map((s) => {
-            const mismatch = s.wooStock != null && s.wooStock !== s.trackedStock;
+            const mismatch = s.wooStock != null && s.trackedStock != null && s.wooStock !== s.trackedStock;
             return (
               <tr key={s.id}>
                 <td className="py-2 pr-3">
@@ -30,7 +30,7 @@ export default async function StockPage() {
                 </td>
                 <Td>{s.wooStock == null ? t.common.none : fmt.num(s.wooStock)}</Td>
                 <Td>
-                  {fmt.num(s.trackedStock)}
+                  {s.trackedStock == null ? t.common.none : fmt.num(s.trackedStock)}
                   {mismatch && (
                     <span title={t.stock.mismatch} className="ml-1 text-amber-600">
                       ⚠

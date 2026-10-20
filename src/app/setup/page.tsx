@@ -41,6 +41,7 @@ export default async function SetupPage() {
   }
 
   const dateFmt = new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: shop.timezone });
+  const money = new Intl.NumberFormat(locale, { style: "currency", currency: shop.currency, maximumFractionDigits: 0 });
   const baselineValue = shop.baselineAt?.toISOString().slice(0, 10) ?? new Date().toISOString().slice(0, 10);
 
   return (
@@ -50,7 +51,28 @@ export default async function SetupPage() {
           rows={[
             { label: t.setup.currency, value: shop.currency },
             { label: t.setup.vat, value: `${shop.vatRate}%` },
-            { label: t.setup.incomeTax, value: `${shop.incomeTaxRate}%` },
+            shop.incomeTaxBrackets?.length
+              ? {
+                  label: t.setup.brackets,
+                  value: (
+                    <span className="block space-y-0.5">
+                      {shop.incomeTaxBrackets.map((b, i, all) => (
+                        <span key={i} className="block">
+                          {b.rate}%{" "}
+                          <span className="text-muted">
+                            {b.upTo == null
+                              ? `${t.setup.above} ${money.format(all[i - 1]?.upTo ?? 0)}`
+                              : `${t.setup.upTo} ${money.format(b.upTo)}`}
+                          </span>
+                        </span>
+                      ))}
+                    </span>
+                  ),
+                }
+              : { label: t.setup.incomeTax, value: `${shop.incomeTaxRate}%` },
+            ...(Number(shop.socialSecurityRate) > 0
+              ? [{ label: t.setup.social, value: `${shop.socialSecurityRate}%` }]
+              : []),
             {
               label: t.setup.taxBase,
               value: shop.taxBase === "profit" ? t.setup.taxBaseProfit : t.setup.taxBaseRevenue,

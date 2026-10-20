@@ -157,6 +157,10 @@
     "qtyAtStart": "Quantità",
     "costAtStart": "Costo unitario (senza IVA)",
     "openingSave": "Salva punto di partenza",
-    "openingWarn": "Si può fare una sola volta."
+    "openingWarn": "Si può fare una sola volta.",
+    "brackets": "Imposte sul reddito (scaglioni annui)",
+    "social": "Contributi previdenziali",
+    "upTo": "fino a",
+    "above": "oltre"
   }
 }

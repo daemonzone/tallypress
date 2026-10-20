@@ -157,6 +157,10 @@
     "qtyAtStart": "Quantity",
     "costAtStart": "Unit cost (without VAT)",
     "openingSave": "Save starting point",
-    "openingWarn": "This can be done only once."
+    "openingWarn": "This can be done only once.",
+    "brackets": "Income tax (yearly brackets)",
+    "social": "Social security contributions",
+    "upTo": "up to",
+    "above": "above"
   }
 }

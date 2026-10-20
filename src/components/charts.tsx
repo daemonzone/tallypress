@@ -69,16 +69,16 @@ export function StackedBar({
         )}
       </div>
 
-      <ul className={`mt-3 grid gap-x-4 gap-y-1.5 text-sm ${compact ? "" : "sm:grid-cols-2"}`}>
+      <ul className={`mt-3 grid gap-x-4 gap-y-1.5 text-sm ${compact ? "grid-cols-[minmax(0,1fr)]" : "grid-cols-[minmax(0,1fr)] sm:grid-cols-2"}`}>
         {segments.map((s) => (
-          <li key={s.key} className="flex items-center gap-2">
+          <li key={s.key} className="flex min-w-0 items-center gap-2">
             <span
               className="h-2.5 w-2.5 shrink-0 rounded-[3px]"
               style={{ background: `var(--viz-${s.slot})` }}
               aria-hidden="true"
             />
             <span className="min-w-0 flex-1 truncate text-muted">{s.label}</span>
-            <span className="tabular-nums">{s.display}</span>
+            <span className="shrink-0 tabular-nums">{s.display}</span>
           </li>
         ))}
       </ul>

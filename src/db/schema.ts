@@ -6,6 +6,7 @@ import {
   date,
   index,
   integer,
+  jsonb,
   numeric,
   pgEnum,
   pgTable,
@@ -25,6 +26,12 @@ export type Locale = (typeof locales)[number];
 
 export const taxBases = ["revenue", "profit"] as const;
 
+/** A yearly income-tax bracket: `rate` percent on profit up to `upTo` (whole currency units, null = no limit). */
+export interface TaxBracket {
+  upTo: number | null;
+  rate: number;
+}
+
 export const shops = pgTable("shops", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
@@ -43,6 +50,10 @@ export const shops = pgTable("shops", {
   // Tax profile, e.g. ordinario = 22 / 56 on profit, forfettario = 0 / 15 on revenue.
   vatRate: numeric("vat_rate", { precision: 5, scale: 2 }).notNull().default("22"),
   incomeTaxRate: numeric("income_tax_rate", { precision: 5, scale: 2 }).notNull().default("0"),
+  // Progressive yearly income tax (e.g. IRPEF). When set it replaces the flat income_tax_rate.
+  incomeTaxBrackets: jsonb("income_tax_brackets").$type<TaxBracket[]>(),
+  // Social security contributions (e.g. INPS), a flat percent of profit.
+  socialSecurityRate: numeric("social_security_rate", { precision: 5, scale: 2 }).notNull().default("0"),
   taxBase: text("tax_base", { enum: taxBases }).notNull().default("profit"),
 
   // Default for the live simulator on the panel; the slider itself never writes here.
@@ -68,6 +79,8 @@ export const items = pgTable(
     productName: text("product_name").notNull(),
     variationLabel: text("variation_label"),
     sku: text("sku"),
+    // Current selling price as listed in WooCommerce (tax included if the shop says so).
+    price: numeric("price", { precision: 14, scale: 2 }),
     managesStock: boolean("manages_stock").notNull().default(false),
     stockQty: numeric("stock_qty", { precision: 14, scale: 3 }),
     // For items without restock lots (e.g. stock not managed): flat manual cost.

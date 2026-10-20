@@ -60,6 +60,8 @@ export async function buildReport(shopId: string): Promise<Report | null> {
 
   const tz = shop.timezone;
   const profile = profileOf(shop);
+  // Per-item rows carry no tax of their own: the month's reserve is shared out afterwards.
+  const noTax = { ...profile, brackets: null, incomeTaxRate: 0, socialRate: 0 };
   const monthSql = (col: string) =>
     sql.raw(`to_char(date_trunc('month', ${col} AT TIME ZONE '${tz.replace(/'/g, "")}'), 'YYYY-MM-01')`);
   const baseline = shop.baselineAt.toISOString();
@@ -123,7 +125,13 @@ export async function buildReport(shopId: string): Promise<Report | null> {
 
   const months: MonthReport[] = [];
   let carried = 0;
+  let ytdProfit = 0; // profit of the earlier months of the same calendar year
+  let ytdYear = "";
   for (const key of keys) {
+    if (key.slice(0, 4) !== ytdYear) {
+      ytdYear = key.slice(0, 4);
+      ytdProfit = 0;
+    }
     const closing = closingByMonth.get(key);
     const live = ordersByMonth.get(key) ?? { orders: 0, gross: 0 };
     const flows = { ...(flowsByMonth.get(key) ?? { sales: 0, restock: 0, withdrawal: 0, expense: 0, other: 0 }) };
@@ -134,7 +142,7 @@ export async function buildReport(shopId: string): Promise<Report | null> {
         const gross = toCents(r.gross);
         const label = r.variation_label ? `${r.product_name} – ${r.variation_label}` : String(r.product_name);
         return {
-          ...figures(gross, toCents(r.cogs), profile),
+          ...figures(gross, toCents(r.cogs), noTax),
           itemId: (r.item_id as string) ?? null,
           label,
           sku: (r.sku as string) ?? null,
@@ -161,7 +169,19 @@ export async function buildReport(shopId: string): Promise<Report | null> {
           taxReserve: toCents(closing.taxReserve),
           netEarnings: toCents(closing.netTotal),
         }
-      : figures(live.gross + lateAdjustments, itemsCogs, profile);
+      : figures(live.gross + lateAdjustments, itemsCogs, profile, ytdProfit);
+    ytdProfit += f.profit;
+
+    // Share the month's tax reserve over the items and the shipping row by their profit.
+    const shippingFig = figures(f.gross - itemsGross, 0, noTax);
+    const weights = [...items.map((i) => Math.max(i.profit, 0)), Math.max(shippingFig.profit, 0)];
+    const weightSum = weights.reduce((a, b) => a + b, 0);
+    const share = (w: number) => (weightSum > 0 ? Math.round((f.taxReserve * w) / weightSum) : 0);
+    items.forEach((it, idx) => {
+      it.taxReserve = share(weights[idx]);
+      it.netEarnings = it.profit - it.taxReserve;
+    });
+    const shippingTax = share(weights[weights.length - 1]);
 
     const start = carried;
     const end = closing
@@ -180,7 +200,7 @@ export async function buildReport(shopId: string): Promise<Report | null> {
       flows,
       end,
       items,
-      shipping: figures(f.gross - itemsGross, 0, profile),
+      shipping: { ...shippingFig, taxReserve: shippingTax, netEarnings: shippingFig.profit - shippingTax },
     });
   }
 

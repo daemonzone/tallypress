@@ -5,7 +5,7 @@ export function formatters(locale: string, currency: string) {
   const num = new Intl.NumberFormat(locale, { maximumFractionDigits: 3 });
   const pct = new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 1 });
   return {
-    money: (cents: number) => cur.format(cents / 100),
+    money: (cents: number) => cur.format((cents || 0) / 100), // `|| 0` turns -0 into 0
     num: (n: number) => num.format(n),
     pct: (ratio: number) => pct.format(ratio),
   };
