@@ -54,6 +54,9 @@ export const shops = pgTable("shops", {
   incomeTaxBrackets: jsonb("income_tax_brackets").$type<TaxBracket[]>(),
   // Social security contributions (e.g. INPS), a flat percent of profit.
   socialSecurityRate: numeric("social_security_rate", { precision: 5, scale: 2 }).notNull().default("0"),
+  // Estimated purchase cost as a percent of the selling price without VAT. Used for sold lines
+  // that have no catalogue item (a product that was trashed or deleted) or no cost of their own.
+  defaultCostPct: numeric("default_cost_pct", { precision: 5, scale: 2 }),
   taxBase: text("tax_base", { enum: taxBases }).notNull().default("profit"),
 
   // Default for the live simulator on the panel; the slider itself never writes here.
@@ -81,6 +84,8 @@ export const items = pgTable(
     sku: text("sku"),
     // Current selling price as listed in WooCommerce (tax included if the shop says so).
     price: numeric("price", { precision: 14, scale: 2 }),
+    // Product photo from WooCommerce (a variation's own photo, else its product's).
+    imageUrl: text("image_url"),
     managesStock: boolean("manages_stock").notNull().default(false),
     stockQty: numeric("stock_qty", { precision: 14, scale: 3 }),
     // For items without restock lots (e.g. stock not managed): flat manual cost.
@@ -117,6 +122,9 @@ export const orderLines = pgTable(
     shopId: uuid("shop_id").notNull().references(() => shops.id, { onDelete: "cascade" }),
     orderId: uuid("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
     wooLineId: bigint("woo_line_id", { mode: "number" }).notNull(),
+    // What WooCommerce says was sold; kept so a line can be linked to an item later.
+    wooProductId: bigint("woo_product_id", { mode: "number" }),
+    wooVariationId: bigint("woo_variation_id", { mode: "number" }),
     itemId: uuid("item_id").references(() => items.id),
     quantity: numeric("quantity", { precision: 14, scale: 3 }).notNull(),
     grossTotal: numeric("gross_total", { precision: 14, scale: 2 }).notNull(),

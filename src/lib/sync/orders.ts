@@ -65,6 +65,8 @@ async function upsertOrders(shop: Shop, wooOrders: WooOrder[], notBefore: Date):
           shopId: shop.id,
           orderId: order.id,
           wooLineId: line.id,
+          wooProductId: line.product_id,
+          wooVariationId: line.variation_id,
           itemId: itemIdByWooIds.get(`${line.product_id}:${line.variation_id}`) ?? null,
           quantity: String(line.quantity),
           grossTotal: sumMoney(line.total, line.total_tax),

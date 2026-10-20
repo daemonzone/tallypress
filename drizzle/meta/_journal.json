@@ -36,6 +36,20 @@
       "when": 1792527332100,
       "tag": "0004_sleepy_machine_man",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792529645363,
+      "tag": "0005_futuristic_peter_quill",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792530232840,
+      "tag": "0006_productive_lockjaw",
+      "breakpoints": true
     }
   ]
 }

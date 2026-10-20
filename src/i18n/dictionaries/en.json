@@ -131,7 +131,17 @@
     "restockHelp": "Adds the lot, blends it into the average cost, and takes the amount out of the shop account.",
     "manualTitle": "Set a manual cost",
     "manualHelp": "For items with no purchase history, such as products without stock tracking.",
-    "noItems": "No products yet. Sync from WooCommerce in Setup."
+    "noItems": "No products yet. Sync from WooCommerce in Setup.",
+    "searchPlaceholder": "Search by product name",
+    "searchButton": "Search",
+    "noResults": "No items match your search.",
+    "results": "{n} items",
+    "clearSearch": "clear",
+    "pagination": "Pages",
+    "prev": "Previous",
+    "next": "Next",
+    "pageOf": "Page {p} of {pages}",
+    "formsHint": "The forms list the items on this page: search by name to find another one."
   },
   "ledger": {
     "title": "Shop account movements",

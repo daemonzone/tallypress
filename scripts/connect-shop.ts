@@ -69,6 +69,7 @@ async function main() {
     const [{ n }] = await db.select({ n: count() }).from(orders).where(eq(orders.shopId, shopId));
     if (!n) throw new Error("SHOP_RESUME needs data already imported: nothing found, run the full import first");
     console.log(`Resuming on the ${n} orders already in the database.`);
+    if (costPct != null) await db.update(shops).set({ defaultCostPct: String(costPct) }).where(eq(shops.id, shopId));
   } else {
     // Wipe: only this app's copy, never the WooCommerce site (the key is read-only anyway).
     const [{ n: existing }] = await db.select({ n: count() }).from(orders).where(eq(orders.shopId, shopId));
@@ -100,6 +101,7 @@ async function main() {
       incomeTaxBrackets: tax.brackets ?? null,
       socialSecurityRate: String(tax.socialRate ?? 0),
       taxBase: tax.taxBase ?? "profit",
+    defaultCostPct: costPct == null ? null : String(costPct),
       ...(env("SHOP_OWNER_PCT") ? { ownerSharePct: env("SHOP_OWNER_PCT")! } : {}),
       baselineAt,
       lastSyncedAt: null,

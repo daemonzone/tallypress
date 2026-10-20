@@ -1,6 +1,6 @@
-import { and, eq, inArray, isNotNull } from "drizzle-orm";
+import { and, count, eq, ilike, inArray, isNotNull, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { items, orderLines, orders, restockLots } from "@/db/schema";
+import { items, orderLines, orders, restockLots, shops } from "@/db/schema";
 
 /** Orders in these statuses count as earned (see product decisions). */
 export const COUNTED_STATUSES = ["processing", "completed"];
@@ -116,8 +116,25 @@ async function loadHistory(shopId: string, itemIds?: string[]) {
 }
 
 /**
+ * Links order lines that have no item yet to the catalogue item with the same WooCommerce
+ * product and variation (an item can appear after the line was imported, e.g. a product that
+ * was restored from the trash). Returns how many lines were linked.
+ */
+export async function relinkLines(shopId: string): Promise<number> {
+  const res = await db.execute(sql`
+    UPDATE order_lines l SET item_id = i.id
+    FROM items i
+    WHERE l.shop_id = ${shopId} AND l.item_id IS NULL
+      AND i.shop_id = l.shop_id AND i.woo_product_id = l.woo_product_id AND i.woo_variation_id = l.woo_variation_id`);
+  return res.rowCount ?? 0;
+}
+
+/**
  * Gives every counted, still-uncosted order line its purchase cost and stores it.
  * Frozen lines are never touched, so closed months cannot move.
+ *
+ * A line that still has no cost (typically a product that is no longer in the catalogue) gets
+ * the shop's default estimate: `default_cost_pct` of the line's own price without VAT.
  */
 export async function freezeCosts(shopId: string): Promise<number> {
   const { lotsByItem, salesByItem } = await loadHistory(shopId);
@@ -138,6 +155,24 @@ export async function freezeCosts(shopId: string): Promise<number> {
       frozen++;
     }
   }
+
+  const [shop] = await db.select().from(shops).where(eq(shops.id, shopId));
+  if (shop?.defaultCostPct != null) {
+    const pct = Number(shop.defaultCostPct);
+    const vat = Number(shop.vatRate);
+    const rest = await db
+      .select({ id: orderLines.id, quantity: orderLines.quantity, gross: orderLines.grossTotal })
+      .from(orderLines)
+      .innerJoin(orders, eq(orders.id, orderLines.orderId))
+      .where(and(eq(orderLines.shopId, shopId), inArray(orders.status, COUNTED_STATUSES), isNull(orderLines.unitCostSnapshot)));
+    for (const l of rest) {
+      const qty = Number(l.quantity);
+      if (!(qty > 0)) continue;
+      const unit = ((Number(l.gross) / (1 + vat / 100) / qty) * pct) / 100;
+      await db.update(orderLines).set({ unitCostSnapshot: unit.toFixed(4) }).where(eq(orderLines.id, l.id));
+      frozen++;
+    }
+  }
   return frozen;
 }
 
@@ -145,6 +180,7 @@ export interface ItemState {
   id: string;
   label: string;
   sku: string | null;
+  imageUrl: string | null;
   wooStock: number | null;
   trackedStock: number | null; // null: no purchase history, so stock is not tracked
   avgCost: number | null;
@@ -152,26 +188,63 @@ export interface ItemState {
   stockValue: number;
 }
 
-/** Tracked stock and average cost per item, for the stock page. */
+function toState(item: typeof items.$inferSelect, lots: LotEvent[], sales: SaleEvent[]): ItemState {
+  const manual = item.manualUnitCost == null ? null : Number(item.manualUnitCost);
+  const r = replayItem(lots, sales, manual);
+  return {
+    id: item.id,
+    label: item.variationLabel ? `${item.productName} – ${item.variationLabel}` : item.productName,
+    sku: item.sku,
+    imageUrl: item.imageUrl,
+    wooStock: item.stockQty == null ? null : Number(item.stockQty),
+    trackedStock: lots.length ? r.stock : null,
+    avgCost: r.avg,
+    manualCost: manual,
+    stockValue: r.stock > 0 && r.avg != null ? r.stock * r.avg : 0,
+  };
+}
+
+/** Tracked stock and average cost for every item (used for totals). */
 export async function getItemStates(shopId: string): Promise<ItemState[]> {
   const { lotsByItem, salesByItem } = await loadHistory(shopId);
   const itemRows = await db.select().from(items).where(eq(items.shopId, shopId));
-
   return itemRows
-    .map((item) => {
-      const manual = item.manualUnitCost == null ? null : Number(item.manualUnitCost);
-      const lots = lotsByItem.get(item.id) ?? [];
-      const r = replayItem(lots, salesByItem.get(item.id) ?? [], manual);
-      return {
-        id: item.id,
-        label: item.variationLabel ? `${item.productName} – ${item.variationLabel}` : item.productName,
-        sku: item.sku,
-        wooStock: item.stockQty == null ? null : Number(item.stockQty),
-        trackedStock: lots.length ? r.stock : null,
-        avgCost: r.avg,
-        manualCost: manual,
-        stockValue: r.stock > 0 && r.avg != null ? r.stock * r.avg : 0,
-      };
-    })
+    .map((item) => toState(item, lotsByItem.get(item.id) ?? [], salesByItem.get(item.id) ?? []))
     .sort((a, b) => a.label.localeCompare(b.label));
+}
+
+/**
+ * One page of items for the stock page, optionally filtered by a search on product name,
+ * variation or SKU. Only the items on the page have their history loaded and replayed.
+ */
+export async function getItemStatePage(
+  shopId: string,
+  opts: { q?: string; page: number; perPage: number },
+): Promise<{ rows: ItemState[]; total: number; page: number; pages: number }> {
+  const term = opts.q?.trim();
+  const like = term ? `%${term.replace(/[\\%_]/g, "\\$&")}%` : null;
+  const where = and(
+    eq(items.shopId, shopId),
+    like ? or(ilike(items.productName, like), ilike(items.variationLabel, like), ilike(items.sku, like)) : undefined,
+  );
+
+  const [{ n: total }] = await db.select({ n: count() }).from(items).where(where);
+  const pages = Math.max(1, Math.ceil(total / opts.perPage));
+  const page = Math.min(Math.max(1, opts.page), pages);
+  const pageItems = await db
+    .select()
+    .from(items)
+    .where(where)
+    .orderBy(items.productName, items.variationLabel)
+    .limit(opts.perPage)
+    .offset((page - 1) * opts.perPage);
+  if (!pageItems.length) return { rows: [], total, page, pages };
+
+  const { lotsByItem, salesByItem } = await loadHistory(shopId, pageItems.map((i) => i.id));
+  return {
+    rows: pageItems.map((item) => toState(item, lotsByItem.get(item.id) ?? [], salesByItem.get(item.id) ?? [])),
+    total,
+    page,
+    pages,
+  };
 }

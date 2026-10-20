@@ -131,7 +131,17 @@
     "restockHelp": "Aggiunge il lotto, lo fonde nel costo medio e scala l'importo dal conto del negozio.",
     "manualTitle": "Imposta un costo manuale",
     "manualHelp": "Per articoli senza storico d'acquisto, come i prodotti senza gestione del magazzino.",
-    "noItems": "Ancora nessun prodotto. Sincronizza da WooCommerce nelle Impostazioni."
+    "noItems": "Ancora nessun prodotto. Sincronizza da WooCommerce nelle Impostazioni.",
+    "searchPlaceholder": "Cerca per nome prodotto",
+    "searchButton": "Cerca",
+    "noResults": "Nessun articolo corrisponde alla ricerca.",
+    "results": "{n} articoli",
+    "clearSearch": "azzera",
+    "pagination": "Pagine",
+    "prev": "Precedente",
+    "next": "Successiva",
+    "pageOf": "Pagina {p} di {pages}",
+    "formsHint": "I moduli elencano gli articoli di questa pagina: cerca per nome per trovarne un altro."
   },
   "ledger": {
     "title": "Movimenti del conto del negozio",

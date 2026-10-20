@@ -1,32 +1,71 @@
 import { formatters } from "@/components/format";
-import { primaryButtonClass, DataTable, inputClass, Notice, Section, Td } from "@/components/ui";
+import Link from "next/link";
+import { Icon } from "@/components/icons";
+import { Thumb } from "@/components/thumb";
+import { buttonClass, primaryButtonClass, DataTable, inputClass, Notice, Section, Td } from "@/components/ui";
 import { getDictionary } from "@/i18n";
 import { addRestock, setManualCost } from "@/lib/actions";
-import { getItemStates } from "@/lib/costs";
+import { getItemStatePage } from "@/lib/costs";
 import { getCurrentShop } from "@/lib/shop";
 
-export default async function StockPage() {
+const PER_PAGE = 25;
+
+export default async function StockPage({ searchParams }: PageProps<"/stock">) {
   const { locale, t } = await getDictionary();
   const shop = await getCurrentShop();
   if (!shop) return <Notice tone="warn">{t.setupNeeded.body}</Notice>;
 
-  const states = await getItemStates(shop.id);
+  const sp = await searchParams;
+  const q = typeof sp.q === "string" ? sp.q.trim().slice(0, 80) : "";
+  const { rows: states, total, page, pages } = await getItemStatePage(shop.id, {
+    q,
+    page: Number(typeof sp.page === "string" ? sp.page : 1) || 1,
+    perPage: PER_PAGE,
+  });
+  const href = (p: number) => `/stock?${new URLSearchParams({ ...(q ? { q } : {}), page: String(p) })}`;
   const fmt = formatters(locale, shop.currency);
   const money = (n: number | null) => (n == null ? t.common.none : fmt.money(Math.round(n * 100)));
 
-  if (!states.length) return <Notice>{t.stock.noItems}</Notice>;
+  if (!states.length && !q) return <Notice>{t.stock.noItems}</Notice>;
 
   return (
     <>
-      <Section title={t.stock.title}>
+      <Section
+        title={t.stock.title}
+        aside={
+          <form action="/stock" method="get" role="search" className="flex items-center gap-2">
+            <input
+              name="q"
+              type="search"
+              defaultValue={q}
+              placeholder={t.stock.searchPlaceholder}
+              aria-label={t.stock.searchPlaceholder}
+              maxLength={80}
+              className={`${inputClass} w-56`}
+            />
+            <button type="submit" className={buttonClass}>
+              <Icon name="search" className="h-4 w-4" />
+              {t.stock.searchButton}
+            </button>
+          </form>
+        }
+      >
+        {states.length === 0 ? (
+          <p className="text-sm text-muted">{t.stock.noResults}</p>
+        ) : (
         <DataTable head={[t.stock.item, t.stock.woo, t.stock.tracked, t.stock.avg, t.stock.manual, t.stock.value]}>
           {states.map((s) => {
             const mismatch = s.wooStock != null && s.trackedStock != null && s.wooStock !== s.trackedStock;
             return (
               <tr key={s.id}>
                 <td className="py-2 pr-3">
-                  {s.label}
-                  {s.sku && <span className="ml-2 text-xs opacity-60">{s.sku}</span>}
+                  <div className="flex items-center gap-3">
+                    <Thumb src={s.imageUrl} alt={s.label} />
+                    <div className="min-w-0">
+                      {s.label}
+                      {s.sku && <span className="ml-2 text-xs text-muted">{s.sku}</span>}
+                    </div>
+                  </div>
                 </td>
                 <Td>{s.wooStock == null ? t.common.none : fmt.num(s.wooStock)}</Td>
                 <Td>
@@ -44,9 +83,32 @@ export default async function StockPage() {
             );
           })}
         </DataTable>
-        <p className="mt-2 text-xs opacity-60">⚠ {t.stock.mismatch}</p>
+        )}
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm">
+          <span className="text-muted">
+            {t.stock.results.replace("{n}", String(total))}
+            {q && <> · “{q}” <Link href="/stock" className="underline">{t.stock.clearSearch}</Link></>}
+          </span>
+          {pages > 1 && (
+            <nav aria-label={t.stock.pagination} className="flex items-center gap-2">
+              {page > 1 ? (
+                <Link href={href(page - 1)} className={buttonClass}>← {t.stock.prev}</Link>
+              ) : (
+                <span className={`${buttonClass} pointer-events-none opacity-40`}>← {t.stock.prev}</span>
+              )}
+              <span className="px-1 tabular-nums">{t.stock.pageOf.replace("{p}", String(page)).replace("{pages}", String(pages))}</span>
+              {page < pages ? (
+                <Link href={href(page + 1)} className={buttonClass}>{t.stock.next} →</Link>
+              ) : (
+                <span className={`${buttonClass} pointer-events-none opacity-40`}>{t.stock.next} →</span>
+              )}
+            </nav>
+          )}
+        </div>
+        {states.length > 0 && <p className="mt-3 text-xs text-muted">⚠ {t.stock.mismatch}</p>}
       </Section>
 
+      {states.length > 0 && (
       <div className="grid gap-8 md:grid-cols-2">
         <Section title={t.stock.restockTitle}>
           <p className="mb-3 text-xs opacity-70">{t.stock.restockHelp}</p>
@@ -80,6 +142,8 @@ export default async function StockPage() {
           </form>
         </Section>
       </div>
+      )}
+      {states.length > 0 && <p className="-mt-2 text-xs text-muted">{t.stock.formsHint}</p>}
     </>
   );
 }

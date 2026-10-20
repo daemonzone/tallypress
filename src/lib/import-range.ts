@@ -2,7 +2,7 @@ import { and, count, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { items, ledgerEntries, monthClosings, orderLines, orders, restockLots, shops } from "@/db/schema";
 import { ensureMonthsClosed } from "./closing";
-import { COUNTED_STATUSES, freezeCosts } from "./costs";
+import { COUNTED_STATUSES, freezeCosts, relinkLines } from "./costs";
 import { withShopLock } from "./lock";
 import { hasOpening } from "./opening";
 import { importOrdersBetween } from "./sync/orders";
@@ -64,7 +64,7 @@ export async function importRange(
 
     const imported = await importOrdersBetween(shop, from, toExclusive);
     if (!extendsBack) {
-      await freezeCosts(shopId);
+      await relinkLines(shopId).then(() => freezeCosts(shopId));
       return { ok: true, orders: imported, newStart: null, lotsRebuilt: 0, closedMonths: await ensureMonthsClosed(shopId) };
     }
 
@@ -113,7 +113,7 @@ export async function importRange(
         .where(and(eq(ledgerEntries.shopId, shopId), eq(ledgerEntries.kind, "opening_balance")));
     });
 
-    await freezeCosts(shopId);
+    await relinkLines(shopId).then(() => freezeCosts(shopId));
     return { ok: true, orders: imported, newStart: input.from, lotsRebuilt: newLots.length, closedMonths: await ensureMonthsClosed(shopId) };
   }).catch((err): { locked: true; value: ImportRangeResult } => ({
     locked: true,

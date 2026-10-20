@@ -67,6 +67,12 @@ const paths: Record<string, ReactNode> = {
       <path d="M12 11v5M12 8h.01" />
     </>
   ),
+  search: (
+    <>
+      <circle cx="11" cy="11" r="7" />
+      <path d="M20 20l-3.5-3.5" />
+    </>
+  ),
   chevron: <path d="M6 9l6 6 6-6" />,
   alert: (
     <>

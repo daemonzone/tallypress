@@ -72,3 +72,12 @@ export function sumMoney(...values: string[]): string {
   const cents = values.reduce((acc, v) => acc + Math.round(parseFloat(v || "0") * 100), 0);
   return (cents / 100).toFixed(2);
 }
+
+/** Runs `fn` over `list` with at most `limit` calls in flight (gentle on a live shop). */
+export async function mapLimit<T>(list: T[], limit: number, fn: (item: T) => Promise<void>): Promise<void> {
+  let next = 0;
+  const worker = async () => {
+    while (next < list.length) await fn(list[next++]);
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, list.length) }, worker));
+}
