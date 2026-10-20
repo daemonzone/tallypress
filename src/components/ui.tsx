@@ -118,11 +118,11 @@ export function KeyValues({
       <tbody className="divide-y divide-line">
         {rows.map((r) => (
           <tr key={r.label} className={r.strong ? "font-semibold" : undefined}>
-            <th scope="row" className="w-2/3 py-2.5 pr-4 font-normal">
+            <th scope="row" className="w-2/3 py-2.5 pr-4 align-top font-normal">
               <span className={r.strong ? "" : "text-muted"}>{r.label}</span>
               {r.note && <span className="block text-xs font-normal text-muted">{r.note}</span>}
             </th>
-            <td className="py-2.5 text-right tabular-nums">{r.value}</td>
+            <td className="py-2.5 text-right align-top tabular-nums">{r.value}</td>
           </tr>
         ))}
       </tbody>
