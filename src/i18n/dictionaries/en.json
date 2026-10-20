@@ -64,7 +64,8 @@
     "saveDefault": "Save as default",
     "default": "Default",
     "allocTitle": "Where the account money goes",
-    "shortfallProvisional": "Shortfall (provisional)"
+    "locked": "There is no money left to take: nothing can be set aside for personal use until the shortfall is covered.",
+    "maxNote": "At most {pct}% can go to personal use without a shortfall."
   },
   "month": {
     "heading": "Month",

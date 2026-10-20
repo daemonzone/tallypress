@@ -26,15 +26,14 @@ interface Props {
     restock: string;
     restockHelp: string;
     shortfall: string;
-    shortfallProvisional: string;
+    locked: string;
+    maxNote: string; // "{pct}"
     saveDefault: string;
     default: string;
     allocTitle: string;
     vat: string;
     tax: string;
   };
-  /** The account balance is not aligned with the bank yet: a shortfall is shown calmly, as provisional. */
-  provisional?: boolean;
   saveAction: (formData: FormData) => void | Promise<void>;
 }
 
@@ -42,9 +41,17 @@ interface Props {
  * A live "what if" calculator: the percentage only changes what is shown here. It is
  * written to the shop only when "Save as default" is pressed.
  */
-export function Simulator({ locale, currency, defaultPct, net, withdrawn, cash, vat, tax, labels, provisional = false, saveAction }: Props) {
-  const [pct, setPct] = useState(defaultPct);
+export function Simulator({ locale, currency, defaultPct, net, withdrawn, cash, vat, tax, labels, saveAction }: Props) {
   const { money, pct: pctFmt } = formatters(locale, currency);
+
+  // Money can only be taken from what is really there: what is left once VAT and taxes are set aside.
+  // The share can't go above what that covers (counting what was already withdrawn); with nothing left
+  // there is no share to choose at all.
+  const free = cash - vat - tax;
+  const maxPct = net > 0 && free + withdrawn > 0 ? Math.min(100, Math.floor(((free + withdrawn) / net) * 100)) : 0;
+  const locked = maxPct === 0;
+  const [chosen, setPct] = useState(defaultPct);
+  const pct = Math.min(chosen, maxPct);
 
   const allowance = Math.round((Math.max(net, 0) * pct) / 100);
   const remaining = Math.max(allowance - withdrawn, 0);
@@ -69,11 +76,12 @@ export function Simulator({ locale, currency, defaultPct, net, withdrawn, cash, 
         <input
           type="range"
           min={0}
-          max={100}
+          max={Math.max(maxPct, 1)}
           step={1}
           value={pct}
+          disabled={locked}
           onChange={(e) => setPct(Number(e.target.value))}
-          className="mb-3 h-2 w-full cursor-pointer accent-[var(--accent)]"
+          className="mb-3 h-2 w-full cursor-pointer accent-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-40"
           aria-label={labels.pct}
         />
         <div className="flex items-center gap-2">
@@ -82,30 +90,36 @@ export function Simulator({ locale, currency, defaultPct, net, withdrawn, cash, 
             name="pct"
             type="number"
             min={0}
-            max={100}
+            max={maxPct}
             step="0.5"
             value={pct}
-            onChange={(e) => setPct(Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
-            className={`${inputClass} w-20 text-right`}
+            disabled={locked}
+            onChange={(e) => setPct(Math.min(maxPct, Math.max(0, Number(e.target.value) || 0)))}
+            className={`${inputClass} w-20 text-right disabled:opacity-50`}
           />
           <span className="text-sm text-muted">%</span>
-          <button type="submit" className={`${buttonClass} ml-auto`} disabled={pct === defaultPct}>
+          <button type="submit" className={`${buttonClass} ml-auto`} disabled={locked || pct === defaultPct}>
             {labels.saveDefault}
           </button>
         </div>
         <p className="mt-1.5 text-xs text-muted">
           {labels.default}: {defaultPct}%
         </p>
+        {locked ? (
+          <p className="mt-2 text-xs font-medium text-bad">{labels.locked}</p>
+        ) : (
+          maxPct < 100 && <p className="mt-2 text-xs text-muted">{labels.maxNote.replace("{pct}", String(maxPct))}</p>
+        )}
       </form>
 
       <div className="mb-5 rounded-xl bg-surface-2 p-4">
         <div className="text-xs font-medium text-muted">
-          {restock < 0 ? (provisional ? labels.shortfallProvisional : labels.shortfall) : labels.restock}
+          {restock < 0 ? labels.shortfall : labels.restock}
         </div>
         <div
-          className={`mt-1 flex items-center gap-2 text-3xl font-semibold tracking-tight ${restock < 0 && !provisional ? "text-bad" : ""}`}
+          className={`mt-1 flex items-center gap-2 text-3xl font-semibold tracking-tight ${restock < 0 ? "text-bad" : ""}`}
         >
-          {restock < 0 && !provisional && <Icon name="alert" className="h-6 w-6" />}
+          {restock < 0 && <Icon name="alert" className="h-6 w-6" />}
           {money(Math.abs(restock))}
         </div>
         <p className="mt-1 text-xs text-muted">{labels.restockHelp}</p>

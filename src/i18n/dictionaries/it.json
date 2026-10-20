@@ -64,7 +64,8 @@
     "saveDefault": "Salva come predefinita",
     "default": "Predefinita",
     "allocTitle": "Dove va il denaro sul conto",
-    "shortfallProvisional": "Ammanco (provvisorio)"
+    "locked": "Non ci sono soldi disponibili da prelevare: finché c'è un ammanco non si può destinare nulla all'uso personale.",
+    "maxNote": "Puoi destinare all'uso personale al massimo il {pct}% senza andare in ammanco."
   },
   "month": {
     "heading": "Mese",
