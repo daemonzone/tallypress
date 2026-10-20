@@ -1,0 +1,94 @@
+# Tallypress dev stack. Local use only: credentials below are throwaway.
+#
+#   docker compose up -d        -> postgres + WordPress/WooCommerce (seeded on first run)
+#   docker compose logs -f wp-setup
+#
+# Shop admin:  http://localhost:9080/wp-admin   (admin / admin)
+# Postgres:    postgres://tallypress:tallypress@localhost:9432/tallypress
+# MariaDB:     mysql://wordpress:wordpress@localhost:9306/wordpress   (root / root)
+
+name: tallypress
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: tallypress
+      POSTGRES_PASSWORD: tallypress
+      POSTGRES_DB: tallypress
+    ports:
+      - "${TALLYPRESS_DB_PORT:-9432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tallypress -d tallypress"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  wp-db:
+    image: mariadb:11
+    environment:
+      MARIADB_DATABASE: wordpress
+      MARIADB_USER: wordpress
+      MARIADB_PASSWORD: wordpress
+      MARIADB_ROOT_PASSWORD: root
+    ports:
+      - "${WP_DB_PORT:-9306}:3306"
+    volumes:
+      - wp_db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  wordpress:
+    image: wordpress:7-php8.3-apache
+    depends_on:
+      wp-db:
+        condition: service_healthy
+    ports:
+      - "${WP_PORT:-9080}:80"
+    environment:
+      WORDPRESS_DB_HOST: wp-db
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DEBUG: "1"
+      # WooCommerce only accepts consumer key/secret over HTTPS. For REST calls
+      # only (so wp-admin cookies keep working over plain http), pretend TLS.
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_ENVIRONMENT_TYPE', 'local');
+        if (isset($$_SERVER['REQUEST_URI']) && (strpos($$_SERVER['REQUEST_URI'], '/wp-json/') !== false || isset($$_GET['rest_route']))) {
+          $$_SERVER['HTTPS'] = 'on';
+        }
+    volumes:
+      - wp_data:/var/www/html
+
+  # One-shot: installs WP + WooCommerce, creates read-only API keys, seeds demo data.
+  # Idempotent; re-run with `docker compose run --rm wp-setup`.
+  wp-setup:
+    image: wordpress:cli-php8.3
+    user: "33:33"
+    depends_on:
+      - wordpress
+    restart: "no"
+    environment:
+      HOME: /tmp
+      WP_URL: "http://localhost:${WP_PORT:-9080}"
+      WC_CONSUMER_KEY: ck_tallypress_dev_0001
+      WC_CONSUMER_SECRET: cs_tallypress_dev_0001
+      WORDPRESS_DB_HOST: wp-db
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+    volumes:
+      - wp_data:/var/www/html
+      - ./docker/wordpress:/scripts:ro
+    entrypoint: ["sh", "/scripts/setup.sh"]
+
+volumes:
+  postgres_data:
+  wp_db_data:
+  wp_data:
