@@ -18,7 +18,8 @@
     "add": "Add",
     "save": "Save",
     "total": "Total",
-    "none": "—"
+    "none": "—",
+    "close": "Close"
   },
   "language": {
     "label": "Language",
@@ -79,12 +80,11 @@
     "lateAdjustments": "includes late changes to earlier months",
     "missingCost": "{n} sold line(s) have no purchase cost yet, so profit is overstated. Set it in Stock.",
     "cashTitle": "Shop account",
-    "start": "Balance carried in",
+    "start": "Previous month balance",
     "sales": "Sales collected",
-    "restocks": "Restocks paid",
+    "restocks": "Restocks",
     "withdrawals": "Withdrawals",
     "expenses": "Expenses",
-    "other": "Starting balance and adjustments",
     "end": "Balance at end of month",
     "variantsTitle": "By product and variation",
     "product": "Product",
@@ -100,7 +100,9 @@
     "netRevenueShort": "Net of VAT",
     "cogsShort": "Cost",
     "taxShort": "Tax",
-    "earningsShort": "Earnings"
+    "earningsShort": "Earnings",
+    "opening": "Opening deposit",
+    "adjustments": "Adjustments"
   },
   "stock": {
     "title": "Stock and purchase prices",

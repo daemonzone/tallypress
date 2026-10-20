@@ -16,7 +16,8 @@ export interface Flows {
   restock: number;
   withdrawal: number;
   expense: number;
-  other: number; // opening balance + manual adjustments
+  opening: number; // the starting deposit on the shop account
+  adjustment: number; // manual corrections
 }
 
 export interface MonthReport extends Figures {
@@ -106,13 +107,15 @@ export async function buildReport(shopId: string): Promise<Report | null> {
   const flowsByMonth = new Map<string, Flows>();
   let hasOpening = false;
   for (const r of ledgerRows) {
-    const f = flowsByMonth.get(r.month as string) ?? { sales: 0, restock: 0, withdrawal: 0, expense: 0, other: 0 };
+    const f = flowsByMonth.get(r.month as string) ?? { sales: 0, opening: 0, restock: 0, withdrawal: 0, expense: 0, adjustment: 0 };
     const amount = toCents(r.amount);
     if (r.kind === "restock") f.restock += amount;
     else if (r.kind === "withdrawal") f.withdrawal += amount;
     else if (r.kind === "expense") f.expense += amount;
-    else f.other += amount;
-    if (r.kind === "opening_balance") hasOpening = true;
+    else if (r.kind === "opening_balance") {
+      f.opening += amount;
+      hasOpening = true;
+    } else f.adjustment += amount;
     flowsByMonth.set(r.month as string, f);
   }
 
@@ -137,7 +140,7 @@ export async function buildReport(shopId: string): Promise<Report | null> {
     }
     const closing = closingByMonth.get(key);
     const live = ordersByMonth.get(key) ?? { orders: 0, gross: 0 };
-    const flows = { ...(flowsByMonth.get(key) ?? { sales: 0, restock: 0, withdrawal: 0, expense: 0, other: 0 }) };
+    const flows = { ...(flowsByMonth.get(key) ?? { sales: 0, opening: 0, restock: 0, withdrawal: 0, expense: 0, adjustment: 0 }) };
 
     const items: ItemRow[] = itemRowsRaw
       .filter((r) => r.month === key)
@@ -189,7 +192,7 @@ export async function buildReport(shopId: string): Promise<Report | null> {
     const start = carried;
     const end = closing
       ? toCents(closing.balance)
-      : start + flows.sales + flows.restock + flows.withdrawal + flows.expense + flows.other;
+      : start + flows.sales + flows.opening + flows.restock + flows.withdrawal + flows.expense + flows.adjustment;
     carried = end;
 
     months.push({

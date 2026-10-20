@@ -83,18 +83,21 @@ export function StatTile({
   icon,
   note,
   hero,
+  labelExtra,
 }: {
   label: string;
   value: ReactNode;
   icon?: IconName;
   note?: ReactNode;
   hero?: boolean;
+  labelExtra?: ReactNode;
 }) {
   return (
     <div>
       <div className="flex items-center gap-1.5 text-xs font-medium text-muted">
         {icon && <Icon name={icon} className="h-3.5 w-3.5" />}
         {label}
+        {labelExtra}
       </div>
       <div className={hero ? "mt-1 text-5xl font-semibold tracking-tight" : "mt-1 text-2xl font-semibold tracking-tight"}>
         {value}

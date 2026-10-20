@@ -18,7 +18,8 @@
     "add": "Aggiungi",
     "save": "Salva",
     "total": "Totale",
-    "none": "—"
+    "none": "—",
+    "close": "Chiudi"
   },
   "language": {
     "label": "Lingua",
@@ -79,12 +80,11 @@
     "lateAdjustments": "include modifiche tardive a mesi precedenti",
     "missingCost": "{n} riga/righe vendute senza costo d'acquisto: l'utile è sovrastimato. Impostalo in Magazzino.",
     "cashTitle": "Conto del negozio",
-    "start": "Saldo riportato",
+    "start": "Saldo mese precedente",
     "sales": "Vendite incassate",
-    "restocks": "Riassortimenti pagati",
+    "restocks": "Riassortimenti",
     "withdrawals": "Prelievi",
     "expenses": "Spese",
-    "other": "Saldo iniziale e rettifiche",
     "end": "Saldo a fine mese",
     "variantsTitle": "Per prodotto e variante",
     "product": "Prodotto",
@@ -100,7 +100,9 @@
     "netRevenueShort": "Netto IVA",
     "cogsShort": "Costo",
     "taxShort": "Imposte",
-    "earningsShort": "Guadagno"
+    "earningsShort": "Guadagno",
+    "opening": "Versamento iniziale",
+    "adjustments": "Rettifiche"
   },
   "stock": {
     "title": "Magazzino e prezzi d'acquisto",

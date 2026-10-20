@@ -9,6 +9,7 @@ import { getCurrentShop } from "@/lib/shop";
 import { MonthColumns, StackedBar, VIZ } from "./charts";
 import { formatters, monthHref, monthLabel, type Formatters } from "./format";
 import { Icon } from "./icons";
+import { InfoModal } from "./info-modal";
 import { Simulator } from "./simulator";
 import { Badge, Card, DataTable, KeyValues, Notice, Section, StatTile, Td } from "./ui";
 
@@ -115,6 +116,51 @@ function Overview({ report, stockValue, t, fmt }: { report: Report; stockValue: 
   );
 }
 
+/** The month's calculation as a statement: running results in the middle, the outcome in the footer. */
+function GrossToNet({ month: m, t, fmt }: { month: MonthReport; t: Dictionary; fmt: Formatters }) {
+  const line = (label: string, value: string, minus = false) => (
+    <div className="flex items-baseline justify-between gap-4 px-3 py-2 text-sm">
+      <span className={minus ? "text-muted" : ""}>
+        {minus && <span className="mr-2 inline-block w-3 text-center font-medium">−</span>}
+        {label}
+      </span>
+      <span className="tabular-nums">{value}</span>
+    </div>
+  );
+  const result = (label: string, value: string) => (
+    <div className="my-1 flex items-baseline justify-between gap-4 rounded-lg bg-surface-2 px-3 py-2.5 text-sm font-semibold">
+      <span>
+        <span className="mr-2 inline-block w-3 text-center">=</span>
+        {label}
+      </span>
+      <span className="tabular-nums">{value}</span>
+    </div>
+  );
+
+  return (
+    <div>
+      {line(t.month.gross, fmt.money(m.gross))}
+      {line(t.month.vat, fmt.money(-m.vat), true)}
+      {result(t.month.netRevenue, fmt.money(m.netRevenue))}
+      {line(t.month.cogs, fmt.money(-m.cogs), true)}
+      {result(t.month.profit, fmt.money(m.profit))}
+
+      <div className="mt-4 grid grid-cols-2 overflow-hidden rounded-xl border border-line">
+        <div className="p-4">
+          <div className="text-xs font-medium text-muted">− {t.month.taxReserve}</div>
+          <div className="mt-1 text-xl font-semibold tabular-nums">{fmt.money(-m.taxReserve)}</div>
+        </div>
+        <div className="border-l border-line bg-accent-soft p-4 text-right">
+          <div className="text-xs font-medium text-muted">= {t.month.netEarnings}</div>
+          <div className={`mt-1 text-3xl font-bold tracking-tight tabular-nums ${m.netEarnings < 0 ? "text-bad" : ""}`}>
+            {fmt.money(m.netEarnings)}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function MonthPanel({
   month: m,
   report,
@@ -129,7 +175,6 @@ function MonthPanel({
   locale: string;
 }) {
   const f = m.flows;
-  const other = f.other + f.expense;
   const columns = report.months.slice(-12).map((x) => ({
     key: x.key,
     label: new Intl.DateTimeFormat(locale, { month: "short", year: "2-digit", timeZone: "UTC" }).format(
@@ -190,6 +235,16 @@ function MonthPanel({
             hero
             label={t.month.netEarnings}
             icon="trend"
+            labelExtra={
+              <InfoModal
+                label={t.month.detail}
+                title={t.month.detail}
+                subtitle={monthLabel(m.key, locale)}
+                closeLabel={t.common.close}
+              >
+                <GrossToNet month={m} t={t} fmt={fmt} />
+              </InfoModal>
+            }
             value={<span className={m.netEarnings < 0 ? "text-bad" : ""}>{fmt.money(m.netEarnings)}</span>}
             note={m.netEarnings < 0 ? t.month.loss : undefined}
           />
@@ -215,34 +270,21 @@ function MonthPanel({
         </Section>
       )}
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Section title={t.month.detail}>
-          <KeyValues
-            rows={[
-              { label: t.month.gross, value: fmt.money(m.gross) },
-              { label: t.month.vat, value: fmt.money(-m.vat) },
-              { label: t.month.netRevenue, value: fmt.money(m.netRevenue) },
-              { label: t.month.cogs, value: fmt.money(-m.cogs) },
-              { label: t.month.profit, value: fmt.money(m.profit), strong: true },
-              { label: t.month.taxReserve, value: fmt.money(-m.taxReserve) },
-              { label: t.month.netEarnings, value: fmt.money(m.netEarnings), strong: true },
-            ]}
-          />
-        </Section>
-
-        <Section title={t.month.cashTitle}>
-          <KeyValues
-            rows={[
-              { label: t.month.start, value: fmt.money(m.start) },
-              { label: t.month.sales, value: fmt.money(f.sales) },
-              { label: t.month.restocks, value: fmt.money(f.restock) },
-              { label: t.month.withdrawals, value: fmt.money(f.withdrawal) },
-              { label: `${t.month.expenses} / ${t.month.other}`, value: fmt.money(other) },
-              { label: t.month.end, value: fmt.money(m.end), strong: true },
-            ]}
-          />
-        </Section>
-      </div>
+      <Section title={t.month.cashTitle}>
+        <KeyValues
+          rows={[
+            { label: t.month.start, value: fmt.money(m.start) },
+            { label: t.month.sales, value: fmt.money(f.sales) },
+            // Shown only when there is something in them (the deposit lands in the first month).
+            ...(f.opening !== 0 ? [{ label: t.month.opening, value: fmt.money(f.opening) }] : []),
+            { label: t.month.restocks, value: fmt.money(f.restock) },
+            { label: t.month.withdrawals, value: fmt.money(f.withdrawal) },
+            { label: t.month.expenses, value: fmt.money(f.expense) },
+            ...(f.adjustment !== 0 ? [{ label: t.month.adjustments, value: fmt.money(f.adjustment) }] : []),
+            { label: t.month.end, value: fmt.money(m.end), strong: true },
+          ]}
+        />
+      </Section>
 
       <Section title={t.month.variantsTitle}>
         {m.items.length === 0 ? (
