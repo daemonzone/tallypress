@@ -1,6 +1,8 @@
 import { eq } from "drizzle-orm";
 import { db, pool } from "@/db";
 import { shops } from "@/db/schema";
+import { ensureMonthsClosed } from "@/lib/closing";
+import { freezeCosts } from "@/lib/costs";
 import { syncItems } from "./items";
 import { syncOrders } from "./orders";
 
@@ -28,6 +30,9 @@ export async function syncShop(shopId: string): Promise<SyncResult> {
 
       const itemCount = await syncItems(shop);
       const orderCount = await syncOrders(shop);
+      // Give new sales their purchase cost, then close any month that has ended.
+      await freezeCosts(shopId);
+      await ensureMonthsClosed(shopId);
 
       await db
         .update(shops)

@@ -1,36 +1,261 @@
 # Tallypress
 
-Monthly sales, margin and cash tracking for WooCommerce shops. Multi-shop by design
-(every table is scoped by `shop_id`); the MVP runs against one fixed shop.
+Monthly sales, margin and cash tracking for WooCommerce shops.
 
-## Local development
+Tallypress reads orders and products from a WooCommerce shop, lets the owner record what
+the stock cost and what was taken out of the shop's money, and answers three questions
+each month: **how much did we sell, how much did we really earn, and how much can I spend
+on restocking and on myself?** It works for any kind of goods, not only clothes, and is
+multi-shop by design.
+
+> **Status: MVP, running locally.** Everything below marked "Done" has been exercised
+> against the Docker WooCommerce shop. There are no automated tests yet. See
+> [Known limitations](#known-limitations) and the [roadmap](#roadmap).
+
+## What it does today
+
+| Area | State |
+|---|---|
+| Sync from WooCommerce (products, variations, orders, refunds) | Done, incremental, safe to repeat |
+| Purchase cost per item (moving average) frozen onto each sold line | Done |
+| Monthly panel: orders, gross, VAT, net, cost of goods, income-tax reserve, net earnings | Done |
+| Breakdown per product / variation, with shipping and refunds as a separate row | Done |
+| Shop account (cash) per month with balance carried forward | Done |
+| Automatic month closing with immutable snapshots | Done |
+| Overview "up to date": cash, reserves, net earnings, invested, ROI | Done |
+| Live owner-share simulator ("what can I spend?") | Done |
+| Restock and withdrawal recording, manual cost for items without history | Done |
+| Starting point ("zero time"): date, bank balance, opening stock and prices | Done |
+| Italian and English UI, per-shop default language | Done |
+| Authentication | Not yet (planned: Supabase) |
+| Stock-change detection (find unrecorded restocks) | Not yet |
+| Monthly expenses, the owner's own shipping costs | Not yet |
+
+## The pages
+
+- **Panel** (`/`, `/month/YYYY-MM`): the current month plus the overview and simulator;
+  month tabs open earlier months (closed ones show their frozen figures).
+- **Stock** (`/stock`): tracked stock vs. WooCommerce stock (a ⚠ means they differ, which
+  usually means an unrecorded restock), average cost, stock value; forms to record a
+  restock and to set a manual cost.
+- **Ledger** (`/ledger`): every movement of the shop account, and a withdrawal form.
+- **Setup** (`/setup`): shop tax profile, WooCommerce sync status and the "Sync now"
+  button, and the one-time starting-point form.
+
+## How the money is calculated
+
+All figures are in the shop's currency (one currency per shop, locked once the starting
+point exists) and are computed in integer cents.
+
+**Which orders count.** Orders in status `processing` or `completed`, placed on or after
+the shop's starting date. Cancelled, failed and refunded-status orders do not. Partial
+refunds reduce the order's collected amount.
+
+**Per month** (month boundaries follow the shop's timezone, `Europe/Rome` by default):
+
+```
+gross        = Σ (order total - refunded amount)          VAT included, shipping included
+VAT          = gross × vat% / (100 + vat%)                from the shop's tax profile
+net of VAT   = gross - VAT
+cost of goods= Σ quantity × purchase cost frozen on the line
+profit       = net of VAT - cost of goods
+tax reserve  = income tax % × (profit, or net of VAT if the profile says "revenue")
+net earnings = profit - tax reserve
+```
+
+The tax profile is a setting per shop: VAT %, income-tax %, and whether the income tax is
+applied to profit (ordinary regime: purchases are deductible) or to revenue (flat regime).
+Income tax is *set aside*, not paid: it shows up as a reserve so the owner never counts it
+as spendable.
+
+**Purchase cost: moving average.** Each item keeps restock lots (quantity, unit cost
+without VAT). The average blends in at every purchase and a sale leaves it unchanged:
+10 blazers at 10 €, 4 sold, 10 more at 12 € → 16 units, average
+`(6 × 10 + 10 × 12) / 16 = 11.25`. When an order line is first costed, that unit cost is
+**frozen** on the line, so a later restock never rewrites an earlier month. Items with no
+purchase history can use a manual unit cost; a line with no cost at all is counted at 0
+and the panel warns about it.
+
+**Shop account and month closing.**
+
+```
+balance at end of month = balance carried in + sales collected
+                          + restocks (negative) + withdrawals (negative)
+                          + expenses (negative) + starting balance / adjustments
+```
+
+After a month ends, it is closed once: its figures and ending balance are stored and the
+next month starts from that balance. Closing runs at the end of every sync (the cron
+endpoint), and also lazily when the panel is opened, so a missed cron run never leaves a
+month open. It is idempotent. If a closed month later changes in WooCommerce (a late
+refund or order), the difference is not edited into the old month: it is booked as a
+"late adjustment" in the first open month, and shown as such.
+
+**The owner-share simulator.** Given a percentage of net earnings kept for personal use:
+
+```
+personal share       = pct × net earnings so far
+still to take        = max(personal share - already withdrawn, 0)
+available to restock = cash - VAT set aside - income tax set aside - still to take
+```
+
+Moving the slider recomputes instantly in the browser and writes nothing. "Save as
+default" stores it on the shop. Real withdrawals are ledger entries.
+
+**ROI** = net earnings so far ÷ invested, where invested = opening stock value + every
+restock.
+
+## Architecture
+
+- **Next.js 16** (App Router), React 19, Tailwind 4, TypeScript. Dev server on **port 9000**.
+  Cache Components are off on purpose: every page reads live data.
+- **Postgres** through **Drizzle ORM** (`pg` driver). Plain Postgres; no Timescale needed.
+  Neon works with the same connection string.
+- **WooCommerce REST API** (`wc/v3`) with a read-only key. WooCommerce is the source of
+  truth for products and orders; the database is a synced copy plus Tallypress's own data
+  (costs, ledger, closings). Direct reads of the WordPress database and the event store
+  were considered and rejected for the MVP: the REST API is stable, safe to expose to a
+  remote host, and carries refunds and statuses.
+- **i18n** without a library: JSON dictionaries (`en`, `it`), the visitor's cookie wins,
+  otherwise the shop's default language.
+- **Multi-shop from the start:** every table below `shops` has a `shop_id`, uniqueness is
+  per shop, and everything is scoped by `getCurrentShopId()` (`src/lib/shop.ts`). For the
+  MVP it returns the fixed `DEFAULT_SHOP_ID`; later it can come from a route or a session.
+
+### Data model (`src/db/schema.ts`)
+
+| Table | Purpose |
+|---|---|
+| `shops` | Shop settings: WooCommerce URL and keys, currency, locale, timezone, tax profile, owner-share default, starting date, sync cursor/error |
+| `items` | A sellable unit: a simple product or one variation; Woo stock; optional manual cost |
+| `orders`, `order_lines` | Synced orders (all statuses) and their lines; `unit_cost_snapshot` is the frozen purchase cost |
+| `restock_lots` | Purchases: quantity and unit cost; `opening` lots come from the starting point |
+| `ledger_entries` | Manual money movements: starting balance, restocks, withdrawals, expenses, adjustments |
+| `month_closings` | Immutable monthly snapshot: figures, adjustments and the balance carried forward |
+
+### Code layout
+
+```
+src/
+  app/                 pages: / , month/[month], stock, ledger, setup, api/cron/sync
+  components/          dashboard, simulator (client), nav, shared table/form UI
+  db/                  schema + client
+  i18n/                dictionaries (en, it), locale lookup, language action
+  lib/
+    woo.ts             WooCommerce REST client (paging, auth)
+    sync/              items + orders import, per-shop lock, "Sync now" action
+    costs.ts           moving-average replay, cost freezing, stock state
+    report.ts          monthly figures, cash balance, overview
+    closing.ts         idempotent month closing
+    money.ts           cents helpers, tax/net formulas, month keys
+    actions.ts         server actions: restock, withdrawal, manual cost, share, starting point
+    shop.ts            getCurrentShopId() / getCurrentShop()
+docker/wordpress/      dev WooCommerce install and seed scripts
+drizzle/               SQL migrations
+scripts/               dev seed (creates the dev shop)
+```
+
+## Running it locally
+
+Requirements: Docker, Node 24.
 
 ```bash
 cp .env.example .env
-docker compose up -d        # Postgres :9432, WordPress/WooCommerce :9080, MariaDB :9306
+docker compose up -d      # Postgres :9432, WordPress/WooCommerce :9080, MariaDB :9306
 npm install
-npm run db:migrate          # apply Drizzle migrations
-npm run db:seed             # create the dev shop (DEFAULT_SHOP_ID)
-npm run dev                 # http://localhost:9000
+npm run db:migrate        # apply migrations
+npm run db:seed           # create the dev shop (id = DEFAULT_SHOP_ID)
+npm run dev               # http://localhost:9000
 ```
 
-WooCommerce admin: http://localhost:9080/wp-admin (`admin` / `admin`).
-The seeded demo catalog, orders and a read-only REST key are created by the `wp-setup`
-container on first start.
+Then open **Setup**, press **Sync now**, and fill in the starting point (date, bank
+balance, and a purchase price for each item; quantities are pre-filled from WooCommerce).
+The panel appears once that is saved.
 
-## Sync
+| Service | URL |
+|---|---|
+| Tallypress | http://localhost:9000 |
+| WooCommerce shop / admin | http://localhost:9080 , `/wp-admin` (`admin` / `admin`) |
+| Postgres (Tallypress) | `postgres://tallypress:tallypress@localhost:9432/tallypress` |
+| MariaDB (WordPress) | `mysql://wordpress:wordpress@localhost:9306/wordpress` (root / `root`) |
 
-`syncShop(shopId)` (`src/lib/sync/`) pulls products/variations and orders from WooCommerce into
-Postgres. The first run imports everything since the shop's baseline; later runs only fetch orders
-modified since the last completed sync. Trigger it with the "Sync now" button or:
+The `wp-setup` container installs WooCommerce on first start and seeds a demo shop: IVA
+22% included in prices, variable and simple products, orders in several statuses across
+two months, and one partial refund. It also creates a fixed read-only REST key (dev only).
+To add more demo products and an order (idempotent by SKU):
+
+```bash
+docker compose run --rm --no-deps -T --entrypoint sh wp-setup \
+  -c 'wp --path=/var/www/html eval-file /scripts/add-products.php'
+```
+
+`docker compose down -v` wipes the stack; `up -d` reinstalls and reseeds it.
+
+### Useful commands
+
+| Command | What it does |
+|---|---|
+| `npm run dev` / `build` / `start` | Dev server, production build, production server (port 9000) |
+| `npm run db:generate` | Create a migration after editing `src/db/schema.ts` |
+| `npm run db:migrate` | Apply migrations |
+| `npm run db:seed` | Create or refresh the dev shop |
+| `npm run typecheck` / `lint` | Type-check (generates route types first) / ESLint |
+
+### Syncing and closing from outside
 
 ```bash
 curl -X POST -H "Authorization: Bearer $CRON_SECRET" http://localhost:9000/api/cron/sync
 ```
 
-## Layout
+Syncs every active shop (products, then orders), gives new sales their cost, and closes any
+finished month. `GET` works too, for Vercel Cron. Without the secret it answers 401.
 
-- `src/db/schema.ts`: Drizzle schema; `npm run db:generate` after changing it.
-- `src/lib/shop.ts`: `getCurrentShopId()`, the single place that picks the active shop.
-- `src/i18n/`: EN/IT dictionaries; locale = cookie, else the shop's default.
-- `docker/wordpress/`: WooCommerce install and seed scripts for the dev stack.
+### Environment
+
+| Variable | Meaning |
+|---|---|
+| `DATABASE_URL` | Postgres connection string |
+| `DEFAULT_SHOP_ID` | The shop every request is scoped to for now |
+| `CRON_SECRET` | Bearer token for `/api/cron/sync` |
+| `DEV_WOO_URL`, `DEV_WOO_CONSUMER_KEY`, `DEV_WOO_CONSUMER_SECRET` | Used only by `db:seed` |
+| `WP_PORT`, `WP_DB_PORT`, `TALLYPRESS_DB_PORT` | Host ports of the Docker services (all 9000+) |
+
+## Known limitations
+
+These are deliberate MVP simplifications or gaps, not hidden behaviour.
+
+- **No authentication.** Anyone who can reach the app can read and edit the books. Fine on
+  localhost; add auth (Supabase is planned) before any public deployment. Access checks are
+  centred on `getCurrentShopId()`.
+- **Secrets in the database.** WooCommerce keys are stored as plain text per shop. Encrypt
+  them or use a secrets store before hosting.
+- **Restocks and withdrawals are booked "now".** There is no date field, so a closed month
+  is never edited after the fact.
+- **VAT comes from the shop's tax profile**, not from WooCommerce's per-order tax figures.
+  VAT paid on purchases is not tracked (purchase prices are entered without VAT) and
+  neither are payments of VAT or income tax: the reserves simply accumulate.
+- **Refunds reduce the collected amount only.** They do not reduce the cost of goods or put
+  stock back, and per-variation rows are shown before refunds (refunds land in the
+  "shipping, refunds and adjustments" row).
+- **Income-tax reserve is clamped per month** (never negative), so monthly reserves can
+  exceed what a yearly calculation would give. A flat rate such as 56% is a conservative
+  ceiling, not a real tax computation: confirm the figures with an accountant.
+- **Late changes to closed months** are folded into the first open month as an adjustment
+  of the collected amount; their effect on cost of goods is not recomputed.
+- **Products are re-read in full on every sync** (cheap, idempotent, no duplicates);
+  orders are incremental.
+- **Stock changes are not detected automatically.** The Stock page flags differences
+  between tracked and WooCommerce stock, but you record restocks yourself.
+- **No automated tests.** Behaviour was verified by hand against the Docker shop; the cost
+  and money logic is pure and ready to unit-test.
+- **Single shop in the UI.** The schema supports many; selecting between them is not built.
+
+## Roadmap
+
+1. Detect unexplained stock increases and offer them as restock / return / correction.
+2. Monthly expenses and the owner's own shipping costs.
+3. Unit tests for `costs.ts`, `money.ts` and the report maths; an end-to-end check.
+4. Authentication (Supabase), encrypted shop credentials, shop selector.
+5. Vercel deployment on Neon, with `vercel.ts` cron for `/api/cron/sync`.
+6. Optional: payment confirmation from the event store, payment fees, ordinary-regime VAT
+   on purchases.

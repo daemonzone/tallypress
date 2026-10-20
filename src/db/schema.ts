@@ -161,6 +161,8 @@ export const monthClosings = pgTable(
     month: date("month").notNull(),
     ordersCount: integer("orders_count").notNull(),
     grossTotal: numeric("gross_total", { precision: 14, scale: 2 }).notNull(),
+    // Late changes (refunds, orders) to earlier closed months, folded into this one.
+    adjustments: numeric("adjustments", { precision: 14, scale: 2 }).notNull().default("0"),
     vatTotal: numeric("vat_total", { precision: 14, scale: 2 }).notNull(),
     cogsTotal: numeric("cogs_total", { precision: 14, scale: 2 }).notNull(),
     taxReserve: numeric("tax_reserve", { precision: 14, scale: 2 }).notNull(),

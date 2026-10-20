@@ -3,40 +3,149 @@
     "name": "Tallypress",
     "tagline": "Monthly sales, margin and cash for your WooCommerce shop"
   },
+  "nav": {
+    "panel": "Panel",
+    "stock": "Stock",
+    "ledger": "Ledger",
+    "setup": "Setup"
+  },
+  "common": {
+    "item": "Item",
+    "quantity": "Quantity",
+    "amount": "Amount",
+    "note": "Note",
+    "date": "Date",
+    "add": "Add",
+    "save": "Save",
+    "total": "Total",
+    "none": "—"
+  },
   "language": {
     "label": "Language",
     "en": "English",
     "it": "Italiano",
     "apply": "Apply"
   },
-  "setup": {
-    "noShopTitle": "No shop configured",
-    "noShopBody": "Create the dev shop with `npm run db:seed`, then reload this page."
+  "setupNeeded": {
+    "title": "No shop configured",
+    "body": "Create the dev shop with `npm run db:seed`, then reload this page.",
+    "openingTitle": "Set the starting point first",
+    "openingBody": "Tallypress needs your starting bank balance and opening stock before it can show results.",
+    "openingLink": "Go to Setup"
   },
-  "shop": {
+  "overview": {
+    "title": "Shop overview, up to date",
+    "cash": "Money in the shop account",
+    "vat": "Set aside for VAT",
+    "tax": "Set aside for income tax",
+    "net": "Net earnings so far",
+    "withdrawn": "Already withdrawn",
+    "invested": "Invested in stock",
+    "roi": "ROI (net earnings ÷ invested)",
+    "roiHelp": "Invested = opening stock value + all restocks."
+  },
+  "simulator": {
+    "title": "What can I spend? (simulation)",
+    "help": "Move the percentage to see the effect live. Nothing changes until you save it as the default.",
+    "pct": "Share of net earnings kept for personal use",
+    "allowance": "Personal share of net earnings",
+    "withdrawn": "Already withdrawn",
+    "remaining": "Still available for personal use",
+    "restock": "Available to restock",
+    "restockHelp": "Money in the account, minus VAT and tax set aside, minus the personal share still to take.",
+    "shortfall": "Shortfall",
+    "saveDefault": "Save as default",
+    "default": "Default"
+  },
+  "month": {
+    "heading": "Month",
+    "open": "open",
+    "closed": "closed",
+    "current": "current month",
+    "orders": "Orders placed",
+    "gross": "Gross total (VAT included)",
+    "vat": "VAT",
+    "netRevenue": "Net of VAT",
+    "cogs": "Purchase cost of goods sold",
+    "profit": "Profit before income tax",
+    "taxReserve": "Income tax set aside",
+    "netEarnings": "Net earnings",
+    "lateAdjustments": "includes late changes to earlier months",
+    "missingCost": "{n} sold line(s) have no purchase cost yet, so profit is overstated. Set it in Stock.",
+    "cashTitle": "Shop account",
+    "start": "Balance carried in",
+    "sales": "Sales collected",
+    "restocks": "Restocks paid",
+    "withdrawals": "Withdrawals",
+    "expenses": "Expenses",
+    "other": "Starting balance and adjustments",
+    "end": "Balance at end of month",
+    "variantsTitle": "By product and variation",
+    "product": "Product",
+    "qty": "Sold",
+    "shipping": "Shipping, refunds and adjustments",
+    "noData": "No orders this month yet.",
+    "months": "Months"
+  },
+  "stock": {
+    "title": "Stock and purchase prices",
+    "item": "Item",
+    "woo": "In WooCommerce",
+    "tracked": "Tracked here",
+    "avg": "Average cost",
+    "manual": "Manual cost",
+    "value": "Stock value",
+    "mismatch": "differs from WooCommerce: was a restock not recorded?",
+    "restockTitle": "Record a restock",
+    "unitCost": "Unit cost (without VAT)",
+    "restockHelp": "Adds the lot, blends it into the average cost, and takes the amount out of the shop account.",
+    "manualTitle": "Set a manual cost",
+    "manualHelp": "For items with no purchase history, such as products without stock tracking.",
+    "noItems": "No products yet. Sync from WooCommerce in Setup."
+  },
+  "ledger": {
+    "title": "Shop account movements",
+    "kind": "Type",
+    "kinds": {
+      "opening_balance": "Starting balance",
+      "restock": "Restock",
+      "withdrawal": "Withdrawal",
+      "expense": "Expense",
+      "adjustment": "Adjustment"
+    },
+    "withdrawTitle": "Record a withdrawal",
+    "withdrawHelp": "For example your salary or personal expenses. It is booked today.",
+    "empty": "No movements yet.",
+    "salesNote": "Sales are not listed here: they come from WooCommerce orders."
+  },
+  "setup": {
+    "shopTitle": "Shop",
     "currency": "Currency",
     "vat": "VAT",
-    "incomeTax": "Income tax reserve",
-    "taxBase": "Tax base",
-    "taxBaseRevenue": "revenue",
+    "incomeTax": "Income tax set aside",
+    "taxBase": "Income tax is applied to",
+    "taxBaseRevenue": "revenue (net of VAT)",
     "taxBaseProfit": "profit",
     "baseline": "Starting point",
-    "baselineMissing": "not set yet"
-  },
-  "panel": {
-    "ordersPlaced": "Orders placed",
-    "gross": "Gross total",
-    "net": "Net earnings",
-    "balance": "Shop balance",
-    "notSynced": "Totals are not computed yet."
-  },
-  "sync": {
-    "title": "WooCommerce data",
-    "button": "Sync now",
-    "last": "Last sync",
+    "baselineMissing": "not set yet",
+    "syncTitle": "WooCommerce data",
+    "syncNow": "Sync now",
+    "lastSync": "Last sync",
     "never": "never",
-    "items": "Products and variations",
+    "products": "Products and variations",
     "orders": "Orders",
-    "error": "Last sync failed"
+    "syncFailed": "Last sync failed",
+    "openingTitle": "Starting point",
+    "openingDone": "The starting point is recorded. Currency and starting point can no longer be changed.",
+    "openingIntro": "Choose the day Tallypress starts counting, the money in the shop account that day, and the stock you had with its purchase price (without VAT). Orders before that day are ignored.",
+    "needSync": "Sync from WooCommerce first, so the product list is available.",
+    "startDate": "Start date",
+    "balance": "Shop account balance",
+    "stockAtStart": "Stock at the start date",
+    "suggested": "Suggested from WooCommerce",
+    "qtyAtStart": "Quantity",
+    "costAtStart": "Unit cost (without VAT)",
+    "openingSave": "Save starting point",
+    "openingWarn": "This can be done only once."
   }
 }

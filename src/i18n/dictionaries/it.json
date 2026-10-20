@@ -3,40 +3,149 @@
     "name": "Tallypress",
     "tagline": "Vendite, margini e cassa mensili del tuo negozio WooCommerce"
   },
+  "nav": {
+    "panel": "Pannello",
+    "stock": "Magazzino",
+    "ledger": "Movimenti",
+    "setup": "Impostazioni"
+  },
+  "common": {
+    "item": "Articolo",
+    "quantity": "Quantità",
+    "amount": "Importo",
+    "note": "Nota",
+    "date": "Data",
+    "add": "Aggiungi",
+    "save": "Salva",
+    "total": "Totale",
+    "none": "—"
+  },
   "language": {
     "label": "Lingua",
     "en": "English",
     "it": "Italiano",
     "apply": "Applica"
   },
-  "setup": {
-    "noShopTitle": "Nessun negozio configurato",
-    "noShopBody": "Crea il negozio di sviluppo con `npm run db:seed`, poi ricarica la pagina."
+  "setupNeeded": {
+    "title": "Nessun negozio configurato",
+    "body": "Crea il negozio di sviluppo con `npm run db:seed`, poi ricarica la pagina.",
+    "openingTitle": "Imposta prima il punto di partenza",
+    "openingBody": "Tallypress ha bisogno del saldo iniziale del conto del negozio e del magazzino di partenza per mostrare i risultati.",
+    "openingLink": "Vai alle Impostazioni"
   },
-  "shop": {
+  "overview": {
+    "title": "Situazione del negozio, ad oggi",
+    "cash": "Soldi sul conto del negozio",
+    "vat": "Accantonato per l'IVA",
+    "tax": "Accantonato per le imposte",
+    "net": "Guadagno netto finora",
+    "withdrawn": "Già prelevato",
+    "invested": "Investito in magazzino",
+    "roi": "ROI (guadagno netto ÷ investito)",
+    "roiHelp": "Investito = valore del magazzino iniziale + tutti i riassortimenti."
+  },
+  "simulator": {
+    "title": "Quanto posso spendere? (simulazione)",
+    "help": "Sposta la percentuale per vedere subito l'effetto. Non cambia nulla finché non la salvi come predefinita.",
+    "pct": "Quota del guadagno netto per uso personale",
+    "allowance": "Quota personale del guadagno netto",
+    "withdrawn": "Già prelevato",
+    "remaining": "Ancora disponibile per uso personale",
+    "restock": "Disponibile per il riassortimento",
+    "restockHelp": "Soldi sul conto, meno IVA e imposte accantonate, meno la quota personale ancora da prelevare.",
+    "shortfall": "Ammanco",
+    "saveDefault": "Salva come predefinita",
+    "default": "Predefinita"
+  },
+  "month": {
+    "heading": "Mese",
+    "open": "aperto",
+    "closed": "chiuso",
+    "current": "mese corrente",
+    "orders": "Ordini ricevuti",
+    "gross": "Totale lordo (IVA inclusa)",
+    "vat": "IVA",
+    "netRevenue": "Al netto dell'IVA",
+    "cogs": "Costo d'acquisto del venduto",
+    "profit": "Utile prima delle imposte",
+    "taxReserve": "Imposte accantonate",
+    "netEarnings": "Guadagno netto",
+    "lateAdjustments": "include modifiche tardive a mesi precedenti",
+    "missingCost": "{n} riga/righe vendute senza costo d'acquisto: l'utile è sovrastimato. Impostalo in Magazzino.",
+    "cashTitle": "Conto del negozio",
+    "start": "Saldo riportato",
+    "sales": "Vendite incassate",
+    "restocks": "Riassortimenti pagati",
+    "withdrawals": "Prelievi",
+    "expenses": "Spese",
+    "other": "Saldo iniziale e rettifiche",
+    "end": "Saldo a fine mese",
+    "variantsTitle": "Per prodotto e variante",
+    "product": "Prodotto",
+    "qty": "Venduti",
+    "shipping": "Spedizioni, rimborsi e rettifiche",
+    "noData": "Ancora nessun ordine in questo mese.",
+    "months": "Mesi"
+  },
+  "stock": {
+    "title": "Magazzino e prezzi d'acquisto",
+    "item": "Articolo",
+    "woo": "In WooCommerce",
+    "tracked": "Registrato qui",
+    "avg": "Costo medio",
+    "manual": "Costo manuale",
+    "value": "Valore a magazzino",
+    "mismatch": "diverso da WooCommerce: manca un riassortimento?",
+    "restockTitle": "Registra un riassortimento",
+    "unitCost": "Costo unitario (senza IVA)",
+    "restockHelp": "Aggiunge il lotto, lo fonde nel costo medio e scala l'importo dal conto del negozio.",
+    "manualTitle": "Imposta un costo manuale",
+    "manualHelp": "Per articoli senza storico d'acquisto, come i prodotti senza gestione del magazzino.",
+    "noItems": "Ancora nessun prodotto. Sincronizza da WooCommerce nelle Impostazioni."
+  },
+  "ledger": {
+    "title": "Movimenti del conto del negozio",
+    "kind": "Tipo",
+    "kinds": {
+      "opening_balance": "Saldo iniziale",
+      "restock": "Riassortimento",
+      "withdrawal": "Prelievo",
+      "expense": "Spesa",
+      "adjustment": "Rettifica"
+    },
+    "withdrawTitle": "Registra un prelievo",
+    "withdrawHelp": "Ad esempio il tuo stipendio o spese personali. Viene registrato oggi.",
+    "empty": "Ancora nessun movimento.",
+    "salesNote": "Le vendite non sono elencate qui: arrivano dagli ordini WooCommerce."
+  },
+  "setup": {
+    "shopTitle": "Negozio",
     "currency": "Valuta",
     "vat": "IVA",
-    "incomeTax": "Accantonamento imposte",
-    "taxBase": "Base imponibile",
-    "taxBaseRevenue": "ricavi",
+    "incomeTax": "Imposte accantonate",
+    "taxBase": "Le imposte si applicano su",
+    "taxBaseRevenue": "ricavi (al netto dell'IVA)",
     "taxBaseProfit": "utile",
     "baseline": "Punto di partenza",
-    "baselineMissing": "non ancora impostato"
-  },
-  "panel": {
-    "ordersPlaced": "Ordini ricevuti",
-    "gross": "Totale lordo",
-    "net": "Guadagno netto",
-    "balance": "Saldo del negozio",
-    "notSynced": "I totali non sono ancora calcolati."
-  },
-  "sync": {
-    "title": "Dati WooCommerce",
-    "button": "Sincronizza ora",
-    "last": "Ultima sincronizzazione",
+    "baselineMissing": "non ancora impostato",
+    "syncTitle": "Dati WooCommerce",
+    "syncNow": "Sincronizza ora",
+    "lastSync": "Ultima sincronizzazione",
     "never": "mai",
-    "items": "Prodotti e varianti",
+    "products": "Prodotti e varianti",
     "orders": "Ordini",
-    "error": "Ultima sincronizzazione fallita"
+    "syncFailed": "Ultima sincronizzazione fallita",
+    "openingTitle": "Punto di partenza",
+    "openingDone": "Il punto di partenza è registrato. Valuta e punto di partenza non si possono più cambiare.",
+    "openingIntro": "Scegli il giorno da cui Tallypress inizia a contare, i soldi sul conto del negozio quel giorno e il magazzino che avevi con il prezzo d'acquisto (senza IVA). Gli ordini precedenti vengono ignorati.",
+    "needSync": "Sincronizza prima da WooCommerce, così l'elenco prodotti è disponibile.",
+    "startDate": "Data di inizio",
+    "balance": "Saldo del conto del negozio",
+    "stockAtStart": "Magazzino alla data di inizio",
+    "suggested": "Suggerito da WooCommerce",
+    "qtyAtStart": "Quantità",
+    "costAtStart": "Costo unitario (senza IVA)",
+    "openingSave": "Salva punto di partenza",
+    "openingWarn": "Si può fare una sola volta."
   }
 }
