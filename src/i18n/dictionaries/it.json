@@ -1,0 +1,33 @@
+{
+  "app": {
+    "name": "Tallypress",
+    "tagline": "Vendite, margini e cassa mensili del tuo negozio WooCommerce"
+  },
+  "language": {
+    "label": "Lingua",
+    "en": "English",
+    "it": "Italiano",
+    "apply": "Applica"
+  },
+  "setup": {
+    "noShopTitle": "Nessun negozio configurato",
+    "noShopBody": "Crea il negozio di sviluppo con `npm run db:seed`, poi ricarica la pagina."
+  },
+  "shop": {
+    "currency": "Valuta",
+    "vat": "IVA",
+    "incomeTax": "Accantonamento imposte",
+    "taxBase": "Base imponibile",
+    "taxBaseRevenue": "ricavi",
+    "taxBaseProfit": "utile",
+    "baseline": "Punto di partenza",
+    "baselineMissing": "non ancora impostato"
+  },
+  "panel": {
+    "ordersPlaced": "Ordini ricevuti",
+    "gross": "Totale lordo",
+    "net": "Guadagno netto",
+    "balance": "Saldo del negozio",
+    "notSynced": "La sincronizzazione da WooCommerce non è ancora implementata."
+  }
+}

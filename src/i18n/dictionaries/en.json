@@ -1,0 +1,33 @@
+{
+  "app": {
+    "name": "Tallypress",
+    "tagline": "Monthly sales, margin and cash for your WooCommerce shop"
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "it": "Italiano",
+    "apply": "Apply"
+  },
+  "setup": {
+    "noShopTitle": "No shop configured",
+    "noShopBody": "Create the dev shop with `npm run db:seed`, then reload this page."
+  },
+  "shop": {
+    "currency": "Currency",
+    "vat": "VAT",
+    "incomeTax": "Income tax reserve",
+    "taxBase": "Tax base",
+    "taxBaseRevenue": "revenue",
+    "taxBaseProfit": "profit",
+    "baseline": "Starting point",
+    "baselineMissing": "not set yet"
+  },
+  "panel": {
+    "ordersPlaced": "Orders placed",
+    "gross": "Gross total",
+    "net": "Net earnings",
+    "balance": "Shop balance",
+    "notSynced": "Sync from WooCommerce is not implemented yet."
+  }
+}
