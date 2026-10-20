@@ -50,6 +50,10 @@ export const shops = pgTable("shops", {
 
   // "Zero time": orders before this instant are ignored.
   baselineAt: timestamp("baseline_at", { withTimezone: true }),
+
+  // Set only when a sync run completes; the next incremental sync starts from here.
+  lastSyncedAt: timestamp("last_synced_at", { withTimezone: true }),
+  lastSyncError: text("last_sync_error"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -104,7 +108,7 @@ export const orderLines = pgTable(
     quantity: numeric("quantity", { precision: 14, scale: 3 }).notNull(),
     grossTotal: numeric("gross_total", { precision: 14, scale: 2 }).notNull(),
     taxTotal: numeric("tax_total", { precision: 14, scale: 2 }).notNull(),
-    // Frozen at first sync so closed months never move. NULL = cost unknown yet.
+    // Frozen once computed so closed months never move. NULL = cost not known yet.
     unitCostSnapshot: numeric("unit_cost_snapshot", { precision: 14, scale: 4 }),
   },
   (t) => [unique().on(t.shopId, t.orderId, t.wooLineId)],

@@ -1,10 +1,20 @@
+import { count, eq } from "drizzle-orm";
 import { LanguageSelector } from "@/components/language-selector";
+import { db } from "@/db";
+import { items, orders } from "@/db/schema";
 import { getDictionary } from "@/i18n";
 import { getCurrentShop } from "@/lib/shop";
+import { syncNow } from "@/lib/sync/actions";
 
 export default async function Home() {
   const { locale, t } = await getDictionary();
   const shop = await getCurrentShop();
+  const [itemCount, orderCount] = shop
+    ? await Promise.all([
+        db.select({ n: count() }).from(items).where(eq(items.shopId, shop.id)),
+        db.select({ n: count() }).from(orders).where(eq(orders.shopId, shop.id)),
+      ])
+    : [];
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8">
@@ -43,6 +53,30 @@ export default async function Home() {
               />
             </tbody>
           </table>
+
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-lg font-medium">{t.sync.title}</h2>
+            <form action={syncNow}>
+              <button type="submit" className="rounded border border-black/20 px-3 py-1 text-sm dark:border-white/20">
+                {t.sync.button}
+              </button>
+            </form>
+          </div>
+          <table className="mb-8 w-full text-left text-sm">
+            <tbody className="divide-y divide-black/10 dark:divide-white/10">
+              <Row label={t.sync.items} value={String(itemCount?.[0].n ?? 0)} />
+              <Row label={t.sync.orders} value={String(orderCount?.[0].n ?? 0)} />
+              <Row
+                label={t.sync.last}
+                value={shop.lastSyncedAt ? shop.lastSyncedAt.toLocaleString(locale) : t.sync.never}
+              />
+            </tbody>
+          </table>
+          {shop.lastSyncError && (
+            <p className="mb-8 rounded border border-red-500/50 p-3 text-sm">
+              {t.sync.error}: {shop.lastSyncError}
+            </p>
+          )}
 
           <table className="w-full text-left text-sm">
             <tbody className="divide-y divide-black/10 dark:divide-white/10">

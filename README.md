@@ -18,6 +18,16 @@ WooCommerce admin: http://localhost:9080/wp-admin (`admin` / `admin`).
 The seeded demo catalog, orders and a read-only REST key are created by the `wp-setup`
 container on first start.
 
+## Sync
+
+`syncShop(shopId)` (`src/lib/sync/`) pulls products/variations and orders from WooCommerce into
+Postgres. The first run imports everything since the shop's baseline; later runs only fetch orders
+modified since the last completed sync. Trigger it with the "Sync now" button or:
+
+```bash
+curl -X POST -H "Authorization: Bearer $CRON_SECRET" http://localhost:9000/api/cron/sync
+```
+
 ## Layout
 
 - `src/db/schema.ts`: Drizzle schema; `npm run db:generate` after changing it.

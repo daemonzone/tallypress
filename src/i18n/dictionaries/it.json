@@ -28,6 +28,15 @@
     "gross": "Totale lordo",
     "net": "Guadagno netto",
     "balance": "Saldo del negozio",
-    "notSynced": "La sincronizzazione da WooCommerce non è ancora implementata."
+    "notSynced": "I totali non sono ancora calcolati."
+  },
+  "sync": {
+    "title": "Dati WooCommerce",
+    "button": "Sincronizza ora",
+    "last": "Ultima sincronizzazione",
+    "never": "mai",
+    "items": "Prodotti e varianti",
+    "orders": "Ordini",
+    "error": "Ultima sincronizzazione fallita"
   }
 }

@@ -28,6 +28,15 @@
     "gross": "Gross total",
     "net": "Net earnings",
     "balance": "Shop balance",
-    "notSynced": "Sync from WooCommerce is not implemented yet."
+    "notSynced": "Totals are not computed yet."
+  },
+  "sync": {
+    "title": "WooCommerce data",
+    "button": "Sync now",
+    "last": "Last sync",
+    "never": "never",
+    "items": "Products and variations",
+    "orders": "Orders",
+    "error": "Last sync failed"
   }
 }

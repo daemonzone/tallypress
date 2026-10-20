@@ -20,8 +20,13 @@ const config = {
   ownerSharePct: "30",
 };
 
+// Dev baseline: the first of the month two months back, so the demo orders are all in range.
+// Set on first insert only; re-seeding never moves a shop's zero time.
+const now = new Date();
+const baselineAt = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 2, 1));
+
 async function main() {
-  await db.insert(shops).values({ id, ...config }).onConflictDoUpdate({ target: shops.id, set: config });
+  await db.insert(shops).values({ id, baselineAt, ...config }).onConflictDoUpdate({ target: shops.id, set: config });
   console.log(`Dev shop ready: ${id}`);
   process.exit(0);
 }
