@@ -15,6 +15,29 @@ function resolveBaseUrl(url: string): string {
   return from && to && trimmed === from.replace(/\/$/, "") ? to.replace(/\/$/, "") : trimmed;
 }
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * fetch with retries for what is usually transient on a live shop: dropped connections,
+ * timeouts, 429 and 5xx. Waits 1s, 2s, 4s, 8s between attempts. Other statuses (401, 403,
+ * 404...) are returned as they are, for the caller to report.
+ */
+async function fetchWithRetry(url: URL, init: RequestInit, attempts = 5): Promise<Response> {
+  for (let i = 1; ; i++) {
+    try {
+      const res = await fetch(url, { ...init, signal: AbortSignal.timeout(60_000) });
+      if ((res.status === 429 || res.status >= 500) && i < attempts) {
+        await sleep(1000 * 2 ** (i - 1));
+        continue;
+      }
+      return res;
+    } catch (err) {
+      if (i >= attempts) throw err;
+      await sleep(1000 * 2 ** (i - 1));
+    }
+  }
+}
+
 /** GET every page of a WooCommerce REST collection (wc/v3). */
 export async function wooGetAll<T>(
   shop: WooCredentials,
@@ -30,7 +53,7 @@ export async function wooGetAll<T>(
       url.searchParams.set(k, String(v));
     }
 
-    const res = await fetch(url, {
+    const res = await fetchWithRetry(url, {
       headers: { Authorization: `Basic ${auth}` },
       cache: "no-store",
     });
