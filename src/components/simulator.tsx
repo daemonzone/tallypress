@@ -26,12 +26,15 @@ interface Props {
     restock: string;
     restockHelp: string;
     shortfall: string;
+    shortfallProvisional: string;
     saveDefault: string;
     default: string;
     allocTitle: string;
     vat: string;
     tax: string;
   };
+  /** The account balance is not aligned with the bank yet: a shortfall is shown calmly, as provisional. */
+  provisional?: boolean;
   saveAction: (formData: FormData) => void | Promise<void>;
 }
 
@@ -39,7 +42,7 @@ interface Props {
  * A live "what if" calculator: the percentage only changes what is shown here. It is
  * written to the shop only when "Save as default" is pressed.
  */
-export function Simulator({ locale, currency, defaultPct, net, withdrawn, cash, vat, tax, labels, saveAction }: Props) {
+export function Simulator({ locale, currency, defaultPct, net, withdrawn, cash, vat, tax, labels, provisional = false, saveAction }: Props) {
   const [pct, setPct] = useState(defaultPct);
   const { money, pct: pctFmt } = formatters(locale, currency);
 
@@ -97,12 +100,12 @@ export function Simulator({ locale, currency, defaultPct, net, withdrawn, cash, 
 
       <div className="mb-5 rounded-xl bg-surface-2 p-4">
         <div className="text-xs font-medium text-muted">
-          {restock < 0 ? labels.shortfall : labels.restock}
+          {restock < 0 ? (provisional ? labels.shortfallProvisional : labels.shortfall) : labels.restock}
         </div>
         <div
-          className={`mt-1 flex items-center gap-2 text-3xl font-semibold tracking-tight ${restock < 0 ? "text-bad" : ""}`}
+          className={`mt-1 flex items-center gap-2 text-3xl font-semibold tracking-tight ${restock < 0 && !provisional ? "text-bad" : ""}`}
         >
-          {restock < 0 && <Icon name="alert" className="h-6 w-6" />}
+          {restock < 0 && !provisional && <Icon name="alert" className="h-6 w-6" />}
           {money(Math.abs(restock))}
         </div>
         <p className="mt-1 text-xs text-muted">{labels.restockHelp}</p>

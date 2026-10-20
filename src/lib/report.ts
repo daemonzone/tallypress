@@ -73,6 +73,7 @@ export interface Report {
   currentKey: string;
   startsOn: string; // "YYYY-MM-DD": the day account balance and stock are tracked from
   hasOpening: boolean;
+  aligned: boolean; // true once a real adjustment (e.g. aligning to the bank balance) has been recorded
   months: MonthReport[];
   overview: Overview;
 }
@@ -139,6 +140,7 @@ export async function buildReport(shopId: string): Promise<Report | null> {
   );
   const flowsByMonth = new Map<string, Flows>();
   let hasOpening = false;
+  let aligned = false;
   for (const r of ledgerRows) {
     const f = flowsByMonth.get(r.month as string) ?? emptyFlows();
     const amount = toCents(r.amount);
@@ -163,7 +165,10 @@ export async function buildReport(shopId: string): Promise<Report | null> {
       f.opening += amount;
       hasOpening = true;
     } else if (r.kind === "other") f.other += amount;
-    else f.adjustment += amount;
+    else {
+      f.adjustment += amount;
+      if (!r.estimated) aligned = true;
+    }
     flowsByMonth.set(r.month as string, f);
   }
 
@@ -278,6 +283,7 @@ export async function buildReport(shopId: string): Promise<Report | null> {
     currentKey,
     startsOn: shop.baselineAt.toISOString().slice(0, 10),
     hasOpening,
+    aligned,
     months,
     overview: {
       cash: months.at(-1)?.end ?? 0,

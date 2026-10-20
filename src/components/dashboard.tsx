@@ -50,7 +50,15 @@ export async function Dashboard({ monthKey }: { monthKey?: string }) {
         <MonthPanel month={selected} report={report} t={t} fmt={fmt} locale={locale} />
       </div>
       <aside className="flex flex-col gap-6 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pb-1 lg:pr-1 lg:[scrollbar-width:thin]">
-        <Overview report={report} t={t} fmt={fmt} />
+        {!report.aligned && (
+          <Notice tone="warn">
+            {t.overview.provisional}{" "}
+            <Link href="/ledger" className="underline">
+              {t.overview.provisionalLink}
+            </Link>
+          </Notice>
+        )}
+        <Overview report={report} provisional={!report.aligned} t={t} fmt={fmt} />
         <Simulator
           locale={locale}
           currency={report.currency}
@@ -60,6 +68,7 @@ export async function Dashboard({ monthKey }: { monthKey?: string }) {
           cash={report.overview.cash}
           vat={report.overview.vatDue}
           tax={report.overview.taxDue}
+          provisional={!report.aligned}
           labels={{ ...t.simulator, vat: t.overview.vat, tax: t.overview.tax }}
           saveAction={saveOwnerShare}
         />
@@ -69,7 +78,7 @@ export async function Dashboard({ monthKey }: { monthKey?: string }) {
   );
 }
 
-function Overview({ report, t, fmt }: { report: Report; t: Dictionary; fmt: Formatters }) {
+function Overview({ report, provisional, t, fmt }: { report: Report; provisional: boolean; t: Dictionary; fmt: Formatters }) {
   const o = report.overview;
   return (
     <Card>
@@ -79,7 +88,7 @@ function Overview({ report, t, fmt }: { report: Report; t: Dictionary; fmt: Form
         <BigRow
           label={t.overview.netRemaining}
           icon="shield"
-          value={<span className={o.netRemaining < 0 ? "text-bad" : ""}>{fmt.money(o.netRemaining)}</span>}
+          value={<span className={o.netRemaining < 0 && !provisional ? "text-bad" : ""}>{fmt.money(o.netRemaining)}</span>}
           note={t.overview.netRemainingHelp}
         />
       </div>

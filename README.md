@@ -334,6 +334,16 @@ finished month. `GET` works too, for Vercel Cron. Without the secret it answers 
 | `WOO_URL_REWRITE` | `<public url>=<internal url>`: how the app reaches WooCommerce from inside Docker |
 | `APP_PORT`, `WP_PORT`, `WP_DB_PORT`, `TALLYPRESS_DB_PORT` | Host ports of the Docker services (all 9000+) |
 
+## Aligning to the bank
+
+The shop account starts from the opening deposit (a placeholder such as 1 EUR when the real balance
+at the starting date is not known) and then follows sales and recorded movements, so until it is
+aligned with the real bank balance its figures are **provisional**: the sidebar says so, and a
+shortfall in the spending simulator is shown calmly instead of in red. On **Movements**, "Align to the
+bank balance" takes one number, the real balance today, and records the difference as an adjustment
+(booked today). The notice disappears once a real adjustment exists. Re-running the estimates changes
+the computed balance, so align after the estimates are in place.
+
 ## Estimated purchases, VAT and taxes
 
 WooCommerce knows what comes in, not what leaves the account. Until the real movements are

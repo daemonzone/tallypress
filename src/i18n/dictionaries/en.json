@@ -47,7 +47,9 @@
     "netRemainingHelp": "Money in the account, minus the VAT and tax still to pay and the cost of goods sold that has not been bought back yet.",
     "stockTitle": "Warehouse",
     "stockValueHelp": "The goods still on the shelves, valued at what they cost you (not at the selling price).",
-    "investedHelp": "Money put into stock: the opening stock plus every restock since. The ROI is measured against it."
+    "investedHelp": "Money put into stock: the opening stock plus every restock since. The ROI is measured against it.",
+    "provisional": "Provisional figures: the account balance starts from 1 and is not aligned with the bank yet, so the balances below are not real.",
+    "provisionalLink": "Align it in Movements"
   },
   "simulator": {
     "title": "What can I spend? (simulation)",
@@ -61,7 +63,8 @@
     "shortfall": "Shortfall",
     "saveDefault": "Save as default",
     "default": "Default",
-    "allocTitle": "Where the account money goes"
+    "allocTitle": "Where the account money goes",
+    "shortfallProvisional": "Shortfall (provisional)"
   },
   "month": {
     "heading": "Month",
@@ -198,7 +201,17 @@
     "searchPlaceholder": "Search notes or type",
     "results": "{n} movements",
     "noResults": "No movements match your search.",
-    "estimated": "Estimated"
+    "estimated": "Estimated",
+    "align": {
+      "title": "Align to the bank balance",
+      "help": "Enter what the bank account really holds today. Tallypress records the difference as an adjustment, so every figure starts from the real balance.",
+      "computed": "Balance worked out by Tallypress",
+      "real": "Real balance today",
+      "submit": "Align",
+      "invalid": "Enter the balance.",
+      "same": "The balance already matches.",
+      "done": "Adjustment recorded: {difference}."
+    }
   },
   "setup": {
     "shopTitle": "Shop",

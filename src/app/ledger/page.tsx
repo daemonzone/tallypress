@@ -2,11 +2,13 @@ import { and, count, desc, eq, ilike, inArray, or } from "drizzle-orm";
 import { db } from "@/db";
 import { ledgerEntries } from "@/db/schema";
 import { formatters } from "@/components/format";
+import { AlignForm } from "@/components/align-form";
 import { MovementForm } from "@/components/movement-form";
 import { Pager, SearchBox } from "@/components/pager";
 import { DataTable, Notice, Section, Td } from "@/components/ui";
 import { getDictionary } from "@/i18n";
-import { addMovement } from "@/lib/actions";
+import { addMovement, alignBalance } from "@/lib/actions";
+import { buildReport } from "@/lib/report";
 import { MOVEMENT_TYPES } from "@/lib/movements";
 import { toCents } from "@/lib/money";
 import { getCurrentShop } from "@/lib/shop";
@@ -43,6 +45,7 @@ export default async function LedgerPage({ searchParams }: PageProps<"/ledger">)
     .orderBy(desc(ledgerEntries.occurredAt), desc(ledgerEntries.id))
     .limit(PER_PAGE)
     .offset((page - 1) * PER_PAGE);
+  const computedCash = (await buildReport(shop.id))?.overview.cash ?? 0;
   const fmt = formatters(locale, shop.currency);
   const date = new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: shop.timezone });
 
@@ -82,6 +85,10 @@ export default async function LedgerPage({ searchParams }: PageProps<"/ledger">)
           labels={{ ...t.stock, results: t.ledger.results }}
         />
         <p className="mt-2 text-xs text-muted">{t.ledger.salesNote}</p>
+      </Section>
+
+      <Section title={t.ledger.align.title} help={t.ledger.align.help}>
+        <AlignForm action={alignBalance} locale={locale} currency={shop.currency} computed={computedCash} labels={t.ledger.align} />
       </Section>
 
       <Section title={t.ledger.movementTitle} help={t.ledger.movementHelp}>

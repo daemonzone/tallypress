@@ -47,7 +47,9 @@
     "netRemainingHelp": "Soldi sul conto, meno l'IVA e le imposte ancora da versare e meno il costo della merce venduta non ancora ricomprata.",
     "stockTitle": "Magazzino",
     "stockValueHelp": "La merce che hai ancora in casa, valutata a quanto ti è costata (non al prezzo di vendita).",
-    "investedHelp": "Soldi messi in merce: il magazzino iniziale più tutti i riassortimenti fatti. Il ROI si misura rispetto a questa cifra."
+    "investedHelp": "Soldi messi in merce: il magazzino iniziale più tutti i riassortimenti fatti. Il ROI si misura rispetto a questa cifra.",
+    "provisional": "Cifre provvisorie: il saldo del conto parte da 1 € e non è ancora allineato alla banca, quindi i saldi qui sotto non sono reali.",
+    "provisionalLink": "Allinealo in Movimenti"
   },
   "simulator": {
     "title": "Quanto posso spendere? (simulazione)",
@@ -61,7 +63,8 @@
     "shortfall": "Ammanco",
     "saveDefault": "Salva come predefinita",
     "default": "Predefinita",
-    "allocTitle": "Dove va il denaro sul conto"
+    "allocTitle": "Dove va il denaro sul conto",
+    "shortfallProvisional": "Ammanco (provvisorio)"
   },
   "month": {
     "heading": "Mese",
@@ -198,7 +201,17 @@
     "searchPlaceholder": "Cerca nelle note o per tipo",
     "results": "{n} movimenti",
     "noResults": "Nessun movimento corrisponde alla ricerca.",
-    "estimated": "Stima"
+    "estimated": "Stima",
+    "align": {
+      "title": "Allinea al saldo della banca",
+      "help": "Inserisci quanto c'è davvero oggi sul conto in banca. Tallypress registra la differenza come rettifica, così tutte le cifre partono dal saldo reale.",
+      "computed": "Saldo calcolato da Tallypress",
+      "real": "Saldo reale oggi",
+      "submit": "Allinea",
+      "invalid": "Inserisci il saldo.",
+      "same": "Il saldo coincide già.",
+      "done": "Rettifica registrata: {difference}."
+    }
   },
   "setup": {
     "shopTitle": "Negozio",

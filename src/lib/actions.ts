@@ -6,6 +6,7 @@ import { db } from "@/db";
 import { items, ledgerEntries, restockLots, shops } from "@/db/schema";
 import { freezeCosts } from "./costs";
 import { importRange, type ImportRangeResult } from "./import-range";
+import { buildReport } from "./report";
 import { MOVEMENT_TYPES, type MovementState } from "./movements";
 import { recordOpening } from "./opening";
 import { centsToString, parseDecimal } from "./money";
@@ -131,4 +132,35 @@ export async function importPeriod(_prev: ImportRangeResult | null, formData: Fo
   });
   revalidatePath("/", "layout");
   return result;
+}
+
+export type AlignState =
+  | { status: "idle" }
+  | { status: "invalid" }
+  | { status: "same" }
+  | { status: "ok"; difference: number; balance: number }; // cents
+
+/**
+ * Aligns the computed shop-account balance with the real bank balance: records the difference as an
+ * adjustment (booked today) so everything that follows starts from the real figure.
+ */
+export async function alignBalance(_prev: AlignState, formData: FormData): Promise<AlignState> {
+  const shopId = await getCurrentShopId();
+  const real = parseDecimal(formData.get("balance"));
+  if (Number.isNaN(real)) return { status: "invalid" };
+
+  const report = await buildReport(shopId);
+  if (!report) return { status: "invalid" };
+  const difference = Math.round(real * 100) - report.overview.cash;
+  if (difference === 0) return { status: "same" };
+
+  await db.insert(ledgerEntries).values({
+    shopId,
+    kind: "adjustment",
+    amount: centsToString(difference),
+    occurredAt: new Date(),
+    note: `Allineamento al saldo della banca (saldo reale ${real.toFixed(2)})`,
+  });
+  revalidatePath("/", "layout");
+  return { status: "ok", difference, balance: Math.round(real * 100) };
 }
