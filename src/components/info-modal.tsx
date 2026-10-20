@@ -37,11 +37,11 @@ export function InfoModal({
         }}
         className="m-auto w-[min(34rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-line bg-surface p-0 text-ink shadow-card backdrop:bg-black/50"
       >
-        <header className="flex items-start justify-between gap-4 border-b border-line bg-accent-soft px-5 py-4">
-          <div>
-            <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
-            {subtitle && <p className="mt-0.5 text-sm capitalize text-muted">{subtitle}</p>}
-          </div>
+        <header className="flex items-center justify-between gap-4 border-b border-line bg-accent-soft px-5 py-3">
+          <h2 className="text-lg font-semibold tracking-tight">
+            {title}
+            {subtitle && <span className="ml-2 text-sm font-normal capitalize text-muted">· {subtitle}</span>}
+          </h2>
           <button
             type="button"
             onClick={() => ref.current?.close()}

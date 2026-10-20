@@ -127,10 +127,11 @@ function GrossToNet({ month: m, t, fmt }: { month: MonthReport; t: Dictionary; f
       <span className="tabular-nums">{value}</span>
     </div>
   );
-  const result = (label: string, value: string) => (
+  // Highlighted rows: the starting figure (no marker) and the running results ("=").
+  const result = (label: string, value: string, marker = "=") => (
     <div className="my-1 flex items-baseline justify-between gap-4 rounded-lg bg-surface-2 px-3 py-2.5 text-sm font-semibold">
       <span>
-        <span className="mr-2 inline-block w-3 text-center">=</span>
+        <span className="mr-2 inline-block w-3 text-center">{marker}</span>
         {label}
       </span>
       <span className="tabular-nums">{value}</span>
@@ -139,7 +140,7 @@ function GrossToNet({ month: m, t, fmt }: { month: MonthReport; t: Dictionary; f
 
   return (
     <div>
-      {line(t.month.gross, fmt.money(m.gross))}
+      {result(t.month.gross, fmt.money(m.gross), "")}
       {line(t.month.vat, fmt.money(-m.vat), true)}
       {result(t.month.netRevenue, fmt.money(m.netRevenue))}
       {line(t.month.cogs, fmt.money(-m.cogs), true)}
