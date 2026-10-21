@@ -384,5 +384,36 @@
       "admin": "Admin",
       "other": "Other"
     }
+  },
+  "calculator": {
+    "title": "Discount calculator",
+    "intro": "What one product leaves in the shop's pocket at discounted prices, after VAT and taxes, and whether it is better to sell it or give it away.",
+    "cost": "Purchase cost (VAT included)",
+    "price": "List price (VAT included)",
+    "vat": "VAT %",
+    "bracket": "Income tax bracket of the year",
+    "noCeiling": "above",
+    "upTo": "up to {n}",
+    "shipPaid": "Shipping paid to the carrier (VAT included)",
+    "shipCharged": "Shipping charged to the customer (VAT included)",
+    "other": "Other costs per sale (VAT excluded)",
+    "taxNote": "Of every extra euro of profit, {n}% goes to income tax and contributions. VAT is not a cost: it is collected on the sale and recovered on the purchase.",
+    "discount": "Discount",
+    "priceCol": "Price",
+    "vatCol": "VAT",
+    "revenueCol": "Revenue ex VAT",
+    "costCol": "Cost ex VAT",
+    "profitCol": "Profit",
+    "taxCol": "Taxes",
+    "pocketCol": "Left in pocket",
+    "fullPrice": "Full price",
+    "customDiscount": "Another discount",
+    "breakEven": "It stops making a profit (before tax) beyond a {n}% discount.",
+    "giftDeductible": "The gift is deductible",
+    "sellAt": "Sell at −{n}%",
+    "giveAway": "Give away",
+    "sellWins": "Selling is better by {n}.",
+    "giftWins": "Giving away is better by {n}.",
+    "giftNote": "A loss reduces the tax on the rest of the profit. VAT on gifts has its own rules (it often still has to be paid): ask your accountant. The calculation is for one product and ignores time and money tied up in stock."
   }
 }

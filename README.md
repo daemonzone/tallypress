@@ -482,3 +482,10 @@ The yearly tax is the contributions (flat percent of profit, e.g. INPS) plus the
 on the profit. With `social_deductible` (the default) the contributions are deducted from the income the
 brackets apply to, as INPS is for IRPEF. The reserve of a month is the extra tax that month's profit adds to the
 year so far. Local surcharges, contribution minimums and ceilings are not modelled.
+
+## Discount calculator
+
+`/calculator` shows what one product leaves in the shop's pocket at different discounts (full price, −20%, −30%,
+−50%, −70% and a free slider), after VAT and taxes, and compares selling it with giving it away. The arithmetic
+is in `src/lib/discount.ts` (pure functions) and the UI in `src/components/discount-calculator.tsx`, which only
+needs the tax defaults (VAT, contributions, brackets) as props, so it can be reused elsewhere.

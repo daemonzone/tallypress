@@ -384,5 +384,36 @@
       "admin": "Admin",
       "other": "Altro"
     }
+  },
+  "calculator": {
+    "title": "Calcolatore sconti",
+    "intro": "Quanto resta in tasca da un prodotto a prezzi scontati, tolte IVA e imposte, e se conviene venderlo o regalarlo.",
+    "cost": "Costo di acquisto (IVA inclusa)",
+    "price": "Prezzo di listino (IVA inclusa)",
+    "vat": "IVA %",
+    "bracket": "Scaglione IRPEF dell'anno",
+    "noCeiling": "oltre",
+    "upTo": "fino a {n}",
+    "shipPaid": "Spedizione pagata al corriere (IVA inclusa)",
+    "shipCharged": "Spedizione addebitata al cliente (IVA inclusa)",
+    "other": "Altri costi per vendita (senza IVA)",
+    "taxNote": "Su ogni euro di utile in più, il {n}% va in imposte e contributi. L'IVA non è un costo: si incassa sulla vendita e si recupera sull'acquisto.",
+    "discount": "Sconto",
+    "priceCol": "Prezzo",
+    "vatCol": "IVA",
+    "revenueCol": "Ricavo senza IVA",
+    "costCol": "Costo senza IVA",
+    "profitCol": "Utile",
+    "taxCol": "Imposte",
+    "pocketCol": "Resta in tasca",
+    "fullPrice": "Prezzo pieno",
+    "customDiscount": "Altro sconto",
+    "breakEven": "Si smette di guadagnare (prima delle imposte) oltre uno sconto del {n}%.",
+    "giftDeductible": "L'omaggio è deducibile",
+    "sellAt": "Vendere al −{n}%",
+    "giveAway": "Regalare",
+    "sellWins": "Vendere conviene: {n} in più.",
+    "giftWins": "Regalare conviene: {n} in più.",
+    "giftNote": "Una perdita riduce le imposte sul resto dell'utile. L'IVA sugli omaggi ha regole proprie (spesso va comunque versata): chiedi al commercialista. Il calcolo è per un singolo prodotto e non tiene conto del tempo né del denaro fermo in magazzino."
   }
 }
