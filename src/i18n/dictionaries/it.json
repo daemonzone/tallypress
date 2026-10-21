@@ -177,6 +177,21 @@
       "done": "Costo impostato.",
       "invalid": "Inserisci un costo valido.",
       "help": "Vale per tutte le taglie e i colori, anche per quelli che arriveranno. Ricalcola il valore del magazzino e il costo delle vendite di questo prodotto, anche passate, e i mesi."
+    },
+    "restockForm": {
+      "perUnit": "Costo per capo",
+      "total": "Totale pagato",
+      "amountUnit": "Costo per capo (senza IVA)",
+      "amountTotal": "Totale pagato (senza IVA)",
+      "qty": "Capi",
+      "summary": "{n} capi · {unit} l'uno · {total} in totale",
+      "submit": "Registra riassortimento",
+      "working": "Registrazione…",
+      "done": "Riassortimento registrato.",
+      "invalid": "Controlla gli importi.",
+      "noQty": "Indica i capi di almeno una variante.",
+      "tooHigh": "Il costo per capo supera il prezzo di vendita: controlla l'importo.",
+      "help": "L'importo dichiarato viene registrato una volta sola nei Movimenti e scalato dai soldi del negozio. Il costo medio si calcola da qui, non si scrive a mano."
     }
   },
   "ledger": {

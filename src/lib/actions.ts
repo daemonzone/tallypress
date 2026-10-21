@@ -213,3 +213,67 @@ export async function setProductCost(_prev: ProductCostState, formData: FormData
   revalidatePath("/", "layout");
   return { status: "ok" };
 }
+
+export type ProductRestockState = { status: "idle" | "ok" | "invalid" | "noQty" | "tooHigh" };
+
+/**
+ * Records a restock of one product as a single document: the declared amount (a cost per piece, or
+ * the total paid plus the number of pieces) is booked once in the ledger as a movement, and the
+ * pieces of each variation enter stock at the same unit cost. The moving average is never typed in:
+ * it is computed from these lots. Amounts are net of VAT. A cost above the selling price (without
+ * VAT) is refused, since it can only be a typing mistake.
+ */
+export async function addProductRestock(_prev: ProductRestockState, formData: FormData): Promise<ProductRestockState> {
+  const shopId = await getCurrentShopId();
+  const productId = Number(formData.get("productId"));
+  const mode = formData.get("mode") === "total" ? "total" : "unit";
+  const amount = parseDecimal(formData.get("amount"));
+  if (!Number.isInteger(productId) || !(amount > 0)) return { status: "invalid" };
+
+  const rows = await db.select().from(items).where(and(eq(items.shopId, shopId), eq(items.wooProductId, productId)));
+  const lines: { item: (typeof rows)[number]; qty: number }[] = [];
+  for (const [key, value] of formData.entries()) {
+    if (!key.startsWith("qty_")) continue;
+    const qty = parseDecimal(value as string);
+    if (!(qty > 0)) continue;
+    const item = rows.find((r) => r.id === key.slice(4));
+    if (!item || !Number.isInteger(qty) || qty > 100000) return { status: "invalid" };
+    lines.push({ item, qty });
+  }
+  const pieces = lines.reduce((sum, l) => sum + l.qty, 0);
+  if (!pieces) return { status: "noQty" };
+
+  const totalCents = mode === "total" ? Math.round(amount * 100) : Math.round(amount * pieces * 100);
+  const unitCost = totalCents / 100 / pieces;
+
+  // Sanity: a piece cannot cost more than it is sold for (price without VAT).
+  const vat = 1 + Number((await db.select({ v: shops.vatRate }).from(shops).where(eq(shops.id, shopId)))[0]?.v ?? 0) / 100;
+  const prices = lines.map((l) => Number(l.item.regularPrice ?? l.item.price ?? 0)).filter((n) => n > 0);
+  if (prices.length && unitCost > Math.max(...prices) / vat) return { status: "tooHigh" };
+
+  const name = rows[0]?.productName ?? `#${productId}`;
+  await db.transaction(async (tx) => {
+    const now = new Date();
+    for (const l of lines) {
+      await tx.insert(restockLots).values({
+        shopId,
+        itemId: l.item.id,
+        quantity: String(l.qty),
+        unitCost: unitCost.toFixed(4),
+        purchasedAt: now,
+        source: "restock",
+        note: `${name}`,
+      });
+    }
+    await tx.insert(ledgerEntries).values({
+      shopId,
+      kind: "restock",
+      amount: centsToString(-totalCents),
+      occurredAt: now,
+      note: `${name}: ${pieces} pz × ${unitCost.toFixed(2)}`.slice(0, 200),
+    });
+  });
+  await freezeCosts(shopId);
+  revalidatePath("/", "layout");
+  return { status: "ok" };
+}

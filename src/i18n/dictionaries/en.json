@@ -177,6 +177,21 @@
       "done": "Cost set.",
       "invalid": "Enter a valid cost.",
       "help": "Applies to every size and colour, including ones that arrive later. It recalculates the stock value and the cost of this product's sales, past ones too, and the months."
+    },
+    "restockForm": {
+      "perUnit": "Cost per piece",
+      "total": "Total paid",
+      "amountUnit": "Cost per piece (without VAT)",
+      "amountTotal": "Total paid (without VAT)",
+      "qty": "Pieces",
+      "summary": "{n} pieces · {unit} each · {total} total",
+      "submit": "Record restock",
+      "working": "Recording…",
+      "done": "Restock recorded.",
+      "invalid": "Check the amounts.",
+      "noQty": "Enter the pieces of at least one variant.",
+      "tooHigh": "The cost per piece is higher than the selling price: check the amount.",
+      "help": "The declared amount is booked once in Movements and taken from the shop's money. The average cost is calculated from it, never typed in."
     }
   },
   "ledger": {

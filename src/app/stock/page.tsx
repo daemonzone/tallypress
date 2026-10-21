@@ -2,10 +2,11 @@ import { formatters } from "@/components/format";
 import { Icon } from "@/components/icons";
 import { Pager, SearchBox } from "@/components/pager";
 import { ProductCostForm } from "@/components/product-cost-form";
+import { ProductRestockForm } from "@/components/product-restock-form";
 import { Thumb } from "@/components/thumb";
-import { primaryButtonClass, inputClass, Notice, Section } from "@/components/ui";
+import { Notice, Section } from "@/components/ui";
 import { getDictionary } from "@/i18n";
-import { addRestock, setProductCost } from "@/lib/actions";
+import { addProductRestock, setProductCost } from "@/lib/actions";
 import { getProductPage } from "@/lib/costs";
 import { getCurrentShop } from "@/lib/shop";
 
@@ -32,7 +33,6 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
 
   const warn = <Icon name="alert" className="h-3.5 w-3.5 text-[var(--warn-line)] opacity-60" />;
   const chip = "rounded-full border border-line bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-muted";
-  const allItems = groups.flatMap((g) => g.items);
 
   return (
     <>
@@ -93,6 +93,14 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
                         labels={t.stock.costForm}
                         action={setProductCost}
                       />
+                      <ProductRestockForm
+                        productId={g.productId}
+                        variants={g.items.filter((s) => s.status !== "trash" && s.status !== "deleted").map((s) => ({ id: s.id, label: s.variation ?? t.stock.noVariant }))}
+                        locale={locale}
+                        currency={shop.currency}
+                        labels={t.stock.restockForm}
+                        action={addProductRestock}
+                      />
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="border-b border-line text-xs uppercase tracking-wide text-muted">
@@ -148,35 +156,6 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
         )}
       </Section>
 
-      {groups.length > 0 && (
-        <Section title={t.stock.restockTitle} help={t.stock.formsHint}>
-          <p className="mb-3 text-xs text-muted">{t.stock.restockHelp}</p>
-          <form action={addRestock} className="flex max-w-lg flex-col gap-3">
-            <label className="flex flex-col gap-1 text-sm">
-              {t.stock.item}
-              <select name="itemId" required className={inputClass}>
-                {allItems.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.label}
-                    {s.sku ? ` (${s.sku})` : ""}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="flex flex-col gap-1 text-sm">
-              {t.common.quantity}
-              <input name="quantity" type="number" min="0.001" step="any" required className={inputClass} />
-            </label>
-            <label className="flex flex-col gap-1 text-sm">
-              {t.stock.unitCost}
-              <input name="unitCost" type="number" min="0" step="0.01" required className={inputClass} />
-            </label>
-            <button type="submit" className={`${primaryButtonClass} self-start`}>
-              {t.common.add}
-            </button>
-          </form>
-        </Section>
-      )}
     </>
   );
 }
