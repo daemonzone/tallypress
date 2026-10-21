@@ -49,7 +49,7 @@ export async function Dashboard({ monthKey }: { monthKey?: string }) {
     <div className="flex flex-col items-end gap-1">
       <SyncButton
         action={syncNow}
-        labels={{ sync: t.setup.syncNow, syncing: t.setup.syncing, done: t.setup.syncDone, failed: t.setup.syncFailed }}
+        labels={{ sync: t.setup.syncNow, syncing: t.setup.syncing, failed: t.setup.syncFailed }}
       />
       <div className="text-xs text-muted">
         {t.setup.lastSync}:{" "}

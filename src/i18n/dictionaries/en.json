@@ -316,7 +316,6 @@
     "syncTitle": "WooCommerce data",
     "syncNow": "Sync now",
     "syncing": "Syncing…",
-    "syncDone": "Synced. New or changed orders: {orders}.",
     "lastSync": "Last sync",
     "never": "never",
     "products": "Products and variations",

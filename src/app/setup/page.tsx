@@ -95,7 +95,7 @@ export default async function SetupPage() {
         aside={
           <SyncButton
             action={syncNow}
-            labels={{ sync: t.setup.syncNow, syncing: t.setup.syncing, done: t.setup.syncDone, failed: t.setup.syncFailed }}
+            labels={{ sync: t.setup.syncNow, syncing: t.setup.syncing, failed: t.setup.syncFailed }}
           />
         }
       >

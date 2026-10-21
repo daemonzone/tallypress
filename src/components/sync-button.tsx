@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useState } from "react";
 import type { SyncState } from "@/lib/sync/actions";
 import { buttonClass } from "./ui";
 
@@ -9,22 +9,36 @@ interface Props {
   labels: {
     sync: string;
     syncing: string;
-    done: string; // "{orders}"
     failed: string;
   };
 }
 
-/** "Sync now" with feedback: a spinner while it runs, then what came of it. */
+/** "Sync now" with feedback: a spinner while it runs, then the page reloads with the new figures. */
 export function SyncButton({ action, labels }: Props) {
-  const [state, formAction, pending] = useActionState(action, { status: "idle" } as SyncState);
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setPending(true);
+    setError(null);
+    try {
+      const result = await action();
+      if (result.status === "ok") return void window.location.reload();
+      setError(result.status === "error" ? result.error : labels.failed);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : labels.failed);
+    }
+    setPending(false);
+  }
 
   return (
-    <form action={formAction} className="flex items-center gap-3">
-      {!pending && state.status === "ok" && (
-        <span className="text-sm text-good">{labels.done.replace("{orders}", String(state.orders))}</span>
+    <div className="flex items-center gap-3">
+      {error && (
+        <span className="text-sm text-bad">
+          {labels.failed}: {error}
+        </span>
       )}
-      {!pending && state.status === "error" && <span className="text-sm text-bad">{labels.failed}: {state.error}</span>}
-      <button type="submit" disabled={pending} aria-busy={pending} className={`${buttonClass} inline-flex items-center gap-2 disabled:opacity-60`}>
+      <button type="button" onClick={run} disabled={pending} aria-busy={pending} className={`${buttonClass} inline-flex items-center gap-2 disabled:opacity-60`}>
         {pending && (
           <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="3" opacity="0.25" />
@@ -33,6 +47,6 @@ export function SyncButton({ action, labels }: Props) {
         )}
         {pending ? labels.syncing : labels.sync}
       </button>
-    </form>
+    </div>
   );
 }
