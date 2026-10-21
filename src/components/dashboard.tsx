@@ -58,7 +58,7 @@ export async function Dashboard({ monthKey }: { monthKey?: string }) {
             </Link>
           </Notice>
         )}
-        <Overview report={report} t={t} fmt={fmt} />
+        <Overview report={report} t={t} fmt={fmt} locale={locale} />
         <Simulator
           locale={locale}
           currency={report.currency}
@@ -77,7 +77,17 @@ export async function Dashboard({ monthKey }: { monthKey?: string }) {
   );
 }
 
-function Overview({ report, t, fmt }: { report: Report; t: Dictionary; fmt: Formatters }) {
+/** The data starts after 1 January, so the income tax of that year (computed on the whole year) is incomplete. */
+function PartialYearWarning({ report, t, locale, year }: { report: Report; t: Dictionary; locale: string; year: string }) {
+  const date = new Intl.DateTimeFormat(locale, { dateStyle: "long", timeZone: "UTC" }).format(new Date(`${report.startsOn}T00:00:00Z`));
+  return (
+    <InfoModal icon="alert" label={t.overview.partialYearShort.replace("{year}", year)} title={t.overview.partialYearTitle.replace("{year}", year)} closeLabel={t.common.close}>
+      <p className="text-sm">{t.overview.partialYearBody.replace(/\{year\}/g, year).replace("{date}", date)}</p>
+    </InfoModal>
+  );
+}
+
+function Overview({ report, t, fmt, locale }: { report: Report; t: Dictionary; fmt: Formatters; locale: string }) {
   const o = report.overview;
   return (
     <Card>
@@ -91,6 +101,12 @@ function Overview({ report, t, fmt }: { report: Report; t: Dictionary; fmt: Form
           note={t.overview.netRemainingHelp}
         />
       </div>
+      {report.partialTaxYear && (
+        <div className="mt-3 flex items-center gap-1.5 text-xs text-muted">
+          <PartialYearWarning report={report} t={t} locale={locale} year={report.partialTaxYear} />
+          {t.overview.partialYearShort.replace("{year}", report.partialTaxYear)}
+        </div>
+      )}
       <div className="mt-4 flex items-baseline justify-between gap-3 border-t border-line pt-3 text-sm font-semibold">
         <span className="whitespace-nowrap">{t.overview.roi}</span>
         <span className="tabular-nums">{o.roi == null ? t.common.none : fmt.pct(o.roi)}</span>
@@ -353,14 +369,19 @@ function MonthPanel({
               icon="trend"
               align="right"
               labelExtra={
-                <InfoModal
-                  label={t.month.detail}
-                  title={t.month.detail}
-                  subtitle={monthLabel(m.key, locale)}
-                  closeLabel={t.common.close}
-                >
-                  <GrossToNet month={m} t={t} fmt={fmt} />
-                </InfoModal>
+                <>
+                  <InfoModal
+                    label={t.month.detail}
+                    title={t.month.detail}
+                    subtitle={monthLabel(m.key, locale)}
+                    closeLabel={t.common.close}
+                  >
+                    <GrossToNet month={m} t={t} fmt={fmt} />
+                  </InfoModal>
+                  {report.partialTaxYear === m.key.slice(0, 4) && (
+                    <PartialYearWarning report={report} t={t} locale={locale} year={report.partialTaxYear} />
+                  )}
+                </>
               }
               value={<span className={m.netEarnings < 0 ? "text-bad" : ""}>{fmt.money(m.netEarnings)}</span>}
               note={m.netEarnings < 0 ? t.month.loss : undefined}

@@ -75,6 +75,7 @@ export interface Report {
   currency: string;
   currentKey: string;
   startsOn: string; // "YYYY-MM-DD": the day account balance and stock are tracked from
+  partialTaxYear: string | null; // the calendar year the data starts in, when it starts after 1 January: its taxes are incomplete
   hasOpening: boolean;
   aligned: boolean; // true once a real adjustment (e.g. aligning to the bank balance) has been recorded
   months: MonthReport[];
@@ -105,6 +106,9 @@ export async function buildReport(shopId: string): Promise<Report | null> {
         : shop.historyStart
       : shop.baselineAt;
   const baseline = dataStart.toISOString();
+  // A starting day in mid-month: the sales of that month before the day are already in the bank balance.
+  const startDay = shop.baselineAt.toISOString();
+  const beforeStartDay = sql`NOT (o.placed_at < ${startDay}::timestamptz AND to_char(date_trunc('month', o.placed_at AT TIME ZONE ${tz}), 'YYYY-MM-01') = to_char(date_trunc('month', ${startDay}::timestamptz AT TIME ZONE ${tz}), 'YYYY-MM-01'))`;
 
   const [orderRows, itemRowsRaw, ledgerRows, closingRows, lotRows] = await Promise.all([
     rowsOf(sql`
@@ -112,7 +116,7 @@ export async function buildReport(shopId: string): Promise<Report | null> {
              coalesce(sum(o.gross_total - o.refunded_total), 0)::text AS gross
       FROM orders o
       WHERE o.shop_id = ${shopId} AND o.status IN ('processing', 'completed')
-        AND o.placed_at >= ${baseline}::timestamptz
+        AND o.placed_at >= ${baseline}::timestamptz AND ${beforeStartDay}
       GROUP BY 1`),
     rowsOf(sql`
       SELECT ${monthSql("o.placed_at")} AS month, l.item_id, i.sku, i.status AS item_status,
@@ -124,7 +128,7 @@ export async function buildReport(shopId: string): Promise<Report | null> {
       JOIN orders o ON o.id = l.order_id
       LEFT JOIN items i ON i.id = l.item_id
       WHERE l.shop_id = ${shopId} AND o.status IN ('processing', 'completed')
-        AND o.placed_at >= ${baseline}::timestamptz
+        AND o.placed_at >= ${baseline}::timestamptz AND ${beforeStartDay}
       -- lines whose product was deleted for good have no item: keep them apart, by the name they were sold under
       GROUP BY 1, l.item_id, i.sku, i.status, i.product_name, i.variation_label, CASE WHEN l.item_id IS NULL THEN l.name END`),
     rowsOf(sql`
@@ -299,6 +303,7 @@ export async function buildReport(shopId: string): Promise<Report | null> {
     currency: shop.currency,
     currentKey,
     startsOn: shop.baselineAt.toISOString().slice(0, 10),
+    partialTaxYear: shop.baselineAt.toISOString().slice(5, 10) === "01-01" ? null : shop.baselineAt.toISOString().slice(0, 4),
     hasOpening,
     aligned,
     months,

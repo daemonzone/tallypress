@@ -49,8 +49,11 @@
     "stockTitle": "Warehouse",
     "stockValueHelp": "The goods still on the shelves, valued at what they cost you (not at the selling price).",
     "investedHelp": "Money put into stock: the opening stock plus every restock since. The ROI is measured against it.",
-    "provisional": "Provisional figures: the account balance starts from 1 and is not aligned with the bank yet, so the balances below are not real.",
-    "provisionalLink": "Align it in Movements"
+    "provisional": "Provisional figures: the account balance is not aligned with the bank yet, so the balances below are not real.",
+    "provisionalLink": "Align it in Movements",
+    "partialYearShort": "{year} taxes: partial data",
+    "partialYearTitle": "{year} taxes: year not complete",
+    "partialYearBody": "The cash data starts on {date}. Income tax and contributions are computed on the profit of the whole year: for the months of {year} before that date the profit is estimated (costs at 30% of list price) and there is no cash balance. The tax accrued on those months is not set aside in the balances and will still have to be paid. From the next year on, with every month present, the calculation is complete."
   },
   "simulator": {
     "title": "What can I spend? (simulation)",

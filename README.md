@@ -454,3 +454,15 @@ panel does not ask about it. A refund without restocking leaves no note and chan
 order is not counted as a sale at all. `npm run shop:returns` does the same for every refunded order
 already imported (read-only against the shop), then recomputes costs and months. Differences between
 WooCommerce and the tracked stock that nobody has classified yet survive that recomputation.
+
+## Moving the starting point
+
+`START_DATE=2026-10-20 START_BALANCE=0 CONFIRM=yes npm run shop:restart` moves the starting point ("zero time")
+to a new day with the real bank balance of that day (without `CONFIRM=yes` it only lists what would go).
+Sales are never touched. Everything dated before the new start is removed: ledger entries (estimated
+purchases, VAT and tax payments included), stock lots and month closings; the opening stock is recomputed at
+that date from WooCommerce, and the months before it become sales history. Entries and restocks on or after
+it are kept, and so are the stock differences nobody has classified yet. A starting day in mid-month is
+supported: that month counts only the sales from that day. Income tax is computed on the profit of the whole
+calendar year; when the data starts after 1 January, a warning on the overview and on the month says that
+the earlier months of that year are estimated and not in the cash balances.

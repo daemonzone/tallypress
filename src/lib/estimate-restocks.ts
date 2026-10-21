@@ -21,7 +21,7 @@ export interface EstimateResult {
  * Differences between WooCommerce and the tracked stock that nobody has classified yet. They must
  * survive a rebuild of the opening stock, which would otherwise absorb them without a trace.
  */
-async function pendingDifferences(shopId: string): Promise<Map<string, number>> {
+export async function pendingDifferences(shopId: string): Promise<Map<string, number>> {
   return new Map((await getItemStates(shopId)).filter((s) => s.diff).map((s) => [s.id, s.diff!]));
 }
 

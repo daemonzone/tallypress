@@ -49,8 +49,11 @@
     "stockTitle": "Magazzino",
     "stockValueHelp": "La merce che hai ancora in casa, valutata a quanto ti è costata (non al prezzo di vendita).",
     "investedHelp": "Soldi messi in merce: il magazzino iniziale più tutti i riassortimenti fatti. Il ROI si misura rispetto a questa cifra.",
-    "provisional": "Cifre provvisorie: il saldo del conto parte da 1 € e non è ancora allineato alla banca, quindi i saldi qui sotto non sono reali.",
-    "provisionalLink": "Allinealo in Movimenti"
+    "provisional": "Cifre provvisorie: il saldo del conto non è ancora allineato alla banca, quindi i saldi qui sotto non sono reali.",
+    "provisionalLink": "Allinealo in Movimenti",
+    "partialYearShort": "Imposte {year}: dati parziali",
+    "partialYearTitle": "Imposte {year}: anno non completo",
+    "partialYearBody": "I dati di cassa partono dal {date}. Le imposte sul reddito (IRPEF e contributi) si calcolano sul profitto dell'intero anno: per i mesi del {year} prima di quella data il profitto è stimato (costi al 30% del listino) e non c'è un saldo di cassa. L'imposta maturata su quei mesi non è accantonata nei saldi e andrà comunque versata. Dall'anno successivo, con tutti i mesi presenti, il calcolo è completo."
   },
   "simulator": {
     "title": "Quanto posso spendere? (simulazione)",
