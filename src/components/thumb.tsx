@@ -12,9 +12,9 @@ export function thumbUrl(src: string): string {
  * Product photo thumbnail. Tries the small copy first, falls back to the original photo if that
  * copy does not exist, and to a quiet placeholder when there is no photo at all.
  */
-export function Thumb({ src, alt, size = "md" }: { src: string | null; alt: string; size?: "md" | "lg" }) {
+export function Thumb({ src, alt, size = "md" }: { src: string | null; alt: string; size?: "md" | "lg" | "xl" }) {
   const [stage, setStage] = useState<"thumb" | "full" | "none">(src ? "thumb" : "none");
-  const box = `${size === "lg" ? "h-20 w-20" : "h-11 w-11"} shrink-0 rounded-lg bg-surface-2`;
+  const box = `${size === "xl" ? "h-36 w-36" : size === "lg" ? "h-20 w-20" : "h-11 w-11"} shrink-0 rounded-lg bg-surface-2`;
 
   if (!src || stage === "none") {
     return (
@@ -28,8 +28,8 @@ export function Thumb({ src, alt, size = "md" }: { src: string | null; alt: stri
     <img
       src={stage === "thumb" ? thumbUrl(src) : src}
       alt={alt}
-      width={size === "lg" ? 80 : 44}
-      height={size === "lg" ? 80 : 44}
+      width={size === "xl" ? 144 : size === "lg" ? 80 : 44}
+      height={size === "xl" ? 144 : size === "lg" ? 80 : 44}
       loading="lazy"
       decoding="async"
       onError={() => setStage(stage === "thumb" ? "full" : "none")}

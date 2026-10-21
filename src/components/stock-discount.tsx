@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { discountResult, toCent } from "@/lib/discount";
 import { Thumb } from "./thumb";
 
@@ -36,7 +36,6 @@ export function DiscountSimulator({ info, name, imageUrl, price, cost, vatRate, 
   const money = new Intl.NumberFormat(locale, { style: "currency", currency, useGrouping: "always" });
   const num = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 });
   const input = { costGross: 0, priceGross: price, vatRate, marginalTaxPct: taxPct, shippingPaidGross: 0, shippingChargedGross: 0, otherCostsNet: cost };
-  const full = discountResult(input, 0);
   const sim = discountResult(input, pct);
   const m = (n: number) => money.format(toCent(n));
   const tone = (n: number) => (toCent(n) < 0 ? "text-bad" : "");
@@ -44,7 +43,7 @@ export function DiscountSimulator({ info, name, imageUrl, price, cost, vatRate, 
     text.replace(/\{n\}/g, num.format(pct)).replace(/\{v\}/g, num.format(vatRate)).replace(/\{t\}/g, num.format(taxPct));
 
   const th = "py-2 pr-3 text-right text-xs font-medium uppercase leading-tight tracking-wide text-muted";
-  const step = (label: string, value: string, opts: { bold?: boolean; blue?: boolean; big?: boolean; valueClass?: string } = {}) => (
+  const step = (label: ReactNode, value: string, opts: { bold?: boolean; blue?: boolean; big?: boolean; valueClass?: string } = {}) => (
     <div className="flex items-baseline justify-between gap-4 py-2">
       <span className={opts.blue ? "text-accent" : opts.bold ? "font-semibold" : "text-muted"}>{label}</span>
       <span
@@ -57,41 +56,21 @@ export function DiscountSimulator({ info, name, imageUrl, price, cost, vatRate, 
 
   return (
     <div className="space-y-6 text-sm">
-      <div className="overflow-x-auto">
-        <div className="grid min-w-[42rem] grid-cols-[minmax(10rem,1fr)_8rem_8rem_8rem_8.5rem] items-center gap-x-3 gap-y-2">
-          <div />
-          <div className={`${th} self-end`}>{t.cost}</div>
-          <div className={`${th} self-end`}>{t.list}</div>
-          <div className={`${th} self-end`}>{t.shopNow}</div>
-          <div className={`${th} self-end pr-0`}>{t.discountNow}</div>
-          <div className="flex items-center gap-4">
-            <Thumb src={imageUrl} alt={name} size="lg" />
-            <div className="text-xl font-semibold tracking-tight">{name}</div>
+      <div className="flex items-start gap-5">
+        <Thumb src={imageUrl} alt={name} size="xl" />
+        <div className="min-w-0 flex-1 overflow-x-auto">
+          <div className="text-2xl font-semibold tracking-tight">{name}</div>
+          <div className="mt-3 grid min-w-[32rem] grid-cols-[repeat(3,minmax(0,1fr))_minmax(0,1.1fr)] gap-x-3 gap-y-1">
+            <div className={th}>{t.cost}</div>
+            <div className={th}>{t.list}</div>
+            <div className={th}>{t.shopNow}</div>
+            <div className={`${th} pr-0`}>{t.discountNow}</div>
+            <div className="whitespace-nowrap pr-3 text-right tabular-nums">{info.cost}</div>
+            <div className="whitespace-nowrap pr-3 text-right tabular-nums">{info.list}</div>
+            <div className="whitespace-nowrap pr-3 text-right font-semibold tabular-nums">{info.shop}</div>
+            <div className="whitespace-nowrap text-right tabular-nums">{info.discount}</div>
           </div>
-          <div className="whitespace-nowrap pr-3 text-right tabular-nums">{info.cost}</div>
-          <div className="whitespace-nowrap pr-3 text-right tabular-nums">{info.list}</div>
-          <div className="whitespace-nowrap pr-3 text-right font-semibold tabular-nums">{info.shop}</div>
-          <div className="whitespace-nowrap text-right tabular-nums">{info.discount}</div>
         </div>
-      </div>
-
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[28rem] table-fixed">
-          <thead>
-            <tr className="border-b border-ink/25 align-bottom">
-              <th className={th}>{t.profit}</th>
-              <th className={th}>{t.afterTax}</th>
-              <th className={`${th} pr-0 text-accent`}>{fill(t.simulated)}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr className="tabular-nums">
-              <td className={`py-3 pr-3 text-right ${tone(full.profitBeforeTax)}`}>{m(full.profitBeforeTax)}</td>
-              <td className={`py-3 pr-3 text-right font-semibold ${tone(full.profitAfterTax)}`}>{m(full.profitAfterTax)}</td>
-              <td className={`py-3 text-right font-semibold ${toCent(sim.profitAfterTax) < 0 ? "text-bad" : "text-accent"}`}>{m(sim.profitAfterTax)}</td>
-            </tr>
-          </tbody>
-        </table>
       </div>
 
       <div className="space-y-4 text-center">
@@ -129,7 +108,15 @@ export function DiscountSimulator({ info, name, imageUrl, price, cost, vatRate, 
         <h3 className="mb-2 text-lg font-semibold tracking-tight">{t.stepsTitle}</h3>
         <div className="divide-y divide-ink/20">
           {step(t.stepList, m(price), { bold: true, big: true })}
-          {step(fill(t.stepDiscount), m(sim.priceGross), { blue: true, big: true })}
+          {step(
+            <>
+              {t.stepDiscount.split("{n}%")[0]}
+              <strong className="text-xl font-semibold">{num.format(pct)}%</strong>
+              {t.stepDiscount.split("{n}%")[1]}
+            </>,
+            m(sim.priceGross),
+            { blue: true, big: true },
+          )}
           {step(fill(t.stepNet), m(sim.netRevenue))}
           {step(t.stepCost, `− ${m(cost)}`)}
           {step(t.stepProfit, m(sim.profitBeforeTax), { valueClass: tone(sim.profitBeforeTax) })}
