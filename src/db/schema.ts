@@ -115,6 +115,15 @@ export const orders = pgTable(
     grossTotal: numeric("gross_total", { precision: 14, scale: 2 }).notNull(), // tax included
     taxTotal: numeric("tax_total", { precision: 14, scale: 2 }).notNull(),
     shippingTotal: numeric("shipping_total", { precision: 14, scale: 2 }).notNull().default("0"),
+    // How the order was paid and where it came from. No customer data and no card digits are kept.
+    paymentMethod: text("payment_method"), // gateway id: "ppcp-gateway", "stripe_cc", "satispay"...; empty for orders entered by hand
+    paymentMethodTitle: text("payment_method_title"), // the label shown to the customer, card digits removed
+    transactionId: text("transaction_id"), // the payment processor's reference
+    createdVia: text("created_via"), // channel the order was created through: "checkout", "rest-api" (app), "admin"...
+    sourceType: text("source_type"), // visit origin type: utm, organic, referral, typein, mobile_app...
+    utmSource: text("utm_source"), // e.g. "ig", "google", "(direct)"
+    utmMedium: text("utm_medium"),
+    discountTotal: numeric("discount_total", { precision: 14, scale: 2 }).notNull().default("0"), // coupons, tax included
     refundedTotal: numeric("refunded_total", { precision: 14, scale: 2 }).notNull().default("0"),
     syncedAt: timestamp("synced_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -122,6 +131,19 @@ export const orders = pgTable(
     unique().on(t.shopId, t.wooOrderId),
     index().on(t.shopId, t.placedAt),
   ],
+);
+
+// Coupons used on an order (one row per code).
+export const orderCoupons = pgTable(
+  "order_coupons",
+  {
+    id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+    shopId: uuid("shop_id").notNull().references(() => shops.id, { onDelete: "cascade" }),
+    orderId: uuid("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
+    code: text("code").notNull(),
+    discount: numeric("discount", { precision: 14, scale: 2 }).notNull(), // tax included
+  },
+  (t) => [unique().on(t.orderId, t.code), index().on(t.shopId, t.code)],
 );
 
 export const orderLines = pgTable(

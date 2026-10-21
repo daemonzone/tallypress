@@ -370,6 +370,18 @@ subtracts the cost of goods sold that has not been bought back yet, so nothing i
 These are approximations of steady state: real purchases come in waves and taxes are paid with a
 delay. Replace them with the real movements as you record them.
 
+## What is kept from an order
+
+Besides amounts, status, date and lines, each order stores **how it was paid and where it came
+from**: the payment method (gateway id, e.g. `ppcp-gateway`, `stripe_cc`, `satispay`; empty for orders
+entered by hand) with its label, the processor's transaction id, the channel it was created through
+(`checkout`, `rest-api` for the mobile app, `admin`), the visit origin from WooCommerce's order
+attribution (type such as `utm`, `organic`, `referral`, `typein`, `mobile_app`; source and medium),
+and the coupons used (`order_coupons`, one row per code, plus the order's total discount). Nothing
+about the customer is stored, and card digits in a payment label ("MasterCard ending in 2163") are
+dropped. Payment fees are not modelled yet. Orders imported before these fields existed get them on
+the next refresh (`npm run shop:import-range -- --from <date>`).
+
 ## Products that are gone from the shop
 
 Order lines keep the WooCommerce product and variation they were sold under. Products the
