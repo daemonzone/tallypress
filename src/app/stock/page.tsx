@@ -187,7 +187,7 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
                         {g.cost == null ? t.common.none : sameCost ? money(g.cost.min) : `${money(g.cost.min)} – ${money(g.cost.max)}`}
                       </div>
                       <div className="text-right tabular-nums">{fmt.money(Math.round(g.stockValue * 100))}</div>
-                      <div className="text-right tabular-nums">{g.price == null ? t.common.none : money(g.price)}</div>
+                      <div className="text-right font-semibold tabular-nums">{g.price == null ? t.common.none : money(g.price)}</div>
                       <div className={`-my-2.5 flex items-center justify-end self-stretch py-2.5 tabular-nums ${DIVIDER}`}>
                         {sale ? (
                           <span className={sale.profitBeforeTax < -0.005 ? "text-bad" : ""}>{money(sale.profitBeforeTax)}</span>
@@ -195,7 +195,7 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
                           t.common.none
                         )}
                       </div>
-                      <div className={`text-right tabular-nums ${sale && sale.profitAfterTax < -0.005 ? "text-bad" : ""}`}>{sale ? money(sale.profitAfterTax) : t.common.none}</div>
+                      <div className={`text-right font-semibold tabular-nums ${sale && sale.profitAfterTax < -0.005 ? "text-bad" : ""}`}>{sale ? money(sale.profitAfterTax) : t.common.none}</div>
                       <DiscountedCell price={g.price} cost={g.unitCost} />
                       <Icon name="chevron" className="h-4 w-4 text-muted transition group-open:rotate-180" />
                     </summary>

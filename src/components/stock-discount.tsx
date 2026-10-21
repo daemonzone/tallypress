@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
 import { discountResult, toCent } from "@/lib/discount";
 
-const LEVELS = [0, 10, 20, 30, 40, 50, 60, 70];
+const LEVELS = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
 
 interface Ctx {
   pct: number;
@@ -62,13 +62,13 @@ export function DiscountButtons({ label, note }: { label: string; note: string }
 export function DiscountHeader({ label }: { label: string }) {
   const { pct } = useDiscount();
   return (
-    <div className="text-right">
+    <div className="text-right text-accent">
       {label} {pct === 0 ? "0%" : `−${pct}%`}
     </div>
   );
 }
 
-/** What one piece leaves in the pocket at the chosen discount (VAT and tax out). */
+/** What one piece leaves in the pocket at the chosen discount (VAT and tax out): a simulation, so it has its own colour. */
 export function DiscountedCell({ price, cost }: { price: number | null; cost: number | null }) {
   const { pct, vatRate, taxPct, locale, currency } = useDiscount();
   if (price == null || cost == null) return <div className="text-right text-muted">—</div>;
@@ -79,6 +79,6 @@ export function DiscountedCell({ price, cost }: { price: number | null; cost: nu
   const money = new Intl.NumberFormat(locale, { style: "currency", currency, useGrouping: "always" });
   const value = toCent(r.profitAfterTax);
   return (
-    <div className={`text-right tabular-nums ${value < 0 ? "font-medium text-bad" : "font-medium"}`}>{money.format(value)}</div>
+    <div className={`text-right font-medium tabular-nums ${value < 0 ? "text-bad" : "text-accent"}`}>{money.format(value)}</div>
   );
 }
