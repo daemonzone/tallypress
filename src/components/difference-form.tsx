@@ -24,31 +24,33 @@ export function DifferenceForm({ productId, pieces, locale, currency, labels, ac
   return (
     <form action={formAction} className="space-y-2">
       <input type="hidden" name="productId" value={productId} />
-      <div className="flex flex-wrap items-end gap-3">
-        <label className="flex flex-col gap-1 text-sm">
-          {labels.total}
-          <input
-            name="total"
-            type="number"
-            min="0.01"
-            step="0.01"
-            value={total}
-            onChange={(e) => setTotal(e.target.value)}
-            className={`${inputClass} w-40`}
-          />
-        </label>
+      <label className="flex max-w-xs flex-col gap-1 text-sm">
+        {labels.total}
+        <input
+          name="total"
+          type="number"
+          min="0.01"
+          step="0.01"
+          value={total}
+          onChange={(e) => setTotal(e.target.value)}
+          className={inputClass}
+        />
+      </label>
+      <div className="flex flex-wrap items-center gap-2">
         <button type="submit" name="kind" value="restock" disabled={pending || !(n > 0)} className={`${primaryButtonClass} disabled:opacity-50`}>
           {pending ? labels.working : labels.restock}
         </button>
         <button type="submit" name="kind" value="adjust" disabled={pending} className={`${buttonClass} disabled:opacity-50`} formNoValidate>
           {labels.adjust}
         </button>
+      </div>
+      <div className="min-h-5 text-sm">
         {n > 0 && pieces > 0 && (
-          <span className="text-sm tabular-nums text-muted">
+          <span className="tabular-nums text-muted">
             {labels.summary.replace("{n}", String(pieces)).replace("{unit}", money.format(n / pieces))}
           </span>
         )}
-        {msg && !pending && <span className={`text-sm ${state.status === "ok" ? "text-good" : "text-bad"}`}>{msg}</span>}
+        {msg && !pending && <span className={`ml-3 ${state.status === "ok" ? "text-good" : "text-bad"}`}>{msg}</span>}
       </div>
     </form>
   );

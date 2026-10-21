@@ -4,7 +4,6 @@ import { Pager, SearchBox } from "@/components/pager";
 import { DifferenceForm } from "@/components/difference-form";
 import { Thumb } from "@/components/thumb";
 import Link from "next/link";
-import { Fragment } from "react";
 import { buttonClass, Notice, Section } from "@/components/ui";
 import { getDictionary } from "@/i18n";
 import { resolveDifference } from "@/lib/actions";
@@ -61,33 +60,36 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
                   {toClassify.map((d) => {
                     const arrived = d.items.filter((i) => i.diff > 0);
                     return (
-                      <div key={d.productId} className={`grid ${DIFF_COLUMNS} items-center gap-x-4 gap-y-1 border-b border-line py-3`}>
-                        <div className="col-span-2 flex items-center gap-3" style={{ gridRow: 1 }}>
-                          <Thumb src={d.imageUrl} alt={d.name} />
-                          <span className="font-medium">{d.name}</span>
-                        </div>
-                        {arrived.map((i, n) => (
-                          <Fragment key={i.id}>
-                            <div className="pl-[3.25rem] text-sm text-muted" style={{ gridRow: n + 2, gridColumn: 1 }}>
+                      <div key={d.productId} className={`grid ${DIFF_COLUMNS} items-start gap-x-4 border-b border-line py-4`}>
+                        <div>
+                          <div className="flex h-11 items-center gap-3">
+                            <Thumb src={d.imageUrl} alt={d.name} />
+                            <span className="font-medium">{d.name}</span>
+                          </div>
+                          {arrived.map((i) => (
+                            <div key={i.id} className="flex h-9 items-center pl-[3.25rem] text-sm text-muted">
                               {i.label || t.stock.noVariant}
                             </div>
-                            <div style={{ gridRow: n + 2, gridColumn: 2 }} className="flex justify-center">
+                          ))}
+                        </div>
+                        <div>
+                          <div className="h-11" />
+                          {arrived.map((i) => (
+                            <div key={i.id} className="flex h-9 items-center justify-center">
                               <span className="inline-flex h-9 min-w-9 items-center justify-center rounded-lg border border-[var(--warn-line)] bg-[var(--warn-bg)] px-2 font-semibold tabular-nums">
                                 +{i.diff}
                               </span>
                             </div>
-                          </Fragment>
-                        ))}
-                        <div style={{ gridRow: `1 / span ${arrived.length + 1}`, gridColumn: 3 }}>
-                          <DifferenceForm
-                            productId={d.productId}
-                            pieces={arrived.reduce((sum, i) => sum + i.diff, 0)}
-                            locale={locale}
-                            currency={shop.currency}
-                            labels={t.stock.diffForm}
-                            action={resolveDifference}
-                          />
+                          ))}
                         </div>
+                        <DifferenceForm
+                          productId={d.productId}
+                          pieces={arrived.reduce((sum, i) => sum + i.diff, 0)}
+                          locale={locale}
+                          currency={shop.currency}
+                          labels={t.stock.diffForm}
+                          action={resolveDifference}
+                        />
                       </div>
                     );
                   })}
