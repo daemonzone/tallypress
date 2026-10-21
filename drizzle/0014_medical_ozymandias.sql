@@ -1,0 +1,1 @@
+ALTER TABLE "ledger_entries" ADD COLUMN "vat_amount" numeric(14, 2) DEFAULT '0' NOT NULL;

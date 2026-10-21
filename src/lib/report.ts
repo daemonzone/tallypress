@@ -17,6 +17,7 @@ export interface Flows {
   opening: number; // the starting deposit on the shop account
   deposit: number; // later money paid into the account
   restock: number;
+  restockVat: number; // the VAT included in `restock` (positive): deductible, not an extra movement
   estimatedRestock: number; // purchases estimated by Tallypress, not recorded by the owner
   withdrawal: number;
   expense: number;
@@ -31,7 +32,7 @@ export interface Flows {
 }
 
 const emptyFlows = (): Flows => ({
-  sales: 0, opening: 0, deposit: 0, restock: 0, estimatedRestock: 0, withdrawal: 0, expense: 0, vatPayment: 0, estimatedVatPayment: 0, taxPayment: 0, estimatedTaxPayment: 0, priorPayment: 0, estimatedPriorPayment: 0, adjustment: 0, other: 0,
+  sales: 0, opening: 0, deposit: 0, restock: 0, restockVat: 0, estimatedRestock: 0, withdrawal: 0, expense: 0, vatPayment: 0, estimatedVatPayment: 0, taxPayment: 0, estimatedTaxPayment: 0, priorPayment: 0, estimatedPriorPayment: 0, adjustment: 0, other: 0,
 });
 
 /** Everything that moves the account apart from sales. */
@@ -60,7 +61,8 @@ export interface Overview {
   netRemaining: number;
   vatReserve: number; // all VAT set aside since the start
   taxReserve: number; // all income tax and contributions set aside since the start
-  vatDue: number; // what is still to be paid: set aside minus payments recorded
+  vatDue: number; // what is still to be paid: set aside minus payments recorded and the VAT paid on purchases
+  vatCredit: number; // VAT paid on purchases (deductible), already subtracted from vatDue
   taxDue: number;
   netEarnings: number;
   withdrawn: number;
@@ -126,7 +128,7 @@ export async function buildReport(shopId: string): Promise<Report | null> {
       -- lines whose product was deleted for good have no item: keep them apart, by the name they were sold under
       GROUP BY 1, l.item_id, i.sku, i.status, i.product_name, i.variation_label, CASE WHEN l.item_id IS NULL THEN l.name END`),
     rowsOf(sql`
-      SELECT ${monthSql("occurred_at")} AS month, kind::text AS kind, estimated, sum(amount)::text AS amount
+      SELECT ${monthSql("occurred_at")} AS month, kind::text AS kind, estimated, sum(amount)::text AS amount, sum(vat_amount)::text AS vat
       FROM ledger_entries WHERE shop_id = ${shopId} GROUP BY 1, 2, 3`),
     db.select().from(monthClosings).where(eq(monthClosings.shopId, shopId)),
     db
@@ -147,7 +149,10 @@ export async function buildReport(shopId: string): Promise<Report | null> {
     const amount = toCents(r.amount);
     if (r.kind === "restock") {
       if (r.estimated) f.estimatedRestock += amount;
-      else f.restock += amount;
+      else {
+        f.restock += amount;
+        f.restockVat += toCents(r.vat);
+      }
     }
     else if (r.kind === "withdrawal") f.withdrawal += amount;
     else if (r.kind === "expense") f.expense += amount;
@@ -280,11 +285,13 @@ export async function buildReport(shopId: string): Promise<Report | null> {
   const openingValue = lotRows
     .filter((l) => l.source === "opening")
     .reduce((s, l) => s + Math.round(Number(l.qty) * Number(l.cost) * 100), 0);
-  const spentOnRestocks = -sum((m) => m.flows.restock + m.flows.estimatedRestock);
+  // Money out for purchases, net of the deductible VAT it contained.
+  const vatCredit = sum((m) => m.flows.restockVat);
+  const spentOnRestocks = -sum((m) => m.flows.restock + m.flows.estimatedRestock) - vatCredit;
   const invested = openingValue + spentOnRestocks;
   const netEarnings = sum((m) => m.netEarnings);
 
-  const vatDue = Math.max(sum((m) => m.vat) + sum((m) => m.flows.vatPayment + m.flows.estimatedVatPayment), 0);
+  const vatDue = Math.max(sum((m) => m.vat) + sum((m) => m.flows.vatPayment + m.flows.estimatedVatPayment) - vatCredit, 0);
   const taxDue = Math.max(sum((m) => m.taxReserve) + sum((m) => m.flows.taxPayment + m.flows.estimatedTaxPayment), 0);
 
   return {
@@ -304,6 +311,7 @@ export async function buildReport(shopId: string): Promise<Report | null> {
       vatReserve: sum((m) => m.vat),
       taxReserve: sum((m) => m.taxReserve),
       vatDue,
+      vatCredit,
       taxDue,
       netEarnings,
       withdrawn: -sum((m) => m.flows.withdrawal),

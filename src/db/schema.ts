@@ -212,6 +212,8 @@ export const ledgerEntries = pgTable(
     restockLotId: uuid("restock_lot_id").references(() => restockLots.id),
     // Entries computed by Tallypress (estimated purchases), as opposed to ones the owner recorded.
     estimated: boolean("estimated").notNull().default(false),
+    // VAT included in a payment (positive; part of `amount`, not an extra movement): deductible VAT on a purchase.
+    vatAmount: numeric("vat_amount", { precision: 14, scale: 2 }).notNull().default("0"),
     note: text("note"),
   },
   (t) => [index().on(t.shopId, t.occurredAt)],

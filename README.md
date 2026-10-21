@@ -52,8 +52,10 @@ multi-shop by design.
   if it has one), total quantity, average purchase cost and stock value; search on product, variation or
   code, or only the products whose quantity does not match WooCommerce. Click a row to see its
   variations (size/colour). A banner on top lists pieces that came in unrecorded: the quantity is
-  read-only (found in WooCommerce) and only the total paid is entered; the cost per piece is computed,
-  the total is booked once in Movements and the average moves only through that calculation. A
+  read-only (found in WooCommerce) and only the total paid is entered, with or without VAT at a rate
+  you can change; the unit cost is computed on the net, the gross is booked once in Movements (the bank
+  figure) and the VAT it contained is deducted from the VAT due. The average moves only through that
+  calculation. A
   "correction" adds the pieces at the current average cost without any money movement.
 - **Ledger** (`/ledger`): every movement of the shop account, and one form to record any
   manual movement. The amount is always positive and the type decides the direction:

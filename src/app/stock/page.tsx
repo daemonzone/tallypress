@@ -84,6 +84,7 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
                             pieces={arrived.reduce((sum, i) => sum + i.diff, 0)}
                             locale={locale}
                             currency={shop.currency}
+                            vatRate={Number(shop.vatRate)}
                             labels={t.stock.diffForm}
                             action={resolveDifference}
                           />

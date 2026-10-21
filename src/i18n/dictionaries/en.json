@@ -173,23 +173,26 @@
     "onlyDiff": "Only mismatched quantities ({n})",
     "allProducts": "All products",
     "diffTitle": "Quantities to classify",
-    "diffBanner": "WooCommerce stock went up compared with the records in {n} products. For each one, say whether the pieces that came in are a restock (enter the total paid) or a correction.",
+    "diffBanner": "WooCommerce stock went up compared with the counts in {n} products. For each one, say whether the units that came in are a restock (enter the total paid) or a correction.",
     "diffForm": {
-      "total": "Total paid for these pieces (without VAT)",
-      "summary": "{n} pieces · {unit} each",
+      "total": "Total paid",
+      "summary": "{n} products · net {net} + VAT {vat} = {gross} · unit cost {unit}",
       "restock": "It was a restock",
       "adjust": "Not a purchase (correction)",
       "working": "Recording…",
       "done": "Recorded.",
       "invalid": "Enter the total paid.",
-      "tooHigh": "The cost per piece is higher than the selling price: check the amount.",
-      "gone": "Nothing left to classify for this product."
+      "tooHigh": "The unit cost is higher than the selling price: check the amount.",
+      "gone": "Nothing left to classify for this product.",
+      "vatWith": "With VAT",
+      "vatWithout": "Without VAT",
+      "rate": "VAT rate %"
     },
     "diffAdded": "Added",
     "diffReconcile": "Reconcile",
-    "diffFewer": "In {n} products WooCommerce shows fewer pieces than the records (usually stock at −1: a piece was sold that was not in stock). Fix the stock in WooCommerce: if the pieces really arrived, they will show up here as an entry to reconcile. Filter the list to see them.",
-    "diffBannerOne": "WooCommerce stock went up compared with the records in 1 product. Say whether the pieces that came in are a restock (enter the total paid) or a correction.",
-    "diffFewerOne": "In 1 product WooCommerce shows fewer pieces than the records (usually stock at −1: a piece was sold that was not in stock). Fix the stock in WooCommerce: if the piece really arrived, it will show up here as an entry to reconcile. Filter the list to see it."
+    "diffFewer": "In {n} products WooCommerce shows fewer units than the counts (usually stock at −1: a product was sold that was not in stock). Fix the stock in WooCommerce: if the units really arrived, they will show up here as an entry to reconcile. Filter the list to see them.",
+    "diffBannerOne": "WooCommerce stock went up compared with the counts in 1 product. Say whether the units that came in are a restock (enter the total paid) or a correction.",
+    "diffFewerOne": "In 1 product WooCommerce shows fewer units than the counts (usually stock at −1: a product was sold that was not in stock). Fix the stock in WooCommerce: if the product really arrived, it will show up here as an entry to reconcile. Filter the list to see it."
   },
   "ledger": {
     "title": "Shop account movements",

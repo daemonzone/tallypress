@@ -170,8 +170,9 @@ export type DifferenceState = { status: "idle" | "ok" | "invalid" | "tooHigh" | 
 /**
  * Settles the pieces that entered a product's stock without being recorded (WooCommerce holds more
  * than the internal figures). The quantities are never typed: they are recomputed here from the
- * data. "restock": the total paid is the only figure entered; the cost per piece is total / pieces,
- * the total is booked once in the ledger and the average moves only through that calculation.
+ * data. "restock": the total paid (with or without VAT, at the rate given) is the only figure entered;
+ * the cost per piece is the net / pieces, the gross is booked once in the ledger (with its VAT, which
+ * is deducted from the VAT due) and the average moves only through that calculation.
  * "adjust": not a purchase (an inventory correction): the pieces enter at the current average cost,
  * with no money movement. A cost above the selling price (without VAT) is refused.
  */
@@ -180,14 +181,21 @@ export async function resolveDifference(_prev: DifferenceState, formData: FormDa
   const productId = Number(formData.get("productId"));
   const kind = formData.get("kind") === "adjust" ? "adjust" : "restock";
   const total = parseDecimal(formData.get("total"));
+  const vatIncluded = formData.get("vatMode") !== "without";
+  const vatRate = parseDecimal(formData.get("vatRate"));
   if (!Number.isInteger(productId) || (kind === "restock" && !(total > 0))) return { status: "invalid" };
+  if (kind === "restock" && !(vatRate >= 0 && vatRate <= 100)) return { status: "invalid" };
 
   const states = await getProductStates(shopId, productId);
   const arrived = states.filter((s) => (s.diff ?? 0) > 0 && s.status !== "trash" && s.status !== "deleted");
   const pieces = arrived.reduce((sum, s) => sum + (s.diff ?? 0), 0);
   if (!pieces) return { status: "gone" };
 
-  const totalCents = Math.round(total * 100);
+  // The amount typed is with or without VAT; the cash that leaves the account is the gross, the cost is the net.
+  const factor = 1 + vatRate / 100;
+  const grossCents = vatIncluded ? Math.round(total * 100) : Math.round(total * factor * 100);
+  const totalCents = vatIncluded ? Math.round(grossCents / factor) : Math.round(total * 100); // net
+  const vatCents = grossCents - totalCents;
   if (kind === "restock") {
     const [shop] = await db.select({ vat: shops.vatRate }).from(shops).where(eq(shops.id, shopId));
     const vat = 1 + Number(shop?.vat ?? 0) / 100;
@@ -215,9 +223,10 @@ export async function resolveDifference(_prev: DifferenceState, formData: FormDa
       await tx.insert(ledgerEntries).values({
         shopId,
         kind: "restock",
-        amount: centsToString(-totalCents),
+        amount: centsToString(-grossCents),
+        vatAmount: centsToString(vatCents),
         occurredAt: now,
-        note: `${name}: ${pieces} pz × ${(totalCents / 100 / pieces).toFixed(2)}`.slice(0, 200),
+        note: `${name}: ${pieces} × ${(totalCents / 100 / pieces).toFixed(2)} + IVA ${vatRate}%`.slice(0, 200),
       });
     }
   });
