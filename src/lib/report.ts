@@ -303,7 +303,11 @@ export async function buildReport(shopId: string): Promise<Report | null> {
     currency: shop.currency,
     currentKey,
     startsOn: shop.baselineAt.toISOString().slice(0, 10),
-    partialTaxYear: shop.baselineAt.toISOString().slice(5, 10) === "01-01" ? null : shop.baselineAt.toISOString().slice(0, 4),
+    // Only when earlier months of that year exist (sales before the starting day) but are not in the cash figures.
+    partialTaxYear:
+      shop.baselineAt.toISOString().slice(5, 10) === "01-01" || !firstOrder || firstOrder >= shop.baselineAt
+        ? null
+        : shop.baselineAt.toISOString().slice(0, 4),
     hasOpening,
     aligned,
     months,
