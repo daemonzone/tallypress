@@ -81,7 +81,7 @@ export function DiscountSimulator({ name, imageUrl, price, cost, vatRate, taxPct
       </div>
 
       <div className="space-y-4 text-center">
-        <p>
+        <p className="text-balance">
           <strong>{t.introBold}</strong>
           {t.introRest}
           <br />
