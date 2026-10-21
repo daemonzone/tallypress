@@ -1,4 +1,4 @@
-import { and, eq, isNull, lt, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, lt, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { items, type shops } from "@/db/schema";
 import { mapLimit, wooGetAll, wooGetOne } from "@/lib/woo";
@@ -125,21 +125,11 @@ async function upsertItems(rows: ItemRow[]): Promise<void> {
   }
 }
 
-/** Upserts one `items` row per simple product / variation. Returns how many were synced. */
-export async function syncItems(shop: Shop): Promise<number> {
-  const runStart = new Date();
-  const products = await wooGetAll<WooProduct>(shop, "products", { _fields: PRODUCT_FIELDS });
+// Overlap with the previous run so a product modified mid-sync is never missed.
+const OVERLAP_MS = 10 * 60 * 1000;
+
+function rowsOf(shop: Shop, products: WooProduct[], variationsOf: Map<number, WooVariation[]>): ItemRow[] {
   const rows: ItemRow[] = [];
-
-  const variationsOf = new Map<number, WooVariation[]>();
-  await mapLimit(
-    products.filter((p) => p.type === "variable"),
-    CONCURRENCY,
-    async (p) => {
-      variationsOf.set(p.id, await wooGetAll<WooVariation>(shop, `products/${p.id}/variations`, { _fields: VARIATION_FIELDS }));
-    },
-  );
-
   for (const p of products) {
     if (UNSOLD_TYPES.has(p.type)) continue;
     if (p.type === "variable") {
@@ -148,9 +138,56 @@ export async function syncItems(shop: Shop): Promise<number> {
       rows.push(productRow(shop, p, p.status));
     }
   }
+  return rows;
+}
+
+async function readVariations(shop: Shop, products: WooProduct[]): Promise<Map<number, WooVariation[]>> {
+  const variationsOf = new Map<number, WooVariation[]>();
+  await mapLimit(
+    products.filter((p) => p.type === "variable"),
+    CONCURRENCY,
+    async (p) => {
+      variationsOf.set(p.id, await wooGetAll<WooVariation>(shop, `products/${p.id}/variations`, { _fields: VARIATION_FIELDS }));
+    },
+  );
+  return variationsOf;
+}
+
+/**
+ * Upserts one `items` row per simple product / variation. Returns how many were synced.
+ *
+ * Unless `full`, only what changed since the last completed sync is read: a sale, a restock or
+ * a price change all update the product's modified date in WooCommerce, and the variations
+ * (the slow part, one request per variable product) are read only for the products that
+ * changed. A full run re-reads the whole catalogue, which also finds products deleted for good.
+ */
+export async function syncItems(shop: Shop, full = false): Promise<number> {
+  const runStart = new Date();
+  if (full || !shop.lastSyncedAt) {
+    const products = await wooGetAll<WooProduct>(shop, "products", { _fields: PRODUCT_FIELDS });
+    const rows = rowsOf(shop, products, await readVariations(shop, products));
+    await upsertItems(rows);
+    await refreshVanishedItems(shop, runStart);
+    await alignLegacyItems(shop);
+    return rows.length;
+  }
+
+  const since = { modified_after: new Date(shop.lastSyncedAt.getTime() - OVERLAP_MS).toISOString(), dates_are_gmt: true };
+  const changed = await wooGetAll<WooProduct>(shop, "products", { _fields: PRODUCT_FIELDS, ...since });
+  const rows = rowsOf(shop, changed, await readVariations(shop, changed));
   await upsertItems(rows);
 
-  await refreshVanishedItems(shop, runStart);
+  // Products moved to the trash are not in the list above: record them without reading their variations.
+  const trashed = await wooGetAll<{ id: number }>(shop, "products", { _fields: "id", status: "trash", ...since });
+  if (trashed.length) {
+    await db
+      .update(items)
+      .set({ status: "trash", managesStock: false, stockQty: null, syncedAt: new Date() })
+      .where(and(eq(items.shopId, shop.id), inArray(items.wooProductId, trashed.map((t) => t.id))));
+  }
+
+  // A variation removed from a product that changed is no longer in its list: find out what became of it.
+  await refreshVanishedItems(shop, runStart, changed.map((p) => p.id));
   await alignLegacyItems(shop);
   return rows.length;
 }
@@ -160,11 +197,18 @@ export async function syncItems(shop: Shop): Promise<number> {
  * deleted in the shop: look each one up and record what happened, instead of leaving it
  * looking published. Usually there are none.
  */
-async function refreshVanishedItems(shop: Shop, runStart: Date): Promise<void> {
+async function refreshVanishedItems(shop: Shop, runStart: Date, onlyProducts?: number[]): Promise<void> {
+  if (onlyProducts && !onlyProducts.length) return;
   const vanished = await db
     .select()
     .from(items)
-    .where(and(eq(items.shopId, shop.id), lt(items.syncedAt, runStart)));
+    .where(
+      and(
+        eq(items.shopId, shop.id),
+        lt(items.syncedAt, runStart),
+        onlyProducts ? inArray(items.wooProductId, onlyProducts) : undefined,
+      ),
+    );
   const live = vanished.filter((i) => !isGone(i.status));
   await mapLimit(live, CONCURRENCY, async (item) => {
     const prod = await wooGetOne<WooProduct>(shop, `products/${item.wooProductId}`, PRODUCT_FIELDS);

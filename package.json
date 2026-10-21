@@ -14,6 +14,7 @@
     "shop:connect": "tsx scripts/connect-shop.ts",
     "shop:import-range": "tsx scripts/import-range.ts",
     "shop:images": "tsx scripts/sync-images.ts",
+    "shop:sync-full": "tsx scripts/sync-full.ts",
     "shop:rebuild-costs": "tsx scripts/rebuild-costs.ts",
     "shop:returns": "tsx scripts/sync-returns.ts",
     "shop:restart": "tsx scripts/restart.ts",

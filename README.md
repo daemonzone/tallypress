@@ -427,8 +427,12 @@ These are deliberate MVP simplifications or gaps, not hidden behaviour.
   social contributions. Confirm the figures with an accountant.
 - **Late changes to closed months** are folded into the first open month as an adjustment
   of the collected amount; their effect on cost of goods is not recomputed.
-- **Products are re-read in full on every sync** (cheap, idempotent, no duplicates);
-  orders are incremental.
+- **The sync is incremental** (about 15 s instead of 90): orders and the products changed
+  since the last run (WooCommerce updates a product's modified date on every sale, restock
+  and price change), reading the variations only of the changed products. Trashed products
+  are picked up too. Not seen: products deleted for good, changes made straight in the
+  WordPress database. `npm run shop:sync-full` re-reads the whole catalogue when something
+  looks stale.
 - **Stock changes are not detected automatically.** The Stock page flags differences
   between tracked and WooCommerce stock, but you record restocks yourself.
 - **No automated tests.** Behaviour was verified by hand against the Docker shop; the cost

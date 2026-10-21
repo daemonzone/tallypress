@@ -11,10 +11,11 @@ export type SyncResult =
   | { shopId: string; ok: false; error: string };
 
 /**
- * Syncs one shop. A Postgres advisory lock (one per shop) stops a manual run and the
+ * Syncs one shop; by default only what changed since the last run (`full` re-reads the whole
+ * catalogue, orders included in the same incremental way). A Postgres advisory lock (one per shop) stops a manual run and the
  * cron from overlapping; the lock lives on its own connection for the whole run.
  */
-export async function syncShop(shopId: string): Promise<SyncResult> {
+export async function syncShop(shopId: string, { full = false }: { full?: boolean } = {}): Promise<SyncResult> {
   const lock = await pool.connect();
   try {
     const { rows } = await lock.query<{ locked: boolean }>(
@@ -28,7 +29,7 @@ export async function syncShop(shopId: string): Promise<SyncResult> {
       const [shop] = await db.select().from(shops).where(eq(shops.id, shopId));
       if (!shop) throw new Error("Shop not found");
 
-      const itemCount = await syncItems(shop);
+      const itemCount = await syncItems(shop, full);
       const orderCount = await syncOrders(shop);
       // Give new sales their purchase cost, then close any month that has ended.
       await syncMissingItems(shop);
