@@ -218,27 +218,36 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
                       <Icon name="chevron" className="h-4 w-4 text-muted transition group-open:rotate-180" />
                     </summary>
 
-                    <div className="space-y-4 pb-5 pl-[3.75rem] pr-6">
-                      <table className="w-full text-sm">
+                    <div className="space-y-4 pb-5 pl-[3.75rem] pr-2">
+                      <table className="w-full table-fixed text-sm">
                         <thead>
                           <tr className="border-b border-line align-bottom text-xs uppercase leading-tight tracking-wide text-muted">
-                            <th className="w-40 py-1.5 pr-3 text-left font-medium">{t.stock.variant}</th>
-                            <th className="w-24 py-1.5 pr-3 text-left font-medium">{t.stock.code}</th>
-                            <th className="w-14 py-1.5 pr-3 text-right font-medium">{t.stock.woo}</th>
-                            <th className="w-32 py-1.5 pr-3 text-right font-medium">{t.stock.cost}</th>
-                            <th className="w-32 py-1.5 pr-3 text-right font-medium">{t.stock.value}</th>
+                            <th className="py-1.5 pr-3 text-left font-medium">{t.stock.variant}</th>
+                            <th className="w-12 py-1.5 pr-3 text-right font-medium">{t.stock.woo}</th>
+                            <th className="w-36 py-1.5 pr-3 text-right font-medium">{t.stock.cost}</th>
                             <th className="w-36 py-1.5 pr-3 text-right font-medium">{t.stock.listPrice}</th>
                             <th className="w-40 py-1.5 pr-3 text-right font-medium">{t.stock.shopPrice}</th>
-                            <th className="w-24 py-1.5 text-right font-medium">{t.stock.currentDiscount}</th>
+                            <th className="w-20 py-1.5 pr-3 text-right font-medium">{t.stock.currentDiscount}</th>
+                            <th className={`w-24 py-1.5 pr-3 text-right font-medium ${DIVIDER}`}>{t.stock.profit}</th>
+                            <th className="w-24 py-1.5 pr-3 text-right font-medium">{t.stock.pocket}</th>
+                            <th className="w-36 py-1.5 font-medium">
+                              <DiscountHeader label={t.stock.realProfit} />
+                            </th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-line">
                           {g.items.map((s) => {
                             const mismatch = s.wooStock != null && s.trackedStock != null && s.wooStock !== s.trackedStock;
+                            const vSale =
+                              s.listPrice != null && s.avgCost != null
+                                ? discountResult(
+                                    { costGross: 0, priceGross: s.listPrice, vatRate, marginalTaxPct: taxPct, shippingPaidGross: 0, shippingChargedGross: 0, otherCostsNet: s.avgCost },
+                                    0,
+                                  )
+                                : null;
                             return (
                               <tr key={s.id}>
-                                <td className="py-1.5 pr-3">{s.variation ?? t.stock.noVariant}</td>
-                                <td className="py-1.5 pr-3 text-muted">{s.sku ?? t.common.none}</td>
+                                <td className="whitespace-nowrap py-1.5 pr-3">{s.variation ?? t.stock.noVariant}</td>
                                 <td className="py-1.5 pr-3 text-right tabular-nums">
                                   {s.wooStock == null ? (
                                     t.common.none
@@ -255,14 +264,22 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
                                   )}
                                 </td>
                                 <td className="py-1.5 pr-3 text-right tabular-nums">{money(s.avgCost)}</td>
-                                <td className="py-1.5 pr-3 text-right tabular-nums">{fmt.money(Math.round(s.stockValue * 100))}</td>
                                 <td className="py-1.5 pr-3 text-right tabular-nums">{money(s.listPrice)}</td>
                                 <td className="py-1.5 pr-3 text-right font-semibold tabular-nums">{money(s.shopPrice)}</td>
-                                <td className="py-1.5 text-right tabular-nums">
+                                <td className="py-1.5 pr-3 text-right tabular-nums">
                                   {(() => {
                                     const d = saleDiscount(s.listPrice, s.shopPrice);
                                     return d == null ? t.common.none : pctText(d);
                                   })()}
+                                </td>
+                                <td className={`py-1.5 pr-3 text-right tabular-nums ${DIVIDER}`}>
+                                  <span className={vSale && vSale.profitBeforeTax < -0.005 ? "text-bad" : ""}>{vSale ? money(vSale.profitBeforeTax) : t.common.none}</span>
+                                </td>
+                                <td className={`py-1.5 pr-3 text-right font-semibold tabular-nums ${vSale && vSale.profitAfterTax < -0.005 ? "text-bad" : ""}`}>
+                                  {vSale ? money(vSale.profitAfterTax) : t.common.none}
+                                </td>
+                                <td className="py-1.5">
+                                  <DiscountedCell price={s.listPrice} cost={s.avgCost} />
                                 </td>
                               </tr>
                             );
