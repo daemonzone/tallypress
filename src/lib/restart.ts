@@ -29,7 +29,8 @@ export async function restartAt(shopId: string, startsAt: Date, balanceCents: nu
     await tx.delete(monthClosings).where(eq(monthClosings.shopId, shopId));
     const ledger = await tx
       .delete(ledgerEntries)
-      .where(and(eq(ledgerEntries.shopId, shopId), lt(ledgerEntries.occurredAt, startsAt)));
+      // The old opening entry goes whatever its date: the new one replaces it.
+      .where(and(eq(ledgerEntries.shopId, shopId), or(lt(ledgerEntries.occurredAt, startsAt), eq(ledgerEntries.kind, "opening_balance"))));
     const lots = await tx
       .delete(restockLots)
       .where(

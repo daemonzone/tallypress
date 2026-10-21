@@ -22,7 +22,7 @@ async function main() {
   const byKind = await db
     .select({ kind: ledgerEntries.kind, estimated: ledgerEntries.estimated, n: count() })
     .from(ledgerEntries)
-    .where(and(eq(ledgerEntries.shopId, shopId), lt(ledgerEntries.occurredAt, startsAt)))
+    .where(and(eq(ledgerEntries.shopId, shopId), or(lt(ledgerEntries.occurredAt, startsAt), eq(ledgerEntries.kind, "opening_balance"))))
     .groupBy(ledgerEntries.kind, ledgerEntries.estimated);
   const [{ n: lots }] = await db
     .select({ n: count() })
