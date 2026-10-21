@@ -185,7 +185,7 @@
       "tooHigh": "The cost per piece is higher than the selling price: check the amount.",
       "gone": "Nothing left to classify for this product."
     },
-    "diffAdded": "Change",
+    "diffAdded": "Added",
     "diffReconcile": "Reconcile",
     "diffFewer": "In {n} products WooCommerce shows fewer pieces than the records (usually stock at −1: a piece was sold that was not in stock). Fix the stock in WooCommerce: if the pieces really arrived, they will show up here as an entry to reconcile. Filter the list to see them.",
     "diffBannerOne": "WooCommerce stock went up compared with the records in 1 product. Say whether the pieces that came in are a restock (enter the total paid) or a correction.",
