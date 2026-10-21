@@ -7,7 +7,8 @@
     "panel": "Pannello",
     "stock": "Magazzino",
     "ledger": "Movimenti",
-    "setup": "Impostazioni"
+    "setup": "Impostazioni",
+    "orders": "Ordini"
   },
   "common": {
     "item": "Articolo",
@@ -271,6 +272,64 @@
       "historyOnly": "Solo storico delle vendite",
       "historyOnlyHelp": "Per periodi precedenti alla data di inizio: aggiunge le vendite senza saldo del conto né magazzino iniziale per quei mesi. Il resto non cambia.",
       "historyAdded": "Storico delle vendite aggiunto fino al {date}."
+    }
+  },
+  "orders": {
+    "title": "Ordini",
+    "searchPlaceholder": "Cerca ordine, prodotto, coupon, pagamento…",
+    "results": "{n} ordini",
+    "noResults": "Nessun ordine corrisponde alla ricerca.",
+    "empty": "Ancora nessun ordine.",
+    "summary": "{gross} lordi negli ordini contati come vendite (in lavorazione o completati, al netto dei rimborsi).",
+    "notCounted": "Non contato nelle vendite",
+    "moreProducts": "+{n} altri",
+    "refunded": "rimborsati {amount}",
+    "manual": "Inserito a mano",
+    "columns": {
+      "date": "Data",
+      "order": "Ordine",
+      "status": "Stato",
+      "products": "Prodotti",
+      "total": "Totale",
+      "discount": "Sconto",
+      "payment": "Pagamento",
+      "channel": "Canale",
+      "origin": "Origine"
+    },
+    "statuses": {
+      "completed": "Completato",
+      "processing": "In lavorazione",
+      "on-hold": "In attesa",
+      "pending": "Attesa pagamento",
+      "cancelled": "Annullato",
+      "refunded": "Rimborsato",
+      "failed": "Fallito",
+      "trash": "Cestinato"
+    },
+    "payment": {
+      "ppcp-gateway": "PayPal",
+      "stripe_cc": "Carta (Stripe)",
+      "stripe": "Stripe",
+      "stripe_applepay": "Apple Pay",
+      "stripe_sepa": "Addebito SEPA",
+      "stripe_satispay": "Satispay (Stripe)",
+      "satispay": "Satispay",
+      "klarna_payments": "Klarna",
+      "bacs": "Bonifico",
+      "cod": "Contrassegno"
+    },
+    "channels": {
+      "checkout": "Sito",
+      "rest-api": "App mobile",
+      "admin": "Admin"
+    },
+    "origins": {
+      "utm": "Campagna",
+      "organic": "Ricerca organica",
+      "referral": "Link da un sito",
+      "typein": "Diretto",
+      "mobile_app": "App mobile",
+      "admin": "Admin"
     }
   }
 }

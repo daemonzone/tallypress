@@ -8,11 +8,13 @@ export function SearchBox({
   q,
   placeholder,
   button,
+  wide = false,
 }: {
   action: string;
   q: string;
   placeholder: string;
   button: string;
+  wide?: boolean;
 }) {
   return (
     <form action={action} method="get" role="search" className="flex items-center gap-2">
@@ -23,7 +25,7 @@ export function SearchBox({
         placeholder={placeholder}
         aria-label={placeholder}
         maxLength={80}
-        className={`${inputClass} w-56`}
+        className={`${inputClass} ${wide ? "w-72" : "w-56"}`}
       />
       <button type="submit" className={buttonClass}>
         <Icon name="search" className="h-4 w-4" />

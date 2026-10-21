@@ -7,7 +7,8 @@
     "panel": "Panel",
     "stock": "Stock",
     "ledger": "Ledger",
-    "setup": "Setup"
+    "setup": "Setup",
+    "orders": "Orders"
   },
   "common": {
     "item": "Item",
@@ -271,6 +272,64 @@
       "historyOnly": "Sales history only",
       "historyOnlyHelp": "For periods before your starting date: adds the sales without an account balance or opening stock for those months. Nothing else changes.",
       "historyAdded": "Sales history added back to {date}."
+    }
+  },
+  "orders": {
+    "title": "Orders",
+    "searchPlaceholder": "Search order, product, coupon, payment…",
+    "results": "{n} orders",
+    "noResults": "No orders match your search.",
+    "empty": "No orders yet.",
+    "summary": "{gross} gross in the orders counted as sales (processing or completed, net of refunds).",
+    "notCounted": "Not counted in sales",
+    "moreProducts": "+{n} more",
+    "refunded": "refunded {amount}",
+    "manual": "Entered by hand",
+    "columns": {
+      "date": "Date",
+      "order": "Order",
+      "status": "Status",
+      "products": "Products",
+      "total": "Total",
+      "discount": "Discount",
+      "payment": "Payment",
+      "channel": "Channel",
+      "origin": "Origin"
+    },
+    "statuses": {
+      "completed": "Completed",
+      "processing": "Processing",
+      "on-hold": "On hold",
+      "pending": "Pending payment",
+      "cancelled": "Cancelled",
+      "refunded": "Refunded",
+      "failed": "Failed",
+      "trash": "Trash"
+    },
+    "payment": {
+      "ppcp-gateway": "PayPal",
+      "stripe_cc": "Card (Stripe)",
+      "stripe": "Stripe",
+      "stripe_applepay": "Apple Pay",
+      "stripe_sepa": "SEPA debit",
+      "stripe_satispay": "Satispay (Stripe)",
+      "satispay": "Satispay",
+      "klarna_payments": "Klarna",
+      "bacs": "Bank transfer",
+      "cod": "Cash on delivery"
+    },
+    "channels": {
+      "checkout": "Website",
+      "rest-api": "Mobile app",
+      "admin": "Admin"
+    },
+    "origins": {
+      "utm": "Campaign",
+      "organic": "Organic search",
+      "referral": "Link from a site",
+      "typein": "Direct",
+      "mobile_app": "Mobile app",
+      "admin": "Admin"
     }
   }
 }

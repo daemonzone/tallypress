@@ -42,6 +42,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             <Nav
               links={[
                 { href: "/", label: t.nav.panel, icon: "grid" },
+                { href: "/orders", label: t.nav.orders, icon: "bag" },
                 { href: "/stock", label: t.nav.stock, icon: "box" },
                 { href: "/ledger", label: t.nav.ledger, icon: "book" },
                 { href: "/setup", label: t.nav.setup, icon: "sliders" },

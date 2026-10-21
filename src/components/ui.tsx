@@ -137,18 +137,23 @@ export function DataTable({
   head,
   children,
   numericFrom = 1,
+  align,
+  minWidth = "40rem",
 }: {
   head: string[];
   children: ReactNode;
   numericFrom?: number;
+  /** Explicit alignment per column; overrides numericFrom. */
+  align?: ("left" | "right")[];
+  minWidth?: string;
 }) {
   return (
     <div className="-mx-1 overflow-x-auto px-1">
-      <table className="w-full min-w-[40rem] text-left text-sm">
+      <table className="w-full text-left text-sm" style={{ minWidth }}>
         <thead>
           <tr className="border-b border-line text-xs uppercase tracking-wide text-muted">
             {head.map((h, i) => (
-              <th key={h} className={`py-2 pr-3 font-medium ${i >= numericFrom ? "text-right" : ""}`}>
+              <th key={h} className={`py-2 pr-3 font-medium ${(align ? align[i] === "right" : i >= numericFrom) ? "text-right" : ""}`}>
                 {h}
               </th>
             ))}

@@ -40,6 +40,11 @@ multi-shop by design.
   right, a sidebar that stays the same whichever month is open: the shop overview (money in
   the account, VAT and tax set aside, net earnings, withdrawals, stock value, invested,
   ROI) and the owner-share simulator with a live bar of where the account money goes.
+- **Orders** (`/orders`): every order, newest first, 10 per page, with one search box that looks at
+  the order number, the products sold, coupon codes, payment, channel, origin and status (also by
+  their names in the current language). Columns: date, order, status, products, total (with refunds
+  noted), discount and coupons, payment, channel, origin. Orders that do not count as sales
+  (cancelled, failed...) are greyed out. First version: more filters and columns to come.
 - **Stock** (`/stock`): 25 items per page with a search on product name, variation or SKU, a
   photo thumbnail for each item (its own colour's photo, from WordPress's 150x150 copy), a
   "In the bin" / "Deleted" badge for products that are no longer published, tracked stock vs. WooCommerce stock (a warning means they differ,
