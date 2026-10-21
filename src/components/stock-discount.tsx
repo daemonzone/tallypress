@@ -52,7 +52,7 @@ export function DiscountSimulator({ name, imageUrl, price, cost, vatRate, taxPct
 
   return (
     <div className="space-y-6 text-sm">
-      <div className="flex items-center justify-center gap-4">
+      <div className="flex items-center gap-4">
         <Thumb src={imageUrl} alt={name} size="lg" />
         <div className="text-xl font-semibold tracking-tight">{name}</div>
       </div>
