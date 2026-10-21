@@ -307,28 +307,29 @@ function MonthPanel({
         <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-5">
           <StatTile
             hero
-            label={t.month.netEarnings}
-            icon="trend"
-            labelExtra={
-              <InfoModal
-                label={t.month.detail}
-                title={t.month.detail}
-                subtitle={monthLabel(m.key, locale)}
-                closeLabel={t.common.close}
-              >
-                <GrossToNet month={m} t={t} fmt={fmt} />
-              </InfoModal>
-            }
-            value={<span className={m.netEarnings < 0 ? "text-bad" : ""}>{fmt.money(m.netEarnings)}</span>}
-            note={m.netEarnings < 0 ? t.month.loss : undefined}
+            label={t.month.gross}
+            icon="wallet"
+            value={fmt.money(m.gross)}
+            note={m.lateAdjustments !== 0 ? `${t.month.lateAdjustments}: ${fmt.money(m.lateAdjustments)}` : undefined}
           />
           <div className="flex gap-8">
-            <StatTile label={t.month.orders} icon="bag" value={fmt.int(m.orders)} />
+            <StatTile label={t.month.orders} icon="bag" value={fmt.int(m.orders)} align="right" />
             <StatTile
-              label={t.month.gross}
-              icon="wallet"
-              value={fmt.money(m.gross)}
-              note={m.lateAdjustments !== 0 ? `${t.month.lateAdjustments}: ${fmt.money(m.lateAdjustments)}` : undefined}
+              label={t.month.netEarnings}
+              icon="trend"
+              align="right"
+              labelExtra={
+                <InfoModal
+                  label={t.month.detail}
+                  title={t.month.detail}
+                  subtitle={monthLabel(m.key, locale)}
+                  closeLabel={t.common.close}
+                >
+                  <GrossToNet month={m} t={t} fmt={fmt} />
+                </InfoModal>
+              }
+              value={<span className={m.netEarnings < 0 ? "text-bad" : ""}>{fmt.money(m.netEarnings)}</span>}
+              note={m.netEarnings < 0 ? t.month.loss : undefined}
             />
           </div>
         </div>
