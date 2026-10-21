@@ -197,7 +197,13 @@
     "diffReconcile": "Reconcile",
     "diffFewer": "In {n} products WooCommerce shows fewer units than the counts (usually stock at −1: a product was sold that was not in stock). Fix the stock in WooCommerce: if the units really arrived, they will show up here as an entry to reconcile. Filter the list to see them.",
     "diffBannerOne": "WooCommerce stock went up compared with the counts in 1 product. Say whether the units that came in are a restock (enter the total paid) or a correction.",
-    "diffFewerOne": "In 1 product WooCommerce shows fewer units than the counts (usually stock at −1: a product was sold that was not in stock). Fix the stock in WooCommerce: if the product really arrived, it will show up here as an entry to reconcile. Filter the list to see it."
+    "diffFewerOne": "In 1 product WooCommerce shows fewer units than the counts (usually stock at −1: a product was sold that was not in stock). Fix the stock in WooCommerce: if the product really arrived, it will show up here as an entry to reconcile. Filter the list to see it.",
+    "price": "Price (VAT incl.)",
+    "profit": "Profit ex VAT",
+    "pocket": "In pocket",
+    "discounted": "In pocket at",
+    "discountLabel": "Discount",
+    "discountNote": "In pocket = profit ex VAT after taxes, which here take {n} of every extra euro (the year's bracket)."
   },
   "ledger": {
     "title": "Shop account movements",

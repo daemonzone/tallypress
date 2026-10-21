@@ -9,12 +9,15 @@ import { buttonClass, Notice, Section } from "@/components/ui";
 import { getDictionary } from "@/i18n";
 import { resolveDifference } from "@/lib/actions";
 import { getDifferences, getProductPage } from "@/lib/costs";
+import { DiscountButtons, DiscountHeader, DiscountProvider, DiscountedCell } from "@/components/stock-discount";
+import { bracketRateFor, discountResult, marginalTaxPct } from "@/lib/discount";
+import { buildReport } from "@/lib/report";
 import { getCurrentShop } from "@/lib/shop";
 
 const PER_PAGE = 20;
 // product | quantity | cost | value | chevron
 const DIFF_COLUMNS = "grid-cols-[minmax(0,1fr)_6rem_minmax(0,1.5fr)]";
-const COLUMNS = "grid-cols-[minmax(0,1fr)_6rem_10rem_8rem_1.25rem]";
+const COLUMNS = "grid-cols-[minmax(12rem,1fr)_3.5rem_8rem_5.5rem_6.5rem_6.5rem_6.5rem_6.5rem_1.25rem]";
 
 export default async function StockPage({ searchParams }: PageProps<"/stock">) {
   const { locale, t } = await getDictionary();
@@ -24,6 +27,16 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
   const sp = await searchParams;
   const q = typeof sp.q === "string" ? sp.q.trim().slice(0, 80) : "";
   const onlyDiff = sp.diff === "1";
+
+  // Income tax and contributions on an extra euro of profit: the bracket the current year has reached.
+  const report = await buildReport(shop.id);
+  const year = report?.currentKey.slice(0, 4) ?? "";
+  const yearProfit = (report?.months ?? []).filter((m) => m.key.startsWith(year) && !m.history).reduce((sum, m) => sum + m.profit, 0) / 100;
+  const social = Number(shop.socialSecurityRate);
+  const brackets = shop.incomeTaxBrackets?.length ? shop.incomeTaxBrackets : [{ rate: Number(shop.incomeTaxRate), upTo: null }];
+  const taxable = Math.max(yearProfit, 0) * (shop.socialDeductible ? 1 - social / 100 : 1);
+  const taxPct = marginalTaxPct(social, bracketRateFor(taxable, brackets), shop.socialDeductible);
+  const vatRate = Number(shop.vatRate);
   const differences = await getDifferences(shop.id);
   const toClassify = differences.filter((d) => d.items.some((i) => i.diff > 0));
   const fewer = differences.filter((d) => !d.items.some((i) => i.diff > 0));
@@ -119,12 +132,18 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
         {groups.length === 0 ? (
           <p className="text-sm text-muted">{t.stock.noResults}</p>
         ) : (
+          <DiscountProvider vatRate={vatRate} taxPct={taxPct} locale={locale} currency={shop.currency} initial={50}>
+          <DiscountButtons label={t.stock.discountLabel} note={t.stock.discountNote.replace("{n}", fmt.pct(taxPct / 100))} />
           <div className="-mx-1 overflow-x-auto px-1">
-            <div className="min-w-[44rem]">
+            <div className="min-w-[66rem]">
               <div className={`grid ${COLUMNS} gap-3 border-b border-line py-2 text-xs font-medium uppercase tracking-wide text-muted`}>
                 <div>{t.stock.product}</div>
                 <div className="text-right">{t.stock.woo}</div>
                 <div className="text-right">{t.stock.cost}</div>
+                <div className="text-right">{t.stock.price}</div>
+                <div className="text-right">{t.stock.profit}</div>
+                <div className="text-right">{t.stock.pocket}</div>
+                <DiscountHeader label={t.stock.discounted} />
                 <div className="text-right">{t.stock.value}</div>
                 <div />
               </div>
@@ -132,6 +151,13 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
               {groups.map((g) => {
                 const gone = g.status === "trash" || g.status === "deleted"; // no longer in the shop: greyed out
                 const sameCost = g.cost && Math.abs(g.cost.max - g.cost.min) < 0.00005;
+                const sale =
+                  g.price != null && g.unitCost != null
+                    ? discountResult(
+                        { costGross: 0, priceGross: g.price, vatRate, marginalTaxPct: taxPct, shippingPaidGross: 0, shippingChargedGross: 0, otherCostsNet: g.unitCost },
+                        0,
+                      )
+                    : null;
                 return (
                   <details key={g.productId} className="group border-b border-line">
                     <summary
@@ -158,6 +184,19 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
                         {g.costSource !== "manual" && <span className={chip}>{g.costSource === "mixed" ? t.stock.mixed : t.stock.estimated}</span>}
                         {g.cost == null ? t.common.none : sameCost ? money(g.cost.min) : `${money(g.cost.min)} – ${money(g.cost.max)}`}
                       </div>
+                      <div className="text-right tabular-nums">{g.price == null ? t.common.none : money(g.price)}</div>
+                      <div className="text-right tabular-nums">
+                        {sale ? (
+                          <>
+                            <div className={sale.profitBeforeTax < -0.005 ? "text-bad" : ""}>{money(sale.profitBeforeTax)}</div>
+                            <div className="text-xs text-muted">{g.unitCost ? fmt.pct(sale.profitBeforeTax / g.unitCost) : ""}</div>
+                          </>
+                        ) : (
+                          t.common.none
+                        )}
+                      </div>
+                      <div className={`text-right tabular-nums ${sale && sale.profitAfterTax < -0.005 ? "text-bad" : ""}`}>{sale ? money(sale.profitAfterTax) : t.common.none}</div>
+                      <DiscountedCell price={g.price} cost={g.unitCost} />
                       <div className="text-right tabular-nums">{fmt.money(Math.round(g.stockValue * 100))}</div>
                       <Icon name="chevron" className="h-4 w-4 text-muted transition group-open:rotate-180" />
                     </summary>
@@ -208,6 +247,7 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
               })}
             </div>
           </div>
+          </DiscountProvider>
         )}
         <Pager basePath="/stock" extra={extra} q={q} page={page} pages={pages} total={total} locale={locale} labels={t.stock} />
         {groups.length > 0 && (

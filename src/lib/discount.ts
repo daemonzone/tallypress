@@ -57,3 +57,9 @@ export function marginalTaxPct(socialRatePct: number, bracketRatePct: number, so
   const r = bracketRatePct / 100;
   return (s + r * (socialDeductible ? 1 - s : 1)) * 100;
 }
+
+/** The marginal income-tax rate (percent) that applies to a taxable income, in euros. */
+export function bracketRateFor(taxable: number, brackets: { rate: number; upTo: number | null }[]): number {
+  const b = brackets.find((x) => x.upTo == null || taxable <= x.upTo) ?? brackets.at(-1);
+  return b?.rate ?? 0;
+}

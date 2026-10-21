@@ -191,6 +191,7 @@ export interface ItemState {
   imageUrl: string | null;
   status: string;
   costSource: "estimate" | "manual";
+  price: number | null; // list price (VAT included), else the current price
   realRestocks: boolean; // the average cost comes from purchases the owner recorded
   wooStock: number | null;
   trackedStock: number | null; // null: no purchase history, so stock is not tracked
@@ -212,6 +213,7 @@ function toState(item: typeof items.$inferSelect, lots: LotEvent[], sales: SaleE
     imageUrl: item.imageUrl,
     status: item.status,
     costSource: item.costSource,
+    price: item.regularPrice != null ? Number(item.regularPrice) : item.price != null ? Number(item.price) : null,
     realRestocks: lots.some((l) => l.real),
     wooStock: item.stockQty == null ? null : Number(item.stockQty),
     // Tracked from the starting point: an item with no purchase yet is tracked at zero (it is the stock that appears later that must be explained).
@@ -279,6 +281,8 @@ export interface ProductGroup {
   mismatch: boolean; // at least one variation does not match the internal figures
   stockValue: number;
   cost: { min: number; max: number } | null; // unit cost across the variations
+  unitCost: number | null; // average unit cost over the variations (net of VAT)
+  price: number | null; // average list price over the variations (VAT included)
   costSource: "estimate" | "manual" | "mixed";
 }
 
@@ -344,6 +348,11 @@ export async function getProductPage(
       mismatch: states.some((s) => s.wooStock != null && s.trackedStock != null && s.wooStock !== s.trackedStock),
       stockValue: states.reduce((sum, s) => sum + s.stockValue, 0),
       cost: costs.length ? { min: Math.min(...costs), max: Math.max(...costs) } : null,
+      unitCost: costs.length ? costs.reduce((a, b) => a + b, 0) / costs.length : null,
+      price: (() => {
+        const prices = states.map((s) => s.price).filter((p): p is number => p != null && p > 0);
+        return prices.length ? prices.reduce((a, b) => a + b, 0) / prices.length : null;
+      })(),
       costSource: sources.size > 1 ? "mixed" : (states[0]?.costSource ?? "estimate"),
     };
   });

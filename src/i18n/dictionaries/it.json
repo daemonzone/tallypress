@@ -197,7 +197,13 @@
     "diffReconcile": "Riconciliazione",
     "diffFewer": "In {n} prodotti WooCommerce segna meno unità dei conteggi (di solito giacenza a −1: venduto un prodotto che non risultava a magazzino). Correggi la giacenza in WooCommerce: se i prodotti erano arrivati davvero, qui apparirà come entrata da riconciliare. Filtra l'elenco per vederli.",
     "diffBannerOne": "In 1 prodotto la giacenza in WooCommerce è salita rispetto ai conteggi. Indica se le unità entrate sono un riassortimento (scrivi il totale pagato) o una correzione.",
-    "diffFewerOne": "In 1 prodotto WooCommerce segna meno unità dei conteggi (di solito giacenza a −1: venduto un prodotto che non risultava a magazzino). Correggi la giacenza in WooCommerce: se il prodotto era arrivato davvero, qui apparirà come entrata da riconciliare. Filtra l'elenco per vederlo."
+    "diffFewerOne": "In 1 prodotto WooCommerce segna meno unità dei conteggi (di solito giacenza a −1: venduto un prodotto che non risultava a magazzino). Correggi la giacenza in WooCommerce: se il prodotto era arrivato davvero, qui apparirà come entrata da riconciliare. Filtra l'elenco per vederlo.",
+    "price": "Prezzo (IVA incl.)",
+    "profit": "Utile senza IVA",
+    "pocket": "In tasca",
+    "discounted": "In tasca con sconto",
+    "discountLabel": "Sconto",
+    "discountNote": "In tasca = utile senza IVA al netto delle imposte, che qui valgono il {n} di ogni euro in più (scaglione dell'anno)."
   },
   "ledger": {
     "title": "Movimenti del conto del negozio",
