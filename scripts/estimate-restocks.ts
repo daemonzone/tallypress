@@ -1,6 +1,7 @@
 // Estimates the purchases behind the goods sold (see src/lib/estimate-restocks.ts).
 //   npm run shop:estimate-restocks             # compute (replaces earlier estimates)
 //   npm run shop:estimate-restocks -- --purchases-only # skip the VAT and tax payments
+//   npm run shop:estimate-restocks -- --upfront-until=2023-12 # buy the stock of the months up to 2023-12 in one go on the starting day
 //   npm run shop:estimate-restocks -- --remove # take them all out again
 import "dotenv/config";
 import { pool } from "../src/db";
@@ -14,7 +15,8 @@ async function main() {
     console.log(`Removed ${r.entries} estimated purchases; opening stock rebuilt for ${r.openingLots} items.`);
     return;
   }
-  const r = await estimateRestocks(shopId, { payments: !process.argv.includes("--purchases-only") });
+  const upfront = process.argv.find((a) => a.startsWith("--upfront-until="))?.split("=")[1];
+  const r = await estimateRestocks(shopId, { payments: !process.argv.includes("--purchases-only"), upfrontUntil: upfront });
   console.log(
     `Estimated purchases: ${(r.total / 100).toFixed(2)} over ${r.months} months (${r.lots} item lots); ` +
       `VAT paid ${(r.vat / 100).toFixed(2)}, earlier-year taxes paid ${(r.tax / 100).toFixed(2)}; ` +
