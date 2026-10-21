@@ -6,12 +6,14 @@ import { ensureMonthsClosed } from "@/lib/closing";
 import { getItemStates } from "@/lib/costs";
 import { buildReport, type MonthReport, type Report } from "@/lib/report";
 import { getCurrentShop } from "@/lib/shop";
+import { syncNow } from "@/lib/sync/actions";
 import { MonthColumns, StackedBar, VIZ } from "./charts";
 import { formatters, monthHref, monthLabel, type Formatters } from "./format";
 import type { ReactNode } from "react";
 import { Icon, type IconName } from "./icons";
 import { InfoModal } from "./info-modal";
 import { Simulator } from "./simulator";
+import { SyncButton } from "./sync-button";
 import { Badge, Card, KeyValues, Notice, Section, StatTile } from "./ui";
 
 export async function Dashboard({ monthKey }: { monthKey?: string }) {
@@ -43,11 +45,25 @@ export async function Dashboard({ monthKey }: { monthKey?: string }) {
 
   const stockValue = (await getItemStates(shop.id)).reduce((s, i) => s + Math.round(i.stockValue * 100), 0);
   const fmt = formatters(locale, report.currency);
+  const sync = (
+    <div className="flex flex-col items-end gap-1">
+      <SyncButton
+        action={syncNow}
+        labels={{ sync: t.setup.syncNow, syncing: t.setup.syncing, done: t.setup.syncDone, failed: t.setup.syncFailed }}
+      />
+      <div className="text-xs text-muted">
+        {t.setup.lastSync}:{" "}
+        {shop.lastSyncedAt
+          ? new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short", timeZone: shop.timezone }).format(shop.lastSyncedAt)
+          : t.setup.never}
+      </div>
+    </div>
+  );
 
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 lg:grid-cols-[minmax(0,1fr)_23.5rem]">
       <div className="min-w-0">
-        <MonthPanel month={selected} report={report} t={t} fmt={fmt} locale={locale} />
+        <MonthPanel month={selected} report={report} t={t} fmt={fmt} locale={locale} sync={sync} />
       </div>
       <aside className="flex flex-col gap-6 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pb-1 lg:pr-1 lg:[scrollbar-width:thin]">
         {!report.aligned && (
@@ -284,12 +300,14 @@ function MonthPanel({
   t,
   fmt,
   locale,
+  sync,
 }: {
   month: MonthReport;
   report: Report;
   t: Dictionary;
   fmt: Formatters;
   locale: string;
+  sync: ReactNode;
 }) {
   const f = m.flows;
   // A window of 12 months that contains the month being viewed (the latest 12 when it is recent).
@@ -316,7 +334,8 @@ function MonthPanel({
 
   return (
     <>
-      <div className="mb-5">
+      <div className="mb-5 flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
+        <div>
         <div className="text-xs font-medium uppercase tracking-wider text-muted">{t.month.heading}</div>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <h1 className="text-3xl font-semibold capitalize tracking-tight">{monthLabel(m.key, locale)}</h1>
@@ -328,6 +347,8 @@ function MonthPanel({
             <Badge icon={<span className="h-2 w-2 rounded-full bg-good" aria-hidden="true" />}>{t.month.open}</Badge>
           )}
         </div>
+        </div>
+        {sync}
       </div>
 
       <MonthNav report={report} selected={m.key} locale={locale} label={t.month.months} />
