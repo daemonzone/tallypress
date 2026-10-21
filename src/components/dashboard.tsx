@@ -306,15 +306,15 @@ function MonthPanel({
       <Card className="mb-6">
         <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-5">
           <StatTile
-            hero
             label={t.month.gross}
             icon="wallet"
             value={fmt.money(m.gross)}
             note={m.lateAdjustments !== 0 ? `${t.month.lateAdjustments}: ${fmt.money(m.lateAdjustments)}` : undefined}
           />
-          <div className="flex gap-8">
+          <div className="flex items-end gap-8">
             <StatTile label={t.month.orders} icon="bag" value={fmt.int(m.orders)} align="right" />
             <StatTile
+              hero
               label={t.month.netEarnings}
               icon="trend"
               align="right"
