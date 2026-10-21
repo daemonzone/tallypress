@@ -63,3 +63,6 @@ export function bracketRateFor(taxable: number, brackets: { rate: number; upTo: 
   const b = brackets.find((x) => x.upTo == null || taxable <= x.upTo) ?? brackets.at(-1);
   return b?.rate ?? 0;
 }
+
+/** Rounds to the cent and never returns -0, so a result of exactly zero is not shown as "-0,00". */
+export const toCent = (n: number): number => Math.round(n * 100) / 100 + 0;
