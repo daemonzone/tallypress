@@ -1,12 +1,13 @@
 import { formatters } from "@/components/format";
 import { Icon } from "@/components/icons";
 import { Pager, SearchBox } from "@/components/pager";
-import { ProductRestockForm } from "@/components/product-restock-form";
+import { DifferenceForm } from "@/components/difference-form";
 import { Thumb } from "@/components/thumb";
-import { Notice, Section } from "@/components/ui";
+import Link from "next/link";
+import { buttonClass, Notice, Section } from "@/components/ui";
 import { getDictionary } from "@/i18n";
-import { addProductRestock } from "@/lib/actions";
-import { getProductPage } from "@/lib/costs";
+import { resolveDifference } from "@/lib/actions";
+import { getDifferences, getProductPage } from "@/lib/costs";
 import { getCurrentShop } from "@/lib/shop";
 
 const PER_PAGE = 20;
@@ -20,7 +21,13 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
 
   const sp = await searchParams;
   const q = typeof sp.q === "string" ? sp.q.trim().slice(0, 80) : "";
+  const onlyDiff = sp.diff === "1";
+  const differences = await getDifferences(shop.id);
+  const toClassify = differences.filter((d) => d.items.some((i) => i.diff > 0));
+  const fewer = differences.filter((d) => !d.items.some((i) => i.diff > 0)).length;
+  const extra: Record<string, string> = onlyDiff ? { diff: "1" } : {};
   const { groups, total, page, pages } = await getProductPage(shop.id, {
+    productIds: onlyDiff ? differences.map((d) => d.productId) : undefined,
     q,
     page: Number(typeof sp.page === "string" ? sp.page : 1) || 1,
     perPage: PER_PAGE,
@@ -28,16 +35,52 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
   const fmt = formatters(locale, shop.currency);
   const money = (n: number | null) => (n == null ? t.common.none : fmt.money(Math.round(n * 100)));
 
-  if (!groups.length && !q) return <Notice>{t.stock.noItems}</Notice>;
+  if (!groups.length && !q && !onlyDiff) return <Notice>{t.stock.noItems}</Notice>;
 
   const warn = <Icon name="alert" className="h-3.5 w-3.5 text-[var(--warn-line)] opacity-60" />;
   const chip = "rounded-full border border-line bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-muted";
 
+  const filterLink = onlyDiff ? `/stock${q ? `?${new URLSearchParams({ q })}` : ""}` : `/stock?${new URLSearchParams({ diff: "1", ...(q ? { q } : {}) })}`;
+
   return (
     <>
+      {differences.length > 0 && (
+        <Section title={t.stock.diffTitle}>
+          {toClassify.length > 0 && (
+            <>
+              <Notice tone="warn">{t.stock.diffBanner.replace("{n}", String(toClassify.length))}</Notice>
+              <div className="divide-y divide-line">
+                {toClassify.map((d) => (
+                  <div key={d.productId} className="flex flex-wrap items-start gap-4 py-4 first:pt-0">
+                    <div className="w-56 shrink-0 font-medium">{d.name}</div>
+                    <DifferenceForm
+                      productId={d.productId}
+                      rows={d.items.filter((i) => i.diff > 0).map((i) => ({ label: i.label, diff: i.diff }))}
+                      locale={locale}
+                      currency={shop.currency}
+                      labels={t.stock.diffForm}
+                      action={resolveDifference}
+                    />
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+          {fewer > 0 && <p className="mt-3 text-sm text-muted">{t.stock.diffMissing.replace("{n}", String(fewer))}</p>}
+        </Section>
+      )}
       <Section
         title={t.stock.title}
-        aside={<SearchBox action="/stock" q={q} placeholder={t.stock.searchPlaceholder} button={t.stock.searchButton} wide />}
+        aside={
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {differences.length > 0 && (
+              <Link href={filterLink} className={`${buttonClass} ${onlyDiff ? "border-[var(--warn-line)] bg-[var(--warn-bg)]" : ""}`}>
+                {onlyDiff ? t.stock.allProducts : t.stock.onlyDiff.replace("{n}", String(differences.length))}
+              </Link>
+            )}
+            <SearchBox action="/stock" q={q} placeholder={t.stock.searchPlaceholder} button={t.stock.searchButton} wide extra={extra} />
+          </div>
+        }
       >
         {groups.length === 0 ? (
           <p className="text-sm text-muted">{t.stock.noResults}</p>
@@ -86,14 +129,6 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
                     </summary>
 
                     <div className="space-y-4 pb-5 pl-[3.75rem] pr-6">
-                      <ProductRestockForm
-                        productId={g.productId}
-                        variants={g.items.filter((s) => s.status !== "trash" && s.status !== "deleted").map((s) => ({ id: s.id, label: s.variation ?? t.stock.noVariant }))}
-                        locale={locale}
-                        currency={shop.currency}
-                        labels={t.stock.restockForm}
-                        action={addProductRestock}
-                      />
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="border-b border-line text-xs uppercase tracking-wide text-muted">
@@ -140,7 +175,7 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
             </div>
           </div>
         )}
-        <Pager basePath="/stock" q={q} page={page} pages={pages} total={total} locale={locale} labels={t.stock} />
+        <Pager basePath="/stock" extra={extra} q={q} page={page} pages={pages} total={total} locale={locale} labels={t.stock} />
         {groups.length > 0 && (
           <p className="mt-3 flex items-center gap-1.5 text-xs text-muted">
             {warn}

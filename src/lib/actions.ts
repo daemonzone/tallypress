@@ -4,7 +4,7 @@ import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { items, ledgerEntries, restockLots, shops } from "@/db/schema";
-import { freezeCosts } from "./costs";
+import { freezeCosts, getProductStates } from "./costs";
 import { importRange, type ImportRangeResult } from "./import-range";
 import { buildReport } from "./report";
 import { MOVEMENT_TYPES, type MovementState } from "./movements";
@@ -165,64 +165,61 @@ export async function alignBalance(_prev: AlignState, formData: FormData): Promi
   return { status: "ok", difference, balance: Math.round(real * 100) };
 }
 
-export type ProductRestockState = { status: "idle" | "ok" | "invalid" | "noQty" | "tooHigh" };
+export type DifferenceState = { status: "idle" | "ok" | "invalid" | "tooHigh" | "gone" };
 
 /**
- * Records a restock of one product as a single document: the declared amount (a cost per piece, or
- * the total paid plus the number of pieces) is booked once in the ledger as a movement, and the
- * pieces of each variation enter stock at the same unit cost. The moving average is never typed in:
- * it is computed from these lots. Amounts are net of VAT. A cost above the selling price (without
- * VAT) is refused, since it can only be a typing mistake.
+ * Settles the pieces that entered a product's stock without being recorded (WooCommerce holds more
+ * than the internal figures). The quantities are never typed: they are recomputed here from the
+ * data. "restock": the total paid is the only figure entered; the cost per piece is total / pieces,
+ * the total is booked once in the ledger and the average moves only through that calculation.
+ * "adjust": not a purchase (an inventory correction): the pieces enter at the current average cost,
+ * with no money movement. A cost above the selling price (without VAT) is refused.
  */
-export async function addProductRestock(_prev: ProductRestockState, formData: FormData): Promise<ProductRestockState> {
+export async function resolveDifference(_prev: DifferenceState, formData: FormData): Promise<DifferenceState> {
   const shopId = await getCurrentShopId();
   const productId = Number(formData.get("productId"));
-  const mode = formData.get("mode") === "total" ? "total" : "unit";
-  const amount = parseDecimal(formData.get("amount"));
-  if (!Number.isInteger(productId) || !(amount > 0)) return { status: "invalid" };
+  const kind = formData.get("kind") === "adjust" ? "adjust" : "restock";
+  const total = parseDecimal(formData.get("total"));
+  if (!Number.isInteger(productId) || (kind === "restock" && !(total > 0))) return { status: "invalid" };
 
-  const rows = await db.select().from(items).where(and(eq(items.shopId, shopId), eq(items.wooProductId, productId)));
-  const lines: { item: (typeof rows)[number]; qty: number }[] = [];
-  for (const [key, value] of formData.entries()) {
-    if (!key.startsWith("qty_")) continue;
-    const qty = parseDecimal(value as string);
-    if (!(qty > 0)) continue;
-    const item = rows.find((r) => r.id === key.slice(4));
-    if (!item || !Number.isInteger(qty) || qty > 100000) return { status: "invalid" };
-    lines.push({ item, qty });
+  const states = await getProductStates(shopId, productId);
+  const arrived = states.filter((s) => (s.diff ?? 0) > 0 && s.status !== "trash" && s.status !== "deleted");
+  const pieces = arrived.reduce((sum, s) => sum + (s.diff ?? 0), 0);
+  if (!pieces) return { status: "gone" };
+
+  const totalCents = Math.round(total * 100);
+  if (kind === "restock") {
+    const [shop] = await db.select({ vat: shops.vatRate }).from(shops).where(eq(shops.id, shopId));
+    const vat = 1 + Number(shop?.vat ?? 0) / 100;
+    const rows = await db.select().from(items).where(and(eq(items.shopId, shopId), eq(items.wooProductId, productId)));
+    const prices = rows.map((r) => Number(r.regularPrice ?? r.price ?? 0)).filter((n) => n > 0);
+    if (prices.length && totalCents / 100 / pieces > Math.max(...prices) / vat) return { status: "tooHigh" };
   }
-  const pieces = lines.reduce((sum, l) => sum + l.qty, 0);
-  if (!pieces) return { status: "noQty" };
 
-  const totalCents = mode === "total" ? Math.round(amount * 100) : Math.round(amount * pieces * 100);
-  const unitCost = totalCents / 100 / pieces;
-
-  // Sanity: a piece cannot cost more than it is sold for (price without VAT).
-  const vat = 1 + Number((await db.select({ v: shops.vatRate }).from(shops).where(eq(shops.id, shopId)))[0]?.v ?? 0) / 100;
-  const prices = lines.map((l) => Number(l.item.regularPrice ?? l.item.price ?? 0)).filter((n) => n > 0);
-  if (prices.length && unitCost > Math.max(...prices) / vat) return { status: "tooHigh" };
-
-  const name = rows[0]?.productName ?? `#${productId}`;
+  const name = states[0]?.label.split(" – ")[0] ?? `#${productId}`;
   await db.transaction(async (tx) => {
     const now = new Date();
-    for (const l of lines) {
+    for (const s of arrived) {
+      const unit = kind === "restock" ? totalCents / 100 / pieces : (s.avgCost ?? s.manualCost ?? 0);
       await tx.insert(restockLots).values({
         shopId,
-        itemId: l.item.id,
-        quantity: String(l.qty),
-        unitCost: unitCost.toFixed(4),
+        itemId: s.id,
+        quantity: String(s.diff),
+        unitCost: unit.toFixed(4),
         purchasedAt: now,
-        source: "restock",
-        note: `${name}`,
+        source: kind === "restock" ? "restock" : "return",
+        note: kind === "restock" ? name : `Rettifica di inventario: ${name}`,
       });
     }
-    await tx.insert(ledgerEntries).values({
-      shopId,
-      kind: "restock",
-      amount: centsToString(-totalCents),
-      occurredAt: now,
-      note: `${name}: ${pieces} pz × ${unitCost.toFixed(2)}`.slice(0, 200),
-    });
+    if (kind === "restock") {
+      await tx.insert(ledgerEntries).values({
+        shopId,
+        kind: "restock",
+        amount: centsToString(-totalCents),
+        occurredAt: now,
+        note: `${name}: ${pieces} pz × ${(totalCents / 100 / pieces).toFixed(2)}`.slice(0, 200),
+      });
+    }
   });
   await freezeCosts(shopId);
   revalidatePath("/", "layout");

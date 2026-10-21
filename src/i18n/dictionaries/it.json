@@ -170,20 +170,22 @@
     "mixed": "misto",
     "noVariant": "Senza variante",
     "variantsCount": "{n} varianti",
-    "restockForm": {
-      "perUnit": "Costo per capo",
-      "total": "Totale pagato",
-      "amountUnit": "Costo per capo (senza IVA)",
-      "amountTotal": "Totale pagato (senza IVA)",
-      "qty": "Capi",
-      "summary": "{n} capi · {unit} l'uno · {total} in totale",
-      "submit": "Registra riassortimento",
+    "onlyDiff": "Solo quantità non corrispondenti ({n})",
+    "allProducts": "Tutti i prodotti",
+    "diffTitle": "Quantità da catalogare",
+    "diffBanner": "In {n} prodotti la giacenza in WooCommerce è cambiata e le entrate non sono ancora registrate. Se sono entrati capi, indica se è un riassortimento (scrivi il totale pagato) o una correzione.",
+    "diffMissing": "{n} prodotti hanno meno capi dei conti: filtra l'elenco per vederli.",
+    "diffForm": {
+      "total": "Totale pagato per questi capi (senza IVA)",
+      "summary": "{n} capi · {unit} l'uno",
+      "restock": "È un riassortimento",
+      "adjust": "Non è un acquisto (correzione)",
       "working": "Registrazione…",
-      "done": "Riassortimento registrato.",
-      "invalid": "Controlla gli importi.",
-      "noQty": "Indica i capi di almeno una variante.",
+      "done": "Registrato.",
+      "invalid": "Indica il totale pagato.",
       "tooHigh": "Il costo per capo supera il prezzo di vendita: controlla l'importo.",
-      "help": "L'importo dichiarato viene registrato una volta sola nei Movimenti e scalato dai soldi del negozio. Il costo medio si calcola da qui, non si scrive a mano."
+      "gone": "Per questo prodotto non c'è più nulla da catalogare.",
+      "help": "I capi sono quelli trovati in WooCommerce e non si modificano. Il riassortimento registra il totale una volta sola nei Movimenti; la correzione li aggiunge al costo medio attuale, senza movimenti di denaro."
     }
   },
   "ledger": {

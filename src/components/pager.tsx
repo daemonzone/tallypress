@@ -9,7 +9,9 @@ export function SearchBox({
   placeholder,
   button,
   wide = false,
+  extra = {},
 }: {
+  extra?: Record<string, string>;
   action: string;
   q: string;
   placeholder: string;
@@ -18,6 +20,9 @@ export function SearchBox({
 }) {
   return (
     <form action={action} method="get" role="search" className="flex items-center gap-2">
+      {Object.entries(extra).map(([k, v]) => (
+        <input key={k} type="hidden" name={k} value={v} />
+      ))}
       <input
         name="q"
         type="search"
@@ -44,16 +49,18 @@ export function Pager({
   total,
   locale,
   labels,
+  extra = {},
 }: {
   basePath: string;
   q: string;
+  extra?: Record<string, string>;
   page: number;
   pages: number;
   total: number;
   locale: string;
   labels: { results: string; clearSearch: string; pagination: string; prev: string; next: string; pageOf: string };
 }) {
-  const href = (p: number) => `${basePath}?${new URLSearchParams({ ...(q ? { q } : {}), page: String(p) })}`;
+  const href = (p: number) => `${basePath}?${new URLSearchParams({ ...extra, ...(q ? { q } : {}), page: String(p) })}`;
   const disabled = `${buttonClass} pointer-events-none opacity-40`;
   return (
     <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm">
@@ -63,7 +70,7 @@ export function Pager({
           <>
             {" "}
             · “{q}”{" "}
-            <Link href={basePath} className="underline">
+            <Link href={`${basePath}${Object.keys(extra).length ? `?${new URLSearchParams(extra)}` : ""}`} className="underline">
               {labels.clearSearch}
             </Link>
           </>

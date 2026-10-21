@@ -50,10 +50,11 @@ multi-shop by design.
   (cancelled, failed...) are greyed out. First version: more filters and columns to come.
 - **Stock** (`/stock`): one row per product (20 per page) with photo, name, product code (the parent SKU,
   if it has one), total quantity, average purchase cost and stock value; search on product, variation or
-  code. Click a row to see its variations (size/colour) and to record a restock: a cost per piece, or
-  the total paid, plus the pieces of each variation. The declared amount is booked once in Movements
-  and the average is computed from the lots, never typed. A light warning flags quantities that differ
-  from WooCommerce.
+  code, or only the products whose quantity does not match WooCommerce. Click a row to see its
+  variations (size/colour). A banner on top lists pieces that came in unrecorded: the quantity is
+  read-only (found in WooCommerce) and only the total paid is entered; the cost per piece is computed,
+  the total is booked once in Movements and the average moves only through that calculation. A
+  "correction" adds the pieces at the current average cost without any money movement.
 - **Ledger** (`/ledger`): every movement of the shop account, and one form to record any
   manual movement. The amount is always positive and the type decides the direction:
   deposit into the account (in), personal withdrawal, expense, VAT payment, income-tax /

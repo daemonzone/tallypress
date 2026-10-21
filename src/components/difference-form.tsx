@@ -1,0 +1,64 @@
+"use client";
+
+import { useActionState, useState } from "react";
+import type { DifferenceState } from "@/lib/actions";
+import { buttonClass, inputClass, primaryButtonClass } from "./ui";
+
+interface Props {
+  productId: number;
+  rows: { label: string; diff: number }[];
+  locale: string;
+  currency: string;
+  labels: Record<"total" | "summary" | "restock" | "adjust" | "working" | "done" | "invalid" | "tooHigh" | "gone" | "help", string>;
+  action: (prev: DifferenceState, formData: FormData) => Promise<DifferenceState>;
+}
+
+/** Pieces that came in unrecorded: the quantities are read-only; only the total paid is entered. */
+export function DifferenceForm({ productId, rows, locale, currency, labels, action }: Props) {
+  const [state, formAction, pending] = useActionState(action, { status: "idle" } as DifferenceState);
+  const [total, setTotal] = useState("");
+  const pieces = rows.reduce((sum, r) => sum + r.diff, 0);
+  const n = Number(total.replace(",", "."));
+  const money = new Intl.NumberFormat(locale, { style: "currency", currency, useGrouping: "always" });
+  const msg = state.status === "ok" ? labels.done : { invalid: labels.invalid, tooHigh: labels.tooHigh, gone: labels.gone, idle: "" }[state.status];
+
+  return (
+    <form action={formAction} className="space-y-2">
+      <input type="hidden" name="productId" value={productId} />
+      <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+        {rows.map((r) => (
+          <span key={r.label} className="tabular-nums">
+            {r.label || "—"} <strong>+{r.diff}</strong>
+          </span>
+        ))}
+      </div>
+      <div className="flex flex-wrap items-end gap-3">
+        <label className="flex flex-col gap-1 text-sm">
+          {labels.total}
+          <input
+            name="total"
+            type="number"
+            min="0.01"
+            step="0.01"
+            value={total}
+            onChange={(e) => setTotal(e.target.value)}
+            className={`${inputClass} w-40`}
+          />
+        </label>
+        <button type="submit" name="kind" value="restock" disabled={pending || !(n > 0)} className={`${primaryButtonClass} disabled:opacity-50`}>
+          {pending ? labels.working : labels.restock}
+        </button>
+        <button type="submit" name="kind" value="adjust" disabled={pending} className={`${buttonClass} disabled:opacity-50`} formNoValidate>
+          {labels.adjust}
+        </button>
+        {n > 0 && pieces > 0 && (
+          <span className="text-sm tabular-nums text-muted">
+            {labels.summary.replace("{n}", String(pieces)).replace("{unit}", money.format(n / pieces))}
+          </span>
+        )}
+        {msg && !pending && <span className={`text-sm ${state.status === "ok" ? "text-good" : "text-bad"}`}>{msg}</span>}
+      </div>
+      <p className="max-w-xl text-xs text-muted">{labels.help}</p>
+    </form>
+  );
+}

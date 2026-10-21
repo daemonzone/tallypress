@@ -102,7 +102,7 @@ async function loadHistory(shopId: string, itemIds?: string[]) {
   const lotsByItem = new Map<string, LotEvent[]>();
   for (const l of lots) {
     const list = lotsByItem.get(l.itemId) ?? [];
-    list.push({ at: l.purchasedAt, qty: Number(l.quantity), cost: Number(l.unitCost), real: l.source === "restock" || l.source === "return" });
+    list.push({ at: l.purchasedAt, qty: Number(l.quantity), cost: Number(l.unitCost), real: l.source === "restock" });
     lotsByItem.set(l.itemId, list);
   }
   const salesByItem = new Map<string, SaleEvent[]>();
@@ -184,6 +184,7 @@ export async function freezeCosts(shopId: string): Promise<number> {
 
 export interface ItemState {
   id: string;
+  productId: number;
   label: string;
   sku: string | null;
   variation: string | null; // e.g. "M / NERO"
@@ -193,6 +194,7 @@ export interface ItemState {
   realRestocks: boolean; // the average cost comes from purchases the owner recorded
   wooStock: number | null;
   trackedStock: number | null; // null: no purchase history, so stock is not tracked
+  diff: number | null; // WooCommerce quantity minus tracked quantity, when both are known (+: pieces came in unrecorded)
   avgCost: number | null;
   manualCost: number | null;
   stockValue: number;
@@ -203,6 +205,7 @@ function toState(item: typeof items.$inferSelect, lots: LotEvent[], sales: SaleE
   const r = replayItem(lots, sales, manual);
   return {
     id: item.id,
+    productId: item.wooProductId,
     label: item.variationLabel ? `${item.productName} – ${item.variationLabel}` : item.productName,
     sku: item.sku,
     variation: item.variationLabel,
@@ -212,6 +215,7 @@ function toState(item: typeof items.$inferSelect, lots: LotEvent[], sales: SaleE
     realRestocks: lots.some((l) => l.real),
     wooStock: item.stockQty == null ? null : Number(item.stockQty),
     trackedStock: lots.length ? r.stock : null,
+    diff: item.stockQty != null && lots.length ? Number(item.stockQty) - r.stock : null,
     avgCost: r.avg,
     manualCost: manual,
     stockValue: r.stock > 0 && r.avg != null ? r.stock * r.avg : 0,
@@ -284,7 +288,7 @@ export interface ProductGroup {
  */
 export async function getProductPage(
   shopId: string,
-  opts: { q?: string; page: number; perPage: number },
+  opts: { q?: string; page: number; perPage: number; productIds?: number[] },
 ): Promise<{ groups: ProductGroup[]; total: number; page: number; pages: number }> {
   const term = opts.q?.trim();
   const like = term ? `%${term.replace(/[\\%_]/g, "\\$&")}%` : null;
@@ -293,6 +297,7 @@ export async function getProductPage(
     like
       ? or(ilike(items.productName, like), ilike(items.variationLabel, like), ilike(items.sku, like), ilike(items.productSku, like))
       : undefined,
+    opts.productIds ? inArray(items.wooProductId, opts.productIds.length ? opts.productIds : [-1]) : undefined,
   );
 
   const [{ n: total }] = await db.select({ n: countDistinct(items.wooProductId) }).from(items).where(where);
@@ -342,4 +347,30 @@ export async function getProductPage(
     };
   });
   return { groups, total, page, pages };
+}
+
+/** Every variation whose WooCommerce quantity differs from the tracked one, grouped by product. */
+export interface ProductDifference {
+  productId: number;
+  name: string;
+  imageUrl: string | null;
+  items: { id: string; label: string; diff: number }[];
+}
+
+export async function getDifferences(shopId: string): Promise<ProductDifference[]> {
+  const states = (await getItemStates(shopId)).filter((s) => s.diff != null && s.diff !== 0 && s.status !== "trash" && s.status !== "deleted");
+  const byProduct = new Map<number, ProductDifference>();
+  for (const s of states) {
+    const g = byProduct.get(s.productId) ?? { productId: s.productId, name: s.label.split(" – ")[0], imageUrl: s.imageUrl, items: [] };
+    g.items.push({ id: s.id, label: s.variation ?? "", diff: s.diff! });
+    byProduct.set(s.productId, g);
+  }
+  return [...byProduct.values()].sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/** The states of one product's variations (used to settle a difference with fresh figures). */
+export async function getProductStates(shopId: string, productId: number): Promise<ItemState[]> {
+  const rows = await db.select().from(items).where(and(eq(items.shopId, shopId), eq(items.wooProductId, productId)));
+  const { lotsByItem, salesByItem } = await loadHistory(shopId, rows.map((r) => r.id));
+  return rows.map((i) => toState(i, lotsByItem.get(i.id) ?? [], salesByItem.get(i.id) ?? []));
 }
