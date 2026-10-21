@@ -113,6 +113,13 @@
       "when": 1792593236614,
       "tag": "0015_sudden_lady_deathstrike",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1792601278328,
+      "tag": "0016_high_king_cobra",
+      "breakpoints": true
     }
   ]
 }

@@ -49,6 +49,8 @@ export const shops = pgTable("shops", {
 
   // Tax profile, e.g. ordinario = 22 / 56 on profit, forfettario = 0 / 15 on revenue.
   vatRate: numeric("vat_rate", { precision: 5, scale: 2 }).notNull().default("22"),
+  // How often VAT is paid: the month after the sales, or each quarter (16 May, 20 Aug, 16 Nov, 16 Mar).
+  vatPeriod: text("vat_period", { enum: ["monthly", "quarterly"] }).notNull().default("monthly"),
   incomeTaxRate: numeric("income_tax_rate", { precision: 5, scale: 2 }).notNull().default("0"),
   // Progressive yearly income tax (e.g. IRPEF). When set it replaces the flat income_tax_rate.
   incomeTaxBrackets: jsonb("income_tax_brackets").$type<TaxBracket[]>(),

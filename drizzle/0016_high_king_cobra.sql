@@ -1,0 +1,1 @@
+ALTER TABLE "shops" ADD COLUMN "vat_period" text DEFAULT 'monthly' NOT NULL;

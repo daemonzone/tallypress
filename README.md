@@ -466,3 +466,12 @@ it are kept, and so are the stock differences nobody has classified yet. A start
 supported: that month counts only the sales from that day. Income tax is computed on the profit of the whole
 calendar year; when the data starts after 1 January, a warning on the overview and on the month says that
 the earlier months of that year are estimated and not in the cash balances.
+
+## Estimated VAT and tax payments
+
+`npm run shop:estimate-payments` books the VAT and income tax payments the owner has not recorded, from the
+months as they stand (purchases are not touched; `-- --remove` takes them out again). VAT follows the shop's
+`vat_period`: `monthly` (the month after the sales) or `quarterly` (16 May for Q1, 20 August for Q2, 16 November
+for Q3, 16 March of the next year for Q4; the quarter before the starting point is booked as a payment for an
+earlier period). Income tax and contributions for year Y-1 come out in two instalments, 30 June and 30 November
+of year Y. A due date still in the future, or before the starting point, is not booked: it stays "still to pay".

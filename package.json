@@ -17,7 +17,8 @@
     "shop:rebuild-costs": "tsx scripts/rebuild-costs.ts",
     "shop:returns": "tsx scripts/sync-returns.ts",
     "shop:restart": "tsx scripts/restart.ts",
-    "shop:estimate-restocks": "tsx scripts/estimate-restocks.ts"
+    "shop:estimate-restocks": "tsx scripts/estimate-restocks.ts",
+    "shop:estimate-payments": "tsx scripts/estimate-payments.ts"
   },
   "dependencies": {
     "dotenv": "^18.0.8",
