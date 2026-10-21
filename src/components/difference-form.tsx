@@ -44,7 +44,7 @@ export function DifferenceForm({ productId, pieces, locale, currency, labels, ac
           {labels.adjust}
         </button>
       </div>
-      <div className="min-h-5 text-sm">
+      <div className="text-sm empty:hidden">
         {n > 0 && pieces > 0 && (
           <span className="tabular-nums text-muted">
             {labels.summary.replace("{n}", String(pieces)).replace("{unit}", money.format(n / pieces))}

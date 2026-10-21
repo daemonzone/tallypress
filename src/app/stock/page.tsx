@@ -12,7 +12,7 @@ import { getCurrentShop } from "@/lib/shop";
 
 const PER_PAGE = 20;
 // product | quantity | cost | value | chevron
-const DIFF_COLUMNS = "grid-cols-[minmax(0,1fr)_6rem_minmax(0,1.5fr)]";
+const DIFF_COLUMNS = "grid-cols-[minmax(0,1fr)_14rem_minmax(0,1.5fr)]";
 const COLUMNS = "grid-cols-[minmax(0,1fr)_6rem_10rem_8rem_1.25rem]";
 
 export default async function StockPage({ searchParams }: PageProps<"/stock">) {
@@ -54,28 +54,21 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
                 <div className="min-w-[44rem]">
                   <div className={`grid ${DIFF_COLUMNS} gap-x-4 border-b border-line py-2 text-xs font-medium uppercase tracking-wide text-muted`}>
                     <div>{t.stock.product}</div>
-                    <div className="text-center">{t.stock.diffAdded}</div>
+                    <div>{t.stock.diffAdded}</div>
                     <div>{t.stock.diffReconcile}</div>
                   </div>
                   {toClassify.map((d) => {
                     const arrived = d.items.filter((i) => i.diff > 0);
                     return (
-                      <div key={d.productId} className={`grid ${DIFF_COLUMNS} items-start gap-x-4 border-b border-line py-4`}>
-                        <div>
-                          <div className="flex h-11 items-center gap-3">
-                            <Thumb src={d.imageUrl} alt={d.name} />
-                            <span className="font-medium">{d.name}</span>
-                          </div>
-                          {arrived.map((i) => (
-                            <div key={i.id} className="flex h-9 items-center pl-[3.25rem] text-sm text-muted">
-                              {i.label || t.stock.noVariant}
-                            </div>
-                          ))}
+                      <div key={d.productId} className={`grid ${DIFF_COLUMNS} items-center gap-x-4 border-b border-line py-4`}>
+                        <div className="flex items-center gap-3">
+                          <Thumb src={d.imageUrl} alt={d.name} />
+                          <span className="font-medium">{d.name}</span>
                         </div>
-                        <div>
-                          <div className="h-11" />
+                        <div className="space-y-1.5">
                           {arrived.map((i) => (
-                            <div key={i.id} className="flex h-9 items-center justify-center">
+                            <div key={i.id} className="flex items-center justify-between gap-3 text-sm">
+                              <span className="text-muted">{i.label || t.stock.noVariant}</span>
                               <span className="inline-flex h-9 min-w-9 items-center justify-center rounded-lg border border-[var(--warn-line)] bg-[var(--warn-bg)] px-2 font-semibold tabular-nums">
                                 +{i.diff}
                               </span>
