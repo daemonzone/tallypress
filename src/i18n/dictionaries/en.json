@@ -137,12 +137,12 @@
   "stock": {
     "title": "Stock and purchase prices",
     "item": "Item",
-    "woo": "In WooCommerce",
+    "woo": "Qty",
     "tracked": "Tracked here",
     "avg": "Average cost",
     "manual": "Manual cost",
     "value": "Stock value",
-    "mismatch": "differs from WooCommerce: was a restock not recorded?",
+    "mismatch": "The quantity does not match the internal figures (purchases minus sales): a restock or a stock write-off may be missing.",
     "restockTitle": "Record a restock",
     "unitCost": "Unit cost (without VAT)",
     "restockHelp": "Adds the lot, blends it into the average cost, and takes the amount out of the shop account.",
@@ -160,7 +160,8 @@
     "pageOf": "Page {p} of {pages}",
     "formsHint": "The forms list the items on this page: search by name to find another one.",
     "trashed": "In the bin",
-    "deleted": "Deleted"
+    "deleted": "Deleted",
+    "mismatchTip": "Internal figures say {n}"
   },
   "ledger": {
     "title": "Shop account movements",

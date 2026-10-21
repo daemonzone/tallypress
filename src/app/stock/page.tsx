@@ -1,4 +1,5 @@
 import { formatters } from "@/components/format";
+import { Icon } from "@/components/icons";
 import { Pager, SearchBox } from "@/components/pager";
 import { Thumb } from "@/components/thumb";
 import { primaryButtonClass, DataTable, inputClass, Notice, Section, Td } from "@/components/ui";
@@ -35,7 +36,7 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
         {states.length === 0 ? (
           <p className="text-sm text-muted">{t.stock.noResults}</p>
         ) : (
-        <DataTable head={[t.stock.item, t.stock.woo, t.stock.tracked, t.stock.avg, t.stock.manual, t.stock.value]}>
+        <DataTable head={[t.stock.item, t.stock.woo, t.stock.avg, t.stock.manual, t.stock.value]}>
           {states.map((s) => {
             const mismatch = s.wooStock != null && s.trackedStock != null && s.wooStock !== s.trackedStock;
             const gone = s.status === "trash" || s.status === "deleted"; // no longer in the shop: greyed out
@@ -55,12 +56,19 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
                     </div>
                   </div>
                 </td>
-                <Td>{s.wooStock == null ? t.common.none : fmt.num(s.wooStock)}</Td>
                 <Td>
-                  {s.trackedStock == null ? t.common.none : fmt.num(s.trackedStock)}
-                  {mismatch && (
-                    <span title={t.stock.mismatch} className="ml-1 text-amber-600">
-                      ⚠
+                  {s.wooStock == null ? (
+                    t.common.none
+                  ) : (
+                    <span className="inline-flex items-center justify-end gap-1.5">
+                      {/* Test aid: the shop's quantity does not match the internal figures (purchases minus sales). */}
+                      {mismatch && (
+                        <span title={t.stock.mismatchTip.replace("{n}", fmt.num(s.trackedStock ?? 0))}>
+                          <Icon name="alert" className="h-3.5 w-3.5 text-[var(--warn-line)] opacity-60" />
+                          <span className="sr-only">{t.stock.mismatchTip.replace("{n}", fmt.num(s.trackedStock ?? 0))}</span>
+                        </span>
+                      )}
+                      {fmt.num(s.wooStock)}
                     </span>
                   )}
                 </Td>
@@ -73,7 +81,12 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
         </DataTable>
         )}
         <Pager basePath="/stock" q={q} page={page} pages={pages} total={total} locale={locale} labels={t.stock} />
-        {states.length > 0 && <p className="mt-3 text-xs text-muted">⚠ {t.stock.mismatch}</p>}
+        {states.length > 0 && (
+          <p className="mt-3 flex items-center gap-1.5 text-xs text-muted">
+            <Icon name="alert" className="h-3.5 w-3.5 text-[var(--warn-line)] opacity-60" />
+            {t.stock.mismatch}
+          </p>
+        )}
       </Section>
 
       {states.length > 0 && (

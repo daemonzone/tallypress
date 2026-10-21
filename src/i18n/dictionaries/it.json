@@ -137,12 +137,12 @@
   "stock": {
     "title": "Magazzino e prezzi d'acquisto",
     "item": "Articolo",
-    "woo": "In WooCommerce",
+    "woo": "Qtà",
     "tracked": "Registrato qui",
     "avg": "Costo medio",
     "manual": "Costo manuale",
     "value": "Valore a magazzino",
-    "mismatch": "diverso da WooCommerce: manca un riassortimento?",
+    "mismatch": "La quantità non coincide con i conti interni (acquisti meno vendite): può mancare un riassortimento o uno scarico.",
     "restockTitle": "Registra un riassortimento",
     "unitCost": "Costo unitario (senza IVA)",
     "restockHelp": "Aggiunge il lotto, lo fonde nel costo medio e scala l'importo dal conto del negozio.",
@@ -160,7 +160,8 @@
     "pageOf": "Pagina {p} di {pages}",
     "formsHint": "I moduli elencano gli articoli di questa pagina: cerca per nome per trovarne un altro.",
     "trashed": "Cestinato",
-    "deleted": "Eliminato"
+    "deleted": "Eliminato",
+    "mismatchTip": "Nei conti interni risulta {n}"
   },
   "ledger": {
     "title": "Movimenti del conto del negozio",
