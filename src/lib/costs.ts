@@ -1,4 +1,4 @@
-import { and, count, eq, gte, ilike, inArray, isNotNull, isNull, or, sql } from "drizzle-orm";
+import { and, count, countDistinct, eq, gte, ilike, inArray, isNotNull, isNull, min, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { items, orderLines, orders, restockLots, shops } from "@/db/schema";
 
@@ -185,8 +185,10 @@ export interface ItemState {
   id: string;
   label: string;
   sku: string | null;
+  variation: string | null; // e.g. "M / NERO"
   imageUrl: string | null;
   status: string;
+  costSource: "estimate" | "manual";
   wooStock: number | null;
   trackedStock: number | null; // null: no purchase history, so stock is not tracked
   avgCost: number | null;
@@ -201,8 +203,10 @@ function toState(item: typeof items.$inferSelect, lots: LotEvent[], sales: SaleE
     id: item.id,
     label: item.variationLabel ? `${item.productName} – ${item.variationLabel}` : item.productName,
     sku: item.sku,
+    variation: item.variationLabel,
     imageUrl: item.imageUrl,
     status: item.status,
+    costSource: item.costSource,
     wooStock: item.stockQty == null ? null : Number(item.stockQty),
     trackedStock: lots.length ? r.stock : null,
     avgCost: r.avg,
@@ -254,4 +258,84 @@ export async function getItemStatePage(
     page,
     pages,
   };
+}
+
+export interface ProductGroup {
+  productId: number;
+  name: string;
+  code: string | null; // the product's own code, when it has one
+  imageUrl: string | null;
+  status: string; // "trash" / "deleted" only when every variation is
+  items: ItemState[]; // sizes and colours
+  wooStock: number | null; // total over the variations that report a quantity
+  mismatch: boolean; // at least one variation does not match the internal figures
+  stockValue: number;
+  cost: { min: number; max: number } | null; // unit cost across the variations
+  costSource: "estimate" | "manual" | "mixed";
+}
+
+/**
+ * One page of products (not items) for the stock page, each with all its variations. The search
+ * matches the product name, any variation, any code; only the products on the page have their
+ * history loaded and replayed.
+ */
+export async function getProductPage(
+  shopId: string,
+  opts: { q?: string; page: number; perPage: number },
+): Promise<{ groups: ProductGroup[]; total: number; page: number; pages: number }> {
+  const term = opts.q?.trim();
+  const like = term ? `%${term.replace(/[\\%_]/g, "\\$&")}%` : null;
+  const where = and(
+    eq(items.shopId, shopId),
+    like
+      ? or(ilike(items.productName, like), ilike(items.variationLabel, like), ilike(items.sku, like), ilike(items.productSku, like))
+      : undefined,
+  );
+
+  const [{ n: total }] = await db.select({ n: countDistinct(items.wooProductId) }).from(items).where(where);
+  const pages = Math.max(1, Math.ceil(total / opts.perPage));
+  const page = Math.min(Math.max(1, opts.page), pages);
+  const pageProducts = await db
+    .select({ id: items.wooProductId })
+    .from(items)
+    .where(where)
+    .groupBy(items.wooProductId)
+    .orderBy(min(items.productName), items.wooProductId)
+    .limit(opts.perPage)
+    .offset((page - 1) * opts.perPage);
+  if (!pageProducts.length) return { groups: [], total, page, pages };
+
+  const productIds = pageProducts.map((r) => r.id);
+  const itemRows = await db
+    .select()
+    .from(items)
+    .where(and(eq(items.shopId, shopId), inArray(items.wooProductId, productIds)));
+  const { lotsByItem, salesByItem } = await loadHistory(shopId, itemRows.map((i) => i.id));
+
+  const byProduct = new Map<number, typeof itemRows>();
+  for (const i of itemRows) byProduct.set(i.wooProductId, [...(byProduct.get(i.wooProductId) ?? []), i]);
+
+  const groups = productIds.map((productId): ProductGroup => {
+    const rows = (byProduct.get(productId) ?? []).sort((a, b) =>
+      (a.variationLabel ?? "").localeCompare(b.variationLabel ?? "", undefined, { numeric: true }),
+    );
+    const states = rows.map((i) => toState(i, lotsByItem.get(i.id) ?? [], salesByItem.get(i.id) ?? []));
+    const reporting = states.filter((s) => s.wooStock != null);
+    const costs = states.map((s) => s.manualCost).filter((c): c is number => c != null);
+    const sources = new Set(states.map((s) => s.costSource));
+    return {
+      productId,
+      name: rows[0]?.productName ?? "",
+      code: rows.find((r) => r.productSku)?.productSku ?? null,
+      imageUrl: states.find((s) => s.imageUrl)?.imageUrl ?? null,
+      status: states.every((s) => s.status === "trash" || s.status === "deleted") ? states[0].status : "publish",
+      items: states,
+      wooStock: reporting.length ? reporting.reduce((sum, s) => sum + (s.wooStock ?? 0), 0) : null,
+      mismatch: states.some((s) => s.wooStock != null && s.trackedStock != null && s.wooStock !== s.trackedStock),
+      stockValue: states.reduce((sum, s) => sum + s.stockValue, 0),
+      cost: costs.length ? { min: Math.min(...costs), max: Math.max(...costs) } : null,
+      costSource: sources.size > 1 ? "mixed" : (states[0]?.costSource ?? "estimate"),
+    };
+  });
+  return { groups, total, page, pages };
 }

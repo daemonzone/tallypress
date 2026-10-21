@@ -149,10 +149,10 @@
     "manualTitle": "Set a manual cost",
     "manualHelp": "For items with no purchase history, such as products without stock tracking.",
     "noItems": "No products yet. Sync from WooCommerce in Setup.",
-    "searchPlaceholder": "Search by product name",
+    "searchPlaceholder": "Search product, variation or code…",
     "searchButton": "Search",
     "noResults": "No items match your search.",
-    "results": "{n} items",
+    "results": "{n} products",
     "clearSearch": "clear",
     "pagination": "Pages",
     "prev": "Previous",
@@ -161,7 +161,23 @@
     "formsHint": "The forms list the items on this page: search by name to find another one.",
     "trashed": "In the bin",
     "deleted": "Deleted",
-    "mismatchTip": "Internal figures say {n}"
+    "mismatchTip": "Internal figures say {n}",
+    "product": "Product",
+    "code": "Code",
+    "variant": "Variant",
+    "cost": "Purchase cost",
+    "estimated": "estimate",
+    "mixed": "mixed",
+    "noVariant": "No variant",
+    "variantsCount": "{n} variants",
+    "costForm": {
+      "cost": "Purchase cost of the product (without VAT)",
+      "submit": "Set for all variants",
+      "working": "Recalculating…",
+      "done": "Cost set.",
+      "invalid": "Enter a valid cost.",
+      "help": "Applies to every size and colour, including ones that arrive later. It recalculates the stock value and the cost of this product's sales, past ones too, and the months."
+    }
   },
   "ledger": {
     "title": "Shop account movements",

@@ -48,11 +48,11 @@ multi-shop by design.
   website), and the origin as one word with a small icon (Instagram, Facebook, Google, Direct, App,
   Link), with the source and medium in the tooltip. Orders that do not count as sales
   (cancelled, failed...) are greyed out. First version: more filters and columns to come.
-- **Stock** (`/stock`): 25 items per page with a search on product name, variation or SKU, a
-  photo thumbnail for each item (its own colour's photo, from WordPress's 150x150 copy), a
-  "In the bin" / "Deleted" badge for products that are no longer published, tracked stock vs. WooCommerce stock (a warning means they differ,
-  which usually means an unrecorded restock), average cost, stock value; forms to record a
-  restock and to set a manual cost.
+- **Stock** (`/stock`): one row per product (20 per page) with photo, name, product code (the parent SKU,
+  if it has one), total quantity, purchase cost and stock value; search on product, variation or code.
+  Click a row to see its variations (size/colour) and to set the purchase cost once for all of them:
+  it also applies to variations created later, and recomputes costs, estimated purchases/taxes and
+  closed months. A light warning flags quantities that differ from WooCommerce. The restock form is below.
 - **Ledger** (`/ledger`): every movement of the shop account, and one form to record any
   manual movement. The amount is always positive and the type decides the direction:
   deposit into the account (in), personal withdrawal, expense, VAT payment, income-tax /

@@ -1,6 +1,6 @@
 import { and, eq, isNull, lt, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { items, type shops } from "@/db/schema";
+import { items, productCosts, type shops } from "@/db/schema";
 import { mapLimit, wooGetAll, wooGetOne } from "@/lib/woo";
 
 type Shop = typeof shops.$inferSelect;
@@ -51,7 +51,15 @@ function estimateCost(shop: Shop, price: string | null): string | null {
   return (((value / (1 + Number(shop.vatRate) / 100)) * Number(shop.defaultCostPct)) / 100).toFixed(4);
 }
 
-function variationRow(shop: Shop, p: WooProduct, v: WooVariation, status: string): ItemRow {
+/** Product-level costs (set once per product): variations inherit them, even new ones. */
+async function loadProductCosts(shop: Shop): Promise<Map<number, string>> {
+  const rows = await db.select().from(productCosts).where(eq(productCosts.shopId, shop.id));
+  return new Map(rows.map((r) => [r.wooProductId, r.unitCost]));
+}
+
+type Inherited = Map<number, string>;
+
+function variationRow(shop: Shop, p: WooProduct, v: WooVariation, status: string, inherited: Inherited): ItemRow {
   const managesStock = !isGone(status) && (v.manage_stock === "parent" ? p.manage_stock : v.manage_stock);
   const price = v.price || p.price || null; // a variation without its own price shows the parent's
   const regularPrice = v.regular_price || p.regular_price || null;
@@ -67,13 +75,16 @@ function variationRow(shop: Shop, p: WooProduct, v: WooVariation, status: string
     regularPrice,
     imageUrl: v.image?.src ?? p.images?.[0]?.src ?? null,
     // The estimate follows the list price, so a sale price does not lower the cost.
-    manualUnitCost: estimateCost(shop, regularPrice ?? price),
+    productSku: p.sku || null,
+    // A cost set for the whole product wins over the estimate.
+    manualUnitCost: inherited.get(p.id) ?? estimateCost(shop, regularPrice ?? price),
+    costSource: inherited.has(p.id) ? "manual" : "estimate",
     managesStock,
     stockQty: managesStock && v.stock_quantity != null ? String(v.stock_quantity) : null,
   };
 }
 
-function productRow(shop: Shop, p: WooProduct, status: string): ItemRow {
+function productRow(shop: Shop, p: WooProduct, status: string, inherited: Inherited): ItemRow {
   const managesStock = !isGone(status) && p.manage_stock;
   const price = p.price || null;
   const regularPrice = p.regular_price || null;
@@ -87,7 +98,9 @@ function productRow(shop: Shop, p: WooProduct, status: string): ItemRow {
     price,
     regularPrice,
     imageUrl: p.images?.[0]?.src ?? null,
-    manualUnitCost: estimateCost(shop, regularPrice ?? price),
+    productSku: p.sku || null,
+    manualUnitCost: inherited.get(p.id) ?? estimateCost(shop, regularPrice ?? price),
+    costSource: inherited.has(p.id) ? "manual" : "estimate",
     managesStock,
     stockQty: managesStock && p.stock_quantity != null ? String(p.stock_quantity) : null,
   };
@@ -106,6 +119,7 @@ async function upsertItems(rows: ItemRow[]): Promise<void> {
           productName: excluded("product_name"),
           variationLabel: excluded("variation_label"),
           sku: excluded("sku"),
+          productSku: excluded("product_sku"),
           status: excluded("status"),
           price: excluded("price"),
           regularPrice: excluded("regular_price"),
@@ -123,6 +137,7 @@ async function upsertItems(rows: ItemRow[]): Promise<void> {
 /** Upserts one `items` row per simple product / variation. Returns how many were synced. */
 export async function syncItems(shop: Shop): Promise<number> {
   const runStart = new Date();
+  const inherited = await loadProductCosts(shop);
   const products = await wooGetAll<WooProduct>(shop, "products", { _fields: PRODUCT_FIELDS });
   const rows: ItemRow[] = [];
 
@@ -138,9 +153,9 @@ export async function syncItems(shop: Shop): Promise<number> {
   for (const p of products) {
     if (UNSOLD_TYPES.has(p.type)) continue;
     if (p.type === "variable") {
-      for (const v of variationsOf.get(p.id) ?? []) rows.push(variationRow(shop, p, v, v.status || p.status));
+      for (const v of variationsOf.get(p.id) ?? []) rows.push(variationRow(shop, p, v, v.status || p.status, inherited));
     } else {
-      rows.push(productRow(shop, p, p.status));
+      rows.push(productRow(shop, p, p.status, inherited));
     }
   }
   await upsertItems(rows);
@@ -193,6 +208,7 @@ export async function syncMissingItems(shop: Shop): Promise<number> {
   }));
   if (!missing.length) return 0;
 
+  const inherited = await loadProductCosts(shop);
   const rows: ItemRow[] = [];
   const deleted = (p: number, v: number, name: string | null, productName?: string): ItemRow => ({
     shopId: shop.id,
@@ -207,11 +223,11 @@ export async function syncMissingItems(shop: Shop): Promise<number> {
   await mapLimit(missing, CONCURRENCY, async ({ p, v, name }) => {
     const prod = await wooGetOne<WooProduct>(shop, `products/${p}`, PRODUCT_FIELDS);
     if (!prod) return void rows.push(deleted(p, v, name));
-    if (v === 0) return void rows.push(productRow(shop, prod, prod.status));
+    if (v === 0) return void rows.push(productRow(shop, prod, prod.status, inherited));
 
     const variation = await wooGetOne<WooVariation>(shop, `products/${p}/variations/${v}`, VARIATION_FIELDS);
     if (!variation) return void rows.push(deleted(p, v, null, prod.name));
-    rows.push(variationRow(shop, prod, variation, prod.status === "trash" ? "trash" : variation.status));
+    rows.push(variationRow(shop, prod, variation, prod.status === "trash" ? "trash" : variation.status, inherited));
   });
 
   await upsertItems(rows);
@@ -225,11 +241,12 @@ export async function syncMissingItems(shop: Shop): Promise<number> {
  * Returns how many items were updated.
  */
 export async function syncItemImages(shop: Shop): Promise<number> {
-  const products = await wooGetAll<{ id: number; type: string; images: { src: string }[] }>(shop, "products", {
-    _fields: "id,type,images",
+  const products = await wooGetAll<{ id: number; type: string; sku: string; images: { src: string }[] }>(shop, "products", {
+    _fields: "id,type,sku,images",
   });
   let updated = 0;
   for (const p of products) {
+    if (p.sku) await db.update(items).set({ productSku: p.sku }).where(and(eq(items.shopId, shop.id), eq(items.wooProductId, p.id)));
     const src = p.images?.[0]?.src;
     if (!src) continue;
     const res = await db

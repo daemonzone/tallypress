@@ -8,15 +8,16 @@ import { freezeCosts } from "./costs";
  * Recomputes every purchase cost from the items' current estimates: the opening stock lots take
  * their item's estimate, every line's frozen cost is cleared and re-frozen, and the closed months
  * are closed again. For when the ESTIMATES change (a new percentage, a corrected price base).
- * Items with a cost entered by hand are left as they are, and so are lots from recorded restocks.
- * Everything cleared here is derived data, so nothing entered by hand is lost.
+ * Opening and estimated lots follow each item's cost (an estimate, or the one set by hand for its
+ * product); lots from restocks the owner recorded keep their own price. Everything cleared here is
+ * derived data, so nothing entered by hand is lost.
  */
 export async function rebuildCosts(shopId: string): Promise<{ lots: number; lines: number; closedMonths: string[] }> {
   const lots = await db.execute(sql`
     UPDATE restock_lots r SET unit_cost = i.manual_unit_cost
     FROM items i
-    WHERE r.shop_id = ${shopId} AND r.item_id = i.id AND r.source = 'opening'
-      AND i.cost_source = 'estimate' AND i.manual_unit_cost IS NOT NULL`);
+    WHERE r.shop_id = ${shopId} AND r.item_id = i.id AND r.source IN ('opening', 'estimate')
+      AND i.manual_unit_cost IS NOT NULL`);
   const lines = await db.update(orderLines).set({ unitCostSnapshot: null }).where(eq(orderLines.shopId, shopId));
   await db.delete(monthClosings).where(eq(monthClosings.shopId, shopId));
   await freezeCosts(shopId);

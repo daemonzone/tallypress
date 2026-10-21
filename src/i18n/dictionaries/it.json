@@ -149,10 +149,10 @@
     "manualTitle": "Imposta un costo manuale",
     "manualHelp": "Per articoli senza storico d'acquisto, come i prodotti senza gestione del magazzino.",
     "noItems": "Ancora nessun prodotto. Sincronizza da WooCommerce nelle Impostazioni.",
-    "searchPlaceholder": "Cerca per nome prodotto",
+    "searchPlaceholder": "Cerca prodotto, variante o codice…",
     "searchButton": "Cerca",
     "noResults": "Nessun articolo corrisponde alla ricerca.",
-    "results": "{n} articoli",
+    "results": "{n} prodotti",
     "clearSearch": "azzera",
     "pagination": "Pagine",
     "prev": "Precedente",
@@ -161,7 +161,23 @@
     "formsHint": "I moduli elencano gli articoli di questa pagina: cerca per nome per trovarne un altro.",
     "trashed": "Cestinato",
     "deleted": "Eliminato",
-    "mismatchTip": "Nei conti interni risulta {n}"
+    "mismatchTip": "Nei conti interni risulta {n}",
+    "product": "Prodotto",
+    "code": "Codice",
+    "variant": "Variante",
+    "cost": "Costo d'acquisto",
+    "estimated": "stima",
+    "mixed": "misto",
+    "noVariant": "Senza variante",
+    "variantsCount": "{n} varianti",
+    "costForm": {
+      "cost": "Costo d'acquisto del prodotto (senza IVA)",
+      "submit": "Imposta per tutte le varianti",
+      "working": "Ricalcolo in corso…",
+      "done": "Costo impostato.",
+      "invalid": "Inserisci un costo valido.",
+      "help": "Vale per tutte le taglie e i colori, anche per quelli che arriveranno. Ricalcola il valore del magazzino e il costo delle vendite di questo prodotto, anche passate, e i mesi."
+    }
   },
   "ledger": {
     "title": "Movimenti del conto del negozio",

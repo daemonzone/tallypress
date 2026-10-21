@@ -73,6 +73,19 @@ export const shops = pgTable("shops", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// The purchase cost of a whole product, set once for all its sizes and colours. Variations that
+// appear later inherit it. (Each item keeps its own manual_unit_cost too; this is the source.)
+export const productCosts = pgTable(
+  "product_costs",
+  {
+    shopId: uuid("shop_id").notNull().references(() => shops.id, { onDelete: "cascade" }),
+    wooProductId: bigint("woo_product_id", { mode: "number" }).notNull(),
+    unitCost: numeric("unit_cost", { precision: 14, scale: 4 }).notNull(), // per unit, net of VAT
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.shopId, t.wooProductId] })],
+);
+
 // A sellable unit: a simple product, or one variation of a variable product.
 export const items = pgTable(
   "items",
@@ -84,6 +97,7 @@ export const items = pgTable(
     productName: text("product_name").notNull(),
     variationLabel: text("variation_label"),
     sku: text("sku"),
+    productSku: text("product_sku"), // the parent product's own code, when it has one
     // WooCommerce status: publish, draft, private, trash (in the bin) or deleted (gone from the shop).
     status: text("status").notNull().default("publish"),
     // Current selling price as listed in WooCommerce (tax included if the shop says so).
