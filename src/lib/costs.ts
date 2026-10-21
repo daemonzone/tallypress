@@ -214,8 +214,9 @@ function toState(item: typeof items.$inferSelect, lots: LotEvent[], sales: SaleE
     costSource: item.costSource,
     realRestocks: lots.some((l) => l.real),
     wooStock: item.stockQty == null ? null : Number(item.stockQty),
-    trackedStock: lots.length ? r.stock : null,
-    diff: item.stockQty != null && lots.length ? Number(item.stockQty) - r.stock : null,
+    // Tracked from the starting point: an item with no purchase yet is tracked at zero (it is the stock that appears later that must be explained).
+    trackedStock: lots.length || item.stockQty != null ? r.stock : null,
+    diff: item.stockQty != null ? Number(item.stockQty) - r.stock : null,
     avgCost: r.avg,
     manualCost: manual,
     stockValue: r.stock > 0 && r.avg != null ? r.stock * r.avg : 0,

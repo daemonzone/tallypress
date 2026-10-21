@@ -46,7 +46,7 @@ export function DifferenceForm({ productId, pieces, locale, currency, vatRate, l
             </button>
           ))}
         </div>
-        <label className="flex items-center gap-1.5 text-sm">
+        <label className="flex shrink-0 items-center gap-1.5 whitespace-nowrap text-sm">
           <span className="text-muted">{labels.rate}</span>
           <input
             name="vatRate"
