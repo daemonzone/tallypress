@@ -9,6 +9,7 @@ export interface LotEvent {
   at: Date;
   qty: number;
   cost: number; // per unit, net of VAT
+  real?: boolean; // a purchase the owner recorded (restock / return), not an estimate or opening stock
 }
 
 export interface SaleEvent {
@@ -101,7 +102,7 @@ async function loadHistory(shopId: string, itemIds?: string[]) {
   const lotsByItem = new Map<string, LotEvent[]>();
   for (const l of lots) {
     const list = lotsByItem.get(l.itemId) ?? [];
-    list.push({ at: l.purchasedAt, qty: Number(l.quantity), cost: Number(l.unitCost) });
+    list.push({ at: l.purchasedAt, qty: Number(l.quantity), cost: Number(l.unitCost), real: l.source === "restock" || l.source === "return" });
     lotsByItem.set(l.itemId, list);
   }
   const salesByItem = new Map<string, SaleEvent[]>();
@@ -189,6 +190,7 @@ export interface ItemState {
   imageUrl: string | null;
   status: string;
   costSource: "estimate" | "manual";
+  realRestocks: boolean; // the average cost comes from purchases the owner recorded
   wooStock: number | null;
   trackedStock: number | null; // null: no purchase history, so stock is not tracked
   avgCost: number | null;
@@ -207,6 +209,7 @@ function toState(item: typeof items.$inferSelect, lots: LotEvent[], sales: SaleE
     imageUrl: item.imageUrl,
     status: item.status,
     costSource: item.costSource,
+    realRestocks: lots.some((l) => l.real),
     wooStock: item.stockQty == null ? null : Number(item.stockQty),
     trackedStock: lots.length ? r.stock : null,
     avgCost: r.avg,
@@ -272,6 +275,7 @@ export interface ProductGroup {
   stockValue: number;
   cost: { min: number; max: number } | null; // unit cost across the variations
   costSource: "estimate" | "manual" | "mixed";
+  setCost: number | null; // the reference cost when every variation shares one (what the form edits)
 }
 
 /**
@@ -321,8 +325,9 @@ export async function getProductPage(
     );
     const states = rows.map((i) => toState(i, lotsByItem.get(i.id) ?? [], salesByItem.get(i.id) ?? []));
     const reporting = states.filter((s) => s.wooStock != null);
-    const costs = states.map((s) => s.manualCost).filter((c): c is number => c != null);
-    const sources = new Set(states.map((s) => s.costSource));
+    const costs = states.map((s) => s.avgCost).filter((c): c is number => c != null);
+    // What the panel shows is the current average, which real restocks move; "estimate" only while no purchase backs it.
+    const sources = new Set(states.map((s) => (s.realRestocks ? "manual" : s.costSource)));
     return {
       productId,
       name: rows[0]?.productName ?? "",
@@ -334,6 +339,10 @@ export async function getProductPage(
       mismatch: states.some((s) => s.wooStock != null && s.trackedStock != null && s.wooStock !== s.trackedStock),
       stockValue: states.reduce((sum, s) => sum + s.stockValue, 0),
       cost: costs.length ? { min: Math.min(...costs), max: Math.max(...costs) } : null,
+      setCost: (() => {
+        const set = new Set(states.map((s) => s.manualCost));
+        return set.size === 1 ? ([...set][0] ?? null) : null;
+      })(),
       costSource: sources.size > 1 ? "mixed" : (states[0]?.costSource ?? "estimate"),
     };
   });

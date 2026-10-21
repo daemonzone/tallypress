@@ -89,7 +89,7 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
                     <div className="space-y-4 pb-5 pl-[3.75rem] pr-6">
                       <ProductCostForm
                         productId={g.productId}
-                        current={sameCost && g.cost ? g.cost.min : null}
+                        current={g.setCost}
                         labels={t.stock.costForm}
                         action={setProductCost}
                       />
@@ -125,7 +125,7 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
                                     </span>
                                   )}
                                 </td>
-                                <td className="py-1.5 pr-3 text-right tabular-nums">{money(s.manualCost)}</td>
+                                <td className="py-1.5 pr-3 text-right tabular-nums">{money(s.avgCost)}</td>
                                 <td className="py-1.5 text-right tabular-nums">{fmt.money(Math.round(s.stockValue * 100))}</td>
                               </tr>
                             );
