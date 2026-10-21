@@ -59,15 +59,17 @@ export async function estimatePayments(shopId: string, rules: PaymentRules = {})
   const now = new Date();
   const start = shop.baselineAt;
 
+  const credit = (m: { flows: { restockVat: number; expenseVat: number } }) => m.flows.restockVat + m.flows.expenseVat;
   type Entry = { what: "vat" | "tax"; kind: "vat_payment" | "tax_payment" | "prior_payment"; amount: number; on: Date; note: string };
   const entries: Entry[] = [];
 
   if (shop.vatPeriod === "quarterly") {
+    // The VAT of a quarter is what was collected minus the deductible VAT paid on purchases and expenses.
     const quarters = new Map<string, { vat: number; cash: boolean }>();
     for (const m of all) {
       const q = `${m.key.slice(0, 4)}-${Math.floor((Number(m.key.slice(5, 7)) - 1) / 3) + 1}`;
       const cur = quarters.get(q) ?? { vat: 0, cash: false };
-      quarters.set(q, { vat: cur.vat + m.vat, cash: cur.cash || !m.history });
+      quarters.set(q, { vat: cur.vat + m.vat - credit(m), cash: cur.cash || !m.history });
     }
     for (const [q, { vat, cash }] of [...quarters.entries()].sort()) {
       const year = Number(q.slice(0, 4));
@@ -89,12 +91,12 @@ export async function estimatePayments(shopId: string, rules: PaymentRules = {})
     // The month after the sales; the first cash month pays the month before the starting point.
     for (const m of all.filter((x) => !x.history)) {
       const prev = all[all.findIndex((x) => x.key === m.key) - 1];
-      if (!prev || prev.vat <= 0) continue;
+      if (!prev || prev.vat - credit(prev) <= 0) continue;
       const on = at(Number(m.key.slice(0, 4)), Number(m.key.slice(5, 7)), 1);
       entries.push(
         prev.history
-          ? { what: "vat", kind: "prior_payment", amount: prev.vat, on, note: `IVA stimata di ${prev.key.slice(0, 7)} (periodo precedente al punto di partenza)` }
-          : { what: "vat", kind: "vat_payment", amount: prev.vat, on, note: "IVA stimata (vendite del mese precedente)" },
+          ? { what: "vat", kind: "prior_payment", amount: prev.vat - credit(prev), on, note: `IVA stimata di ${prev.key.slice(0, 7)} (periodo precedente al punto di partenza)` }
+          : { what: "vat", kind: "vat_payment", amount: prev.vat - credit(prev), on, note: "IVA stimata (vendite del mese precedente)" },
       );
     }
   }

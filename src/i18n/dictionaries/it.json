@@ -93,6 +93,7 @@
     "restocks": "Riassortimenti",
     "withdrawals": "Prelievi",
     "expenses": "Spese",
+    "expensesNet": "Spese (senza IVA)",
     "end": "Saldo previsto a fine mese",
     "variantsTitle": "Per prodotto e variante",
     "product": "Prodotto",

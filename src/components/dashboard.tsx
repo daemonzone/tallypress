@@ -243,6 +243,7 @@ function GrossToNet({ month: m, t, fmt }: { month: MonthReport; t: Dictionary; f
       {line(t.month.vat, fmt.money(-m.vat), true)}
       {result(t.month.netRevenue, fmt.money(m.netRevenue))}
       {line(t.month.cogs, fmt.money(-m.cogs), true)}
+      {m.expenses !== 0 && line(t.month.expensesNet, fmt.money(-m.expenses), true)}
       {result(t.month.profit, fmt.money(m.profit))}
 
       <div className="mt-4 grid grid-cols-2 overflow-hidden rounded-xl border border-line">
@@ -329,6 +330,7 @@ function MonthPanel({
     { key: "net", label: t.month.netEarnings, value: Math.max(m.netEarnings, 0), slot: VIZ.mine, display: fmt.money(m.netEarnings) },
     { key: "cogs", label: t.month.cogs, value: m.cogs, slot: VIZ.cogs, display: fmt.money(m.cogs) },
     { key: "vat", label: t.month.vat, value: m.vat, slot: VIZ.vat, display: fmt.money(m.vat) },
+    ...(m.expenses > 0 ? [{ key: "expenses", label: t.month.expensesNet, value: m.expenses, slot: VIZ.personal, display: fmt.money(m.expenses) }] : []),
     { key: "tax", label: t.month.taxReserve, value: m.taxReserve, slot: VIZ.tax, display: fmt.money(m.taxReserve) },
   ];
 

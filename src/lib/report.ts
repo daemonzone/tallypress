@@ -21,6 +21,7 @@ export interface Flows {
   estimatedRestock: number; // purchases estimated by Tallypress, not recorded by the owner
   withdrawal: number;
   expense: number;
+  expenseVat: number; // the VAT included in `expense` (positive): deductible, not an extra movement
   vatPayment: number;
   estimatedVatPayment: number; // VAT payments estimated by Tallypress
   taxPayment: number;
@@ -32,7 +33,7 @@ export interface Flows {
 }
 
 const emptyFlows = (): Flows => ({
-  sales: 0, opening: 0, deposit: 0, restock: 0, restockVat: 0, estimatedRestock: 0, withdrawal: 0, expense: 0, vatPayment: 0, estimatedVatPayment: 0, taxPayment: 0, estimatedTaxPayment: 0, priorPayment: 0, estimatedPriorPayment: 0, adjustment: 0, other: 0,
+  sales: 0, opening: 0, deposit: 0, restock: 0, restockVat: 0, estimatedRestock: 0, withdrawal: 0, expense: 0, expenseVat: 0, vatPayment: 0, estimatedVatPayment: 0, taxPayment: 0, estimatedTaxPayment: 0, priorPayment: 0, estimatedPriorPayment: 0, adjustment: 0, other: 0,
 });
 
 /** Everything that moves the account apart from sales. */
@@ -159,7 +160,10 @@ export async function buildReport(shopId: string): Promise<Report | null> {
       }
     }
     else if (r.kind === "withdrawal") f.withdrawal += amount;
-    else if (r.kind === "expense") f.expense += amount;
+    else if (r.kind === "expense") {
+      f.expense += amount;
+      f.expenseVat += toCents(r.vat);
+    }
     else if (r.kind === "deposit") f.deposit += amount;
     else if (r.kind === "vat_payment") {
       if (r.estimated) f.estimatedVatPayment += amount;
@@ -238,17 +242,21 @@ export async function buildReport(shopId: string): Promise<Report | null> {
     const gross = closing ? toCents(closing.grossTotal) : live.gross;
     flows.sales = gross + lateAdjustments;
 
+    // Running costs of the month without their VAT (the VAT is deducted from what is due to the state).
+    const expensesNet = -flows.expense - flows.expenseVat;
     const f = closing
       ? {
           gross: gross + lateAdjustments,
           vat: toCents(closing.vatTotal),
           netRevenue: gross + lateAdjustments - toCents(closing.vatTotal),
           cogs: toCents(closing.cogsTotal),
-          profit: gross + lateAdjustments - toCents(closing.vatTotal) - toCents(closing.cogsTotal),
+          // A closing stores the tax reserve and the net earnings; the profit and the expenses follow from them.
+          expenses: gross + lateAdjustments - toCents(closing.vatTotal) - toCents(closing.cogsTotal) - (toCents(closing.netTotal) + toCents(closing.taxReserve)),
+          profit: toCents(closing.netTotal) + toCents(closing.taxReserve),
           taxReserve: toCents(closing.taxReserve),
           netEarnings: toCents(closing.netTotal),
         }
-      : figures(live.gross + lateAdjustments, itemsCogs, profile, ytdProfit);
+      : figures(live.gross + lateAdjustments, itemsCogs, profile, ytdProfit, expensesNet);
     ytdProfit += f.profit;
 
     // Share the month's tax reserve over the items and the shipping row by their profit.
@@ -290,8 +298,9 @@ export async function buildReport(shopId: string): Promise<Report | null> {
     .filter((l) => l.source === "opening")
     .reduce((s, l) => s + Math.round(Number(l.qty) * Number(l.cost) * 100), 0);
   // Money out for purchases, net of the deductible VAT it contained.
-  const vatCredit = sum((m) => m.flows.restockVat);
-  const spentOnRestocks = -sum((m) => m.flows.restock + m.flows.estimatedRestock) - vatCredit;
+  const restockVat = sum((m) => m.flows.restockVat);
+  const vatCredit = restockVat + sum((m) => m.flows.expenseVat); // all the deductible VAT paid, on purchases and on expenses
+  const spentOnRestocks = -sum((m) => m.flows.restock + m.flows.estimatedRestock) - restockVat;
   const invested = openingValue + spentOnRestocks;
   const netEarnings = sum((m) => m.netEarnings);
 

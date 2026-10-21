@@ -29,7 +29,8 @@ export interface Figures {
   vat: number;
   netRevenue: number; // gross minus VAT
   cogs: number;
-  profit: number; // net revenue minus purchase cost
+  expenses: number; // running costs of the shop without VAT (accountant, materials...), deducted from the profit
+  profit: number; // net revenue minus purchase cost and expenses
   taxReserve: number;
   netEarnings: number; // profit minus the tax reserve
 }
@@ -61,15 +62,15 @@ export function annualTax(profitCents: number, p: TaxProfile): number {
  * months of the same calendar year), so brackets apply to the yearly total, not to each
  * month on its own.
  */
-export function figures(gross: number, cogs: number, p: TaxProfile, priorProfit = 0): Figures {
+export function figures(gross: number, cogs: number, p: TaxProfile, priorProfit = 0, expenses = 0): Figures {
   const vat = Math.round((gross * p.vatRate) / (100 + p.vatRate));
   const netRevenue = gross - vat;
-  const profit = netRevenue - cogs;
+  const profit = netRevenue - cogs - expenses;
   const taxReserve =
     p.taxBase === "profit"
       ? annualTax(priorProfit + profit, p) - annualTax(priorProfit, p)
       : Math.round((Math.max(netRevenue, 0) * (p.incomeTaxRate + p.socialRate)) / 100);
-  return { gross, vat, netRevenue, cogs, profit, taxReserve, netEarnings: profit - taxReserve };
+  return { gross, vat, netRevenue, cogs, expenses, profit, taxReserve, netEarnings: profit - taxReserve };
 }
 
 export function profileOf(shop: {

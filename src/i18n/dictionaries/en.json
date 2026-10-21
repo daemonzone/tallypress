@@ -93,6 +93,7 @@
     "restocks": "Restocks",
     "withdrawals": "Withdrawals",
     "expenses": "Expenses",
+    "expensesNet": "Expenses (VAT excluded)",
     "end": "Expected balance at month end",
     "variantsTitle": "By product and variation",
     "product": "Product",

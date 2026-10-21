@@ -512,3 +512,11 @@ database `tallypress_test`, so experiments never touch the real data on port 900
 day of the month after the quarter and the tax of the previous year in one payment on 30 June.
 `npm run shop:estimate-restocks -- --upfront-until=2023-12` buys the stock of the months up to that one in a
 single purchase right after the opening balance (later months are bought month by month as usual).
+
+## Expenses
+
+A ledger entry of kind `expense` is a running cost of the shop (accountant, materials, subscriptions). Its
+amount is the money out, VAT included; `vat_amount` is the deductible VAT it contains. The part without VAT
+is deducted from the month's profit (so it lowers the income tax set aside, shown as "Spese (senza IVA)" in
+the month), and the VAT is deducted from the VAT due (the estimated quarterly payments net it too).
+Entries entered by hand in the Movements page have no VAT yet, so they are deducted in full.
