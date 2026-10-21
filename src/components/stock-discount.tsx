@@ -68,7 +68,7 @@ export function DiscountHeader({ label }: { label: string }) {
   );
 }
 
-/** What one piece leaves in the pocket at the chosen discount (VAT and tax out), with the discounted price under it. */
+/** What one piece leaves in the pocket at the chosen discount (VAT and tax out). */
 export function DiscountedCell({ price, cost }: { price: number | null; cost: number | null }) {
   const { pct, vatRate, taxPct, locale, currency } = useDiscount();
   if (price == null || cost == null) return <div className="text-right text-muted">—</div>;
@@ -78,9 +78,6 @@ export function DiscountedCell({ price, cost }: { price: number | null; cost: nu
   );
   const money = new Intl.NumberFormat(locale, { style: "currency", currency, useGrouping: "always" });
   return (
-    <div className="text-right tabular-nums">
-      <div className={r.profitAfterTax < -0.005 ? "font-medium text-bad" : "font-medium"}>{money.format(r.profitAfterTax)}</div>
-      <div className="text-xs text-muted">{money.format(r.priceGross)}</div>
-    </div>
+    <div className={`text-right tabular-nums ${r.profitAfterTax < -0.005 ? "font-medium text-bad" : "font-medium"}`}>{money.format(r.profitAfterTax)}</div>
   );
 }

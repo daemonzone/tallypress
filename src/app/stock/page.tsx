@@ -187,10 +187,7 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
                       <div className="text-right tabular-nums">{g.price == null ? t.common.none : money(g.price)}</div>
                       <div className="text-right tabular-nums">
                         {sale ? (
-                          <>
-                            <div className={sale.profitBeforeTax < -0.005 ? "text-bad" : ""}>{money(sale.profitBeforeTax)}</div>
-                            <div className="text-xs text-muted">{g.unitCost ? fmt.pct(sale.profitBeforeTax / g.unitCost) : ""}</div>
-                          </>
+                          <span className={sale.profitBeforeTax < -0.005 ? "text-bad" : ""}>{money(sale.profitBeforeTax)}</span>
                         ) : (
                           t.common.none
                         )}
