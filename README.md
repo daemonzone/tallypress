@@ -49,10 +49,11 @@ multi-shop by design.
   Link), with the source and medium in the tooltip. Orders that do not count as sales
   (cancelled, failed...) are greyed out. First version: more filters and columns to come.
 - **Stock** (`/stock`): one row per product (20 per page) with photo, name, product code (the parent SKU,
-  if it has one), total quantity, purchase cost and stock value; search on product, variation or code.
-  Click a row to see its variations (size/colour) and to set the purchase cost once for all of them:
-  it also applies to variations created later, and recomputes costs, estimated purchases/taxes and
-  closed months. A light warning flags quantities that differ from WooCommerce. The restock form is below.
+  if it has one), total quantity, average purchase cost and stock value; search on product, variation or
+  code. Click a row to see its variations (size/colour) and to record a restock: a cost per piece, or
+  the total paid, plus the pieces of each variation. The declared amount is booked once in Movements
+  and the average is computed from the lots, never typed. A light warning flags quantities that differ
+  from WooCommerce.
 - **Ledger** (`/ledger`): every movement of the shop account, and one form to record any
   manual movement. The amount is always positive and the type decides the direction:
   deposit into the account (in), personal withdrawal, expense, VAT payment, income-tax /

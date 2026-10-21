@@ -1,13 +1,11 @@
 "use server";
 
-import { and, count, eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
-import { items, ledgerEntries, productCosts, restockLots, shops } from "@/db/schema";
+import { items, ledgerEntries, restockLots, shops } from "@/db/schema";
 import { freezeCosts } from "./costs";
-import { estimateRestocks } from "./estimate-restocks";
 import { importRange, type ImportRangeResult } from "./import-range";
-import { rebuildCosts } from "./rebuild-costs";
 import { buildReport } from "./report";
 import { MOVEMENT_TYPES, type MovementState } from "./movements";
 import { recordOpening } from "./opening";
@@ -165,53 +163,6 @@ export async function alignBalance(_prev: AlignState, formData: FormData): Promi
   });
   revalidatePath("/", "layout");
   return { status: "ok", difference, balance: Math.round(real * 100) };
-}
-
-export type ProductCostState = { status: "idle" | "ok" | "invalid" };
-
-/**
- * Sets the purchase cost (net of VAT) of a whole product, for every size and colour at once, and
- * for variations that appear later. Costs here are estimates until real purchases are recorded, so
- * the new price is applied back over the opening stock, the estimated purchases and the sales of
- * that product, and the months are recomputed. While the account is not aligned with the bank yet,
- * the estimated purchases and tax payments are recomputed too; once aligned they are left alone so
- * the balance does not move.
- */
-export async function setProductCost(_prev: ProductCostState, formData: FormData): Promise<ProductCostState> {
-  const shopId = await getCurrentShopId();
-  const productId = Number(formData.get("productId"));
-  const cost = parseDecimal(formData.get("unitCost"));
-  if (!Number.isInteger(productId) || !(cost >= 0)) return { status: "invalid" };
-
-  const [known] = await db
-    .select({ id: items.id })
-    .from(items)
-    .where(and(eq(items.shopId, shopId), eq(items.wooProductId, productId)))
-    .limit(1);
-  if (!known) return { status: "invalid" };
-
-  const unitCost = cost.toFixed(4);
-  await db.transaction(async (tx) => {
-    await tx
-      .insert(productCosts)
-      .values({ shopId, wooProductId: productId, unitCost })
-      .onConflictDoUpdate({ target: [productCosts.shopId, productCosts.wooProductId], set: { unitCost, updatedAt: new Date() } });
-    await tx
-      .update(items)
-      .set({ manualUnitCost: unitCost, costSource: "manual" })
-      .where(and(eq(items.shopId, shopId), eq(items.wooProductId, productId)));
-  });
-
-  const [{ n: estimates }] = await db
-    .select({ n: count() })
-    .from(ledgerEntries)
-    .where(and(eq(ledgerEntries.shopId, shopId), eq(ledgerEntries.estimated, true)));
-  const aligned = (await buildReport(shopId))?.aligned ?? false;
-  if (estimates > 0 && !aligned) await estimateRestocks(shopId);
-  else await rebuildCosts(shopId);
-
-  revalidatePath("/", "layout");
-  return { status: "ok" };
 }
 
 export type ProductRestockState = { status: "idle" | "ok" | "invalid" | "noQty" | "tooHigh" };

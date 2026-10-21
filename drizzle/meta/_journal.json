@@ -92,6 +92,13 @@
       "when": 1792586594945,
       "tag": "0012_large_supernaut",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792588741633,
+      "tag": "0013_moaning_chamber",
+      "breakpoints": true
     }
   ]
 }

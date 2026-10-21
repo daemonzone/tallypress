@@ -275,7 +275,6 @@ export interface ProductGroup {
   stockValue: number;
   cost: { min: number; max: number } | null; // unit cost across the variations
   costSource: "estimate" | "manual" | "mixed";
-  setCost: number | null; // the reference cost when every variation shares one (what the form edits)
 }
 
 /**
@@ -339,10 +338,6 @@ export async function getProductPage(
       mismatch: states.some((s) => s.wooStock != null && s.trackedStock != null && s.wooStock !== s.trackedStock),
       stockValue: states.reduce((sum, s) => sum + s.stockValue, 0),
       cost: costs.length ? { min: Math.min(...costs), max: Math.max(...costs) } : null,
-      setCost: (() => {
-        const set = new Set(states.map((s) => s.manualCost));
-        return set.size === 1 ? ([...set][0] ?? null) : null;
-      })(),
       costSource: sources.size > 1 ? "mixed" : (states[0]?.costSource ?? "estimate"),
     };
   });

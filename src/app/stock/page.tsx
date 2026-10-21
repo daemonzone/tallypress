@@ -1,12 +1,11 @@
 import { formatters } from "@/components/format";
 import { Icon } from "@/components/icons";
 import { Pager, SearchBox } from "@/components/pager";
-import { ProductCostForm } from "@/components/product-cost-form";
 import { ProductRestockForm } from "@/components/product-restock-form";
 import { Thumb } from "@/components/thumb";
 import { Notice, Section } from "@/components/ui";
 import { getDictionary } from "@/i18n";
-import { addProductRestock, setProductCost } from "@/lib/actions";
+import { addProductRestock } from "@/lib/actions";
 import { getProductPage } from "@/lib/costs";
 import { getCurrentShop } from "@/lib/shop";
 
@@ -87,12 +86,6 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
                     </summary>
 
                     <div className="space-y-4 pb-5 pl-[3.75rem] pr-6">
-                      <ProductCostForm
-                        productId={g.productId}
-                        current={g.setCost}
-                        labels={t.stock.costForm}
-                        action={setProductCost}
-                      />
                       <ProductRestockForm
                         productId={g.productId}
                         variants={g.items.filter((s) => s.status !== "trash" && s.status !== "deleted").map((s) => ({ id: s.id, label: s.variation ?? t.stock.noVariant }))}

@@ -170,14 +170,6 @@
     "mixed": "mixed",
     "noVariant": "No variant",
     "variantsCount": "{n} variants",
-    "costForm": {
-      "cost": "Purchase cost of the product (without VAT)",
-      "submit": "Set for all variants",
-      "working": "Recalculating…",
-      "done": "Cost set.",
-      "invalid": "Enter a valid cost.",
-      "help": "Applies to every size and colour, including ones that arrive later. It recalculates the stock value and the cost of this product's sales, past ones too, and the months."
-    },
     "restockForm": {
       "perUnit": "Cost per piece",
       "total": "Total paid",
