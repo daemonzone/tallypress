@@ -43,9 +43,13 @@ export function DiscountSimulator({ info, name, imageUrl, price, cost, vatRate, 
     text.replace(/\{n\}/g, num.format(pct)).replace(/\{v\}/g, num.format(vatRate)).replace(/\{t\}/g, num.format(taxPct));
 
   const th = "py-2 pr-3 text-right text-xs font-medium uppercase leading-tight tracking-wide text-muted";
-  const step = (label: ReactNode, value: string, opts: { bold?: boolean; blue?: boolean; big?: boolean; valueClass?: string } = {}) => (
+  const step = (
+    label: ReactNode,
+    value: string,
+    opts: { bold?: boolean; blue?: boolean; blueLabel?: boolean; big?: boolean; valueClass?: string } = {},
+  ) => (
     <div className="flex items-baseline justify-between gap-4 py-2">
-      <span className={opts.blue ? "text-accent" : opts.bold ? "font-semibold" : "text-muted"}>{label}</span>
+      <span className={opts.blueLabel ? "text-accent" : opts.bold ? "font-semibold" : "text-muted"}>{label}</span>
       <span
         className={`tabular-nums ${opts.blue ? "text-accent" : ""} ${opts.bold ? "font-semibold" : ""} ${opts.big ? "text-xl font-semibold" : ""} ${opts.valueClass ?? ""}`}
       >
@@ -111,7 +115,7 @@ export function DiscountSimulator({ info, name, imageUrl, price, cost, vatRate, 
           {step(
             <>
               {t.stepDiscount.split("{n}%")[0]}
-              <strong className="text-xl font-semibold">{num.format(pct)}%</strong>
+              <strong className="text-xl font-semibold text-accent">{num.format(pct)}%</strong>
               {t.stepDiscount.split("{n}%")[1]}
             </>,
             m(sim.priceGross),
