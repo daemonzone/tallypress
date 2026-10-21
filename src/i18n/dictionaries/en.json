@@ -211,7 +211,8 @@
     "listShort": "list",
     "inSale": "{n} of {m} on sale",
     "discountRange": "from {a} to {b}",
-    "discountWord": "discount"
+    "discountWord": "discount",
+    "shopDiscount": "Shop discount today"
   },
   "ledger": {
     "title": "Shop account movements",

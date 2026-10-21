@@ -211,7 +211,8 @@
     "listShort": "listino",
     "inSale": "{n} su {m} in saldo",
     "discountRange": "da {a} a {b}",
-    "discountWord": "sconto"
+    "discountWord": "sconto",
+    "shopDiscount": "Sconto in negozio oggi"
   },
   "ledger": {
     "title": "Movimenti del conto del negozio",

@@ -19,7 +19,7 @@ const PER_PAGE = 20;
 const DIFF_COLUMNS = "grid-cols-[minmax(0,1fr)_6rem_minmax(0,1.5fr)]";
 // a vertical rule that separates the figures that follow the selling price
 const DIVIDER = "border-l border-line pl-3";
-const COLUMNS = "grid-cols-[minmax(11rem,1fr)_2.5rem_11.5rem_11.5rem_6rem_6rem_9rem_1.25rem]";
+const COLUMNS = "grid-cols-[minmax(12rem,1fr)_2.5rem_11.5rem_10.5rem_10.5rem_9rem_1.25rem]";
 
 export default async function StockPage({ searchParams }: PageProps<"/stock">) {
   const { locale, t } = await getDictionary();
@@ -143,28 +143,20 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
           <DiscountProvider vatRate={vatRate} taxPct={taxPct} locale={locale} currency={shop.currency}>
           <DiscountButtons label={t.stock.discountLabel} note={t.stock.discountNote.replace("{n}", fmt.pct(taxPct / 100))} />
           <div className="-mx-1 overflow-x-auto px-1">
-            <div className="min-w-[60rem]">
+            <div className="min-w-[58rem]">
               <div className={`grid ${COLUMNS} gap-3 border-b border-line py-2 text-xs font-medium uppercase tracking-wide text-muted`}>
                 <div>{t.stock.product}</div>
                 <div className="text-right">{t.stock.woo}</div>
                 <div className="text-right">{t.stock.cost}</div>
+                <div className="text-right">{t.stock.listPrice}</div>
                 <div className="text-right">{t.stock.shopPrice}</div>
-                <div className={`-my-2 self-stretch py-2 text-right ${DIVIDER}`}>{t.stock.profit}</div>
-                <div className="text-right">{t.stock.pocket}</div>
-                <DiscountHeader label={t.stock.realProfit} />
+                <div className="text-right">{t.stock.shopDiscount}</div>
                 <div />
               </div>
 
               {groups.map((g) => {
                 const gone = g.status === "trash" || g.status === "deleted"; // no longer in the shop: greyed out
                 const sameCost = g.cost && Math.abs(g.cost.max - g.cost.min) < 0.00005;
-                const sale =
-                  g.price != null && g.unitCost != null
-                    ? discountResult(
-                        { costGross: 0, priceGross: g.price, vatRate, marginalTaxPct: taxPct, shippingPaidGross: 0, shippingChargedGross: 0, otherCostsNet: g.unitCost },
-                        0,
-                      )
-                    : null;
                 return (
                   <details key={g.productId} className="group border-b border-line">
                     <summary
@@ -191,30 +183,22 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
                         {g.costSource !== "manual" && <span className={chip}>{g.costSource === "mixed" ? t.stock.mixed : t.stock.estimated}</span>}
                         {g.cost == null ? t.common.none : sameCost ? money(g.cost.min) : `${money(g.cost.min)} – ${money(g.cost.max)}`}
                       </div>
-                      <div className="text-right tabular-nums">
-                        <div className="font-semibold">{rangeMoney(g.pricing.shop)}</div>
-                        {g.pricing.onSale > 0 && (
+                      <div className="whitespace-nowrap text-right tabular-nums">{rangeMoney(g.pricing.list)}</div>
+                      <div className="whitespace-nowrap text-right font-semibold tabular-nums">{rangeMoney(g.pricing.shop)}</div>
+                      <div className="flex flex-col items-end justify-center tabular-nums">
+                        {g.pricing.onSale > 0 ? (
                           <>
-                            <div className="text-xs text-muted">
-                              {t.stock.listShort} {rangeMoney(g.pricing.list)}
-                            </div>
-                            <div className="text-xs text-muted">
-                              {g.pricing.onSale < g.pricing.priced &&
-                                `${t.stock.inSale.replace("{n}", String(g.pricing.onSale)).replace("{m}", String(g.pricing.priced))} · `}
-                              {t.stock.discountWord} {discountText(g.pricing.discount)}
-                            </div>
+                            <div>{discountText(g.pricing.discount)}</div>
+                            {g.pricing.onSale < g.pricing.priced && (
+                              <div className="text-xs text-muted">
+                                {t.stock.inSale.replace("{n}", String(g.pricing.onSale)).replace("{m}", String(g.pricing.priced))}
+                              </div>
+                            )}
                           </>
-                        )}
-                      </div>
-                      <div className={`-my-2.5 flex items-center justify-end self-stretch py-2.5 tabular-nums ${DIVIDER}`}>
-                        {sale ? (
-                          <span className={sale.profitBeforeTax < -0.005 ? "text-bad" : ""}>{money(sale.profitBeforeTax)}</span>
                         ) : (
-                          t.common.none
+                          <span className="text-muted">{t.common.none}</span>
                         )}
                       </div>
-                      <div className={`text-right font-semibold tabular-nums ${sale && sale.profitAfterTax < -0.005 ? "text-bad" : ""}`}>{sale ? money(sale.profitAfterTax) : t.common.none}</div>
-                      <DiscountedCell price={g.price} cost={g.unitCost} />
                       <Icon name="chevron" className="h-4 w-4 text-muted transition group-open:rotate-180" />
                     </summary>
 
