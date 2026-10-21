@@ -37,7 +37,7 @@ export function InfoModal({
         onClick={(e) => {
           if (e.target === ref.current) ref.current?.close(); // click on the backdrop
         }}
-        className={`m-auto ${wide ? "w-[min(56rem,calc(100vw-2rem))]" : "w-[min(34rem,calc(100vw-2rem))]"} overflow-hidden rounded-2xl border border-line bg-surface p-0 text-ink shadow-card backdrop:bg-black/50`}
+        className={`m-auto ${wide ? "w-[min(56rem,calc(100vw-2rem))]" : "w-[min(34rem,calc(100vw-2rem))]"} max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl border border-line bg-surface p-0 text-ink shadow-card backdrop:bg-black/50`}
       >
         <header className="flex items-center justify-between gap-4 border-b border-line bg-accent-soft px-5 py-3">
           <h2 className="text-lg font-semibold tracking-tight">

@@ -241,7 +241,9 @@
       "introNote": "(il calcolo parte dal prezzo di listino, e il costo è la media dei costi delle varianti)",
       "currentNote": "Preselezionato lo sconto attuale in negozio: {n}%.",
       "currentMixed": "Le varianti non hanno tutte lo stesso sconto: è la media tra prezzo di listino e prezzo in negozio.",
-      "currentButton": "Sconto attuale in negozio"
+      "currentButton": "Sconto attuale in negozio",
+      "shopNow": "Prezzo di vendita attuale (IVA incl.)",
+      "discountNow": "Sconto attuale"
     }
   },
   "ledger": {

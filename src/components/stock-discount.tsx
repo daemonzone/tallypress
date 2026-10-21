@@ -8,6 +8,7 @@ import { Thumb } from "./thumb";
 const LEVELS = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
 
 interface Props {
+  info: { cost: string; list: string; shop: string; discount: string }; // what the product row shows, already formatted
   name: string;
   imageUrl: string | null;
   price: number | null; // list price, VAT included
@@ -22,7 +23,7 @@ interface Props {
 }
 
 /** The body of the discount simulator popup: pick a discount, read what is left in the pocket and why. */
-export function DiscountSimulator({ name, imageUrl, price, cost, vatRate, taxPct, currentDiscount, mixed, locale, currency, labels: t }: Props) {
+export function DiscountSimulator({ info, name, imageUrl, price, cost, vatRate, taxPct, currentDiscount, mixed, locale, currency, labels: t }: Props) {
   // A product already on sale starts at its current discount: a standard button when it matches one,
   // else an extra button (e.g. 65% or 65,5%) placed between its neighbours.
   const current = currentDiscount == null ? null : Math.round(currentDiscount * 1000) / 10;
@@ -52,17 +53,28 @@ export function DiscountSimulator({ name, imageUrl, price, cost, vatRate, taxPct
 
   return (
     <div className="space-y-6 text-sm">
-      <div className="flex items-center gap-4">
-        <Thumb src={imageUrl} alt={name} size="lg" />
-        <div className="text-xl font-semibold tracking-tight">{name}</div>
+      <div className="overflow-x-auto">
+        <div className="grid min-w-[42rem] grid-cols-[minmax(10rem,1fr)_8rem_8rem_8rem_8.5rem] items-center gap-x-3 gap-y-2">
+          <div />
+          <div className={`${th} self-end`}>{t.cost}</div>
+          <div className={`${th} self-end`}>{t.list}</div>
+          <div className={`${th} self-end`}>{t.shopNow}</div>
+          <div className={`${th} self-end pr-0`}>{t.discountNow}</div>
+          <div className="flex items-center gap-4">
+            <Thumb src={imageUrl} alt={name} size="lg" />
+            <div className="text-xl font-semibold tracking-tight">{name}</div>
+          </div>
+          <div className="whitespace-nowrap pr-3 text-right tabular-nums">{info.cost}</div>
+          <div className="whitespace-nowrap pr-3 text-right tabular-nums">{info.list}</div>
+          <div className="whitespace-nowrap pr-3 text-right font-semibold tabular-nums">{info.shop}</div>
+          <div className="whitespace-nowrap text-right tabular-nums">{info.discount}</div>
+        </div>
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[40rem] table-fixed">
+        <table className="w-full min-w-[28rem] table-fixed">
           <thead>
             <tr className="border-b border-ink/25 align-bottom">
-              <th className={th}>{t.cost}</th>
-              <th className={th}>{t.list}</th>
               <th className={th}>{t.profit}</th>
               <th className={th}>{t.afterTax}</th>
               <th className={`${th} pr-0 text-accent`}>{fill(t.simulated)}</th>
@@ -70,8 +82,6 @@ export function DiscountSimulator({ name, imageUrl, price, cost, vatRate, taxPct
           </thead>
           <tbody>
             <tr className="tabular-nums">
-              <td className="py-3 pr-3 text-right">{m(cost)}</td>
-              <td className="py-3 pr-3 text-right">{m(price)}</td>
               <td className={`py-3 pr-3 text-right ${tone(full.profitBeforeTax)}`}>{m(full.profitBeforeTax)}</td>
               <td className={`py-3 pr-3 text-right font-semibold ${tone(full.profitAfterTax)}`}>{m(full.profitAfterTax)}</td>
               <td className={`py-3 text-right font-semibold ${toCent(sim.profitAfterTax) < 0 ? "text-bad" : "text-accent"}`}>{m(sim.profitAfterTax)}</td>

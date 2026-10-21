@@ -206,6 +206,12 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
                           closeLabel={t.common.close}
                         >
                           <DiscountSimulator
+                            info={{
+                              cost: rangeMoney(g.cost),
+                              list: rangeMoney(g.pricing.list),
+                              shop: rangeMoney(g.pricing.shop),
+                              discount: g.pricing.onSale > 0 ? (discountText(g.pricing.discount) ?? t.common.none) : t.common.none,
+                            }}
                             name={g.name}
                             imageUrl={g.imageUrl}
                             price={g.price}

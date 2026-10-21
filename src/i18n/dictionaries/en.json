@@ -241,7 +241,9 @@
       "introNote": "(the calculation starts from the list price, and the cost is the average over the variations)",
       "currentNote": "Preselected the discount the product is on sale at today: {n}%.",
       "currentMixed": "The variations do not all have the same discount: it is the average between list price and shop price.",
-      "currentButton": "Discount in the shop today"
+      "currentButton": "Discount in the shop today",
+      "shopNow": "Current selling price (VAT incl.)",
+      "discountNow": "Current discount"
     }
   },
   "ledger": {
