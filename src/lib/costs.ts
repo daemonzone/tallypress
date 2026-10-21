@@ -192,6 +192,8 @@ export interface ItemState {
   status: string;
   costSource: "estimate" | "manual";
   price: number | null; // list price (VAT included), else the current price
+  listPrice: number | null; // the list price (regular price), VAT included
+  shopPrice: number | null; // what the customer pays today (the sale price while a sale is on), VAT included
   realRestocks: boolean; // the average cost comes from purchases the owner recorded
   wooStock: number | null;
   trackedStock: number | null; // null: no purchase history, so stock is not tracked
@@ -214,6 +216,8 @@ function toState(item: typeof items.$inferSelect, lots: LotEvent[], sales: SaleE
     status: item.status,
     costSource: item.costSource,
     price: item.regularPrice != null ? Number(item.regularPrice) : item.price != null ? Number(item.price) : null,
+    listPrice: item.regularPrice != null ? Number(item.regularPrice) : item.price != null ? Number(item.price) : null,
+    shopPrice: item.price != null ? Number(item.price) : item.regularPrice != null ? Number(item.regularPrice) : null,
     realRestocks: lots.some((l) => l.real),
     wooStock: item.stockQty == null ? null : Number(item.stockQty),
     // Tracked from the starting point: an item with no purchase yet is tracked at zero (it is the stock that appears later that must be explained).
@@ -270,6 +274,39 @@ export async function getItemStatePage(
   };
 }
 
+export interface Range {
+  min: number;
+  max: number;
+}
+
+/** The sale discount of a price pair, as a ratio (0.655 = 65.5% off), or null when there is no sale. */
+export function saleDiscount(list: number | null, shop: number | null): number | null {
+  return list != null && shop != null && list > 0 && shop < list - 0.005 ? 1 - shop / list : null;
+}
+
+export interface PricingSummary {
+  list: Range | null;
+  shop: Range | null;
+  discount: Range | null; // over the variations that are on sale
+  onSale: number; // variations on sale
+  priced: number; // variations that have a price
+}
+
+function summarizePricing(states: ItemState[]): PricingSummary {
+  // The variations still in the shop; a product that is gone altogether is summarized by what it had.
+  const live = states.filter((s) => s.status !== "trash" && s.status !== "deleted");
+  const base = (live.length ? live : states).filter((s) => s.listPrice != null || s.shopPrice != null);
+  const range = (values: number[]): Range | null => (values.length ? { min: Math.min(...values), max: Math.max(...values) } : null);
+  const discounts = base.map((s) => saleDiscount(s.listPrice, s.shopPrice)).filter((d): d is number => d != null);
+  return {
+    list: range(base.map((s) => s.listPrice).filter((n): n is number => n != null)),
+    shop: range(base.map((s) => s.shopPrice).filter((n): n is number => n != null)),
+    discount: range(discounts),
+    onSale: discounts.length,
+    priced: base.length,
+  };
+}
+
 export interface ProductGroup {
   productId: number;
   name: string;
@@ -283,6 +320,7 @@ export interface ProductGroup {
   cost: { min: number; max: number } | null; // unit cost across the variations
   unitCost: number | null; // average unit cost over the variations (net of VAT)
   price: number | null; // average list price over the variations (VAT included)
+  pricing: PricingSummary; // list price, shop price and sale of the variations, as ranges
   costSource: "estimate" | "manual" | "mixed";
 }
 
@@ -348,6 +386,7 @@ export async function getProductPage(
       mismatch: states.some((s) => s.wooStock != null && s.trackedStock != null && s.wooStock !== s.trackedStock),
       stockValue: states.reduce((sum, s) => sum + s.stockValue, 0),
       cost: costs.length ? { min: Math.min(...costs), max: Math.max(...costs) } : null,
+      pricing: summarizePricing(states),
       unitCost: costs.length ? costs.reduce((a, b) => a + b, 0) / costs.length : null,
       price: (() => {
         const prices = states.map((s) => s.price).filter((p): p is number => p != null && p > 0);

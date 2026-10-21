@@ -204,7 +204,13 @@
     "discountLabel": "Sconto",
     "discountNote": "Utile dopo le tasse = utile senza IVA meno imposte e contributi, che qui valgono il {n} di ogni euro in più (scaglione dell'anno). Utile reale con sconto = lo stesso calcolo al prezzo scontato.",
     "discountedPrice": "Prezzo scontato del {n}%",
-    "realProfit": "Utile reale con sconto del {n}%"
+    "realProfit": "Utile reale con sconto del {n}%",
+    "listPrice": "Prezzo di listino (IVA incl.)",
+    "shopPrice": "Prezzo in negozio oggi (IVA incl.)",
+    "currentDiscount": "Sconto attuale",
+    "listShort": "listino",
+    "inSale": "{n} su {m} in saldo",
+    "discountRange": "da {a} a {b}"
   },
   "ledger": {
     "title": "Movimenti del conto del negozio",

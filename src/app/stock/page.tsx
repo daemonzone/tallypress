@@ -8,7 +8,7 @@ import { Fragment } from "react";
 import { buttonClass, Notice, Section } from "@/components/ui";
 import { getDictionary } from "@/i18n";
 import { resolveDifference } from "@/lib/actions";
-import { getDifferences, getProductPage } from "@/lib/costs";
+import { getDifferences, getProductPage, saleDiscount, type Range } from "@/lib/costs";
 import { DiscountButtons, DiscountHeader, DiscountProvider, DiscountedCell, DiscountedPriceCell } from "@/components/stock-discount";
 import { bracketRateFor, discountResult, marginalTaxPct } from "@/lib/discount";
 import { buildReport } from "@/lib/report";
@@ -19,7 +19,7 @@ const PER_PAGE = 20;
 const DIFF_COLUMNS = "grid-cols-[minmax(0,1fr)_6rem_minmax(0,1.5fr)]";
 // a vertical rule that separates the figures that follow the selling price
 const DIVIDER = "border-l border-line pl-3";
-const COLUMNS = "grid-cols-[minmax(11rem,1fr)_2.5rem_6.75rem_6rem_5rem_5.5rem_5.5rem_5.5rem_6.5rem_1.25rem]";
+const COLUMNS = "grid-cols-[minmax(11rem,1fr)_2.5rem_6.75rem_6rem_8.5rem_5.5rem_5.5rem_5.5rem_6.5rem_1.25rem]";
 
 export default async function StockPage({ searchParams }: PageProps<"/stock">) {
   const { locale, t } = await getDictionary();
@@ -53,6 +53,12 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
   const money = (n: number | null) => (n == null ? t.common.none : fmt.money(Math.round(n * 100)));
 
   if (!groups.length && !q && !onlyDiff) return <Notice>{t.stock.noItems}</Notice>;
+
+  const rangeMoney = (r: Range | null) =>
+    !r ? t.common.none : Math.abs(r.max - r.min) < 0.005 ? money(r.min) : `${money(r.min)} – ${money(r.max)}`;
+  const minus = (d: number) => `−${fmt.pct(d)}`;
+  const discountText = (r: Range | null) =>
+    !r ? null : Math.abs(r.max - r.min) < 0.0005 ? minus(r.min) : t.stock.discountRange.replace("{a}", minus(r.min)).replace("{b}", minus(r.max));
 
   const warn = <Icon name="alert" className="h-3.5 w-3.5 text-[var(--warn-line)] opacity-60" />;
   const chip = "rounded-full border border-line bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-muted";
@@ -137,13 +143,13 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
           <DiscountProvider vatRate={vatRate} taxPct={taxPct} locale={locale} currency={shop.currency}>
           <DiscountButtons label={t.stock.discountLabel} note={t.stock.discountNote.replace("{n}", fmt.pct(taxPct / 100))} />
           <div className="-mx-1 overflow-x-auto px-1">
-            <div className="min-w-[62rem]">
+            <div className="min-w-[66rem]">
               <div className={`grid ${COLUMNS} gap-3 border-b border-line py-2 text-xs font-medium uppercase tracking-wide text-muted`}>
                 <div>{t.stock.product}</div>
                 <div className="text-right">{t.stock.woo}</div>
                 <div className="text-right">{t.stock.cost}</div>
                 <div className="text-right">{t.stock.value}</div>
-                <div className="text-right">{t.stock.price}</div>
+                <div className="text-right">{t.stock.shopPrice}</div>
                 <DiscountHeader label={t.stock.discountedPrice} />
                 <div className={`-my-2 self-stretch py-2 text-right ${DIVIDER}`}>{t.stock.profit}</div>
                 <div className="text-right">{t.stock.pocket}</div>
@@ -188,7 +194,21 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
                         {g.cost == null ? t.common.none : sameCost ? money(g.cost.min) : `${money(g.cost.min)} – ${money(g.cost.max)}`}
                       </div>
                       <div className="text-right tabular-nums">{fmt.money(Math.round(g.stockValue * 100))}</div>
-                      <div className="text-right font-semibold tabular-nums">{g.price == null ? t.common.none : money(g.price)}</div>
+                      <div className="text-right tabular-nums">
+                        <div className="font-semibold">{rangeMoney(g.pricing.shop)}</div>
+                        {g.pricing.onSale > 0 && (
+                          <>
+                            <div className="text-xs text-muted">
+                              {t.stock.listShort} {rangeMoney(g.pricing.list)}
+                            </div>
+                            <div className="text-xs text-muted">
+                              {g.pricing.onSale < g.pricing.priced &&
+                                `${t.stock.inSale.replace("{n}", String(g.pricing.onSale)).replace("{m}", String(g.pricing.priced))} · `}
+                              {discountText(g.pricing.discount)}
+                            </div>
+                          </>
+                        )}
+                      </div>
                       <DiscountedPriceCell price={g.price} />
                       <div className={`-my-2.5 flex items-center justify-end self-stretch py-2.5 tabular-nums ${DIVIDER}`}>
                         {sale ? (
@@ -210,7 +230,10 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
                             <th className="py-1.5 pr-3 text-left font-medium">{t.stock.code}</th>
                             <th className="py-1.5 pr-3 text-right font-medium">{t.stock.woo}</th>
                             <th className="py-1.5 pr-3 text-right font-medium">{t.stock.cost}</th>
-                            <th className="py-1.5 text-right font-medium">{t.stock.value}</th>
+                            <th className="py-1.5 pr-3 text-right font-medium">{t.stock.value}</th>
+                            <th className="py-1.5 pr-3 text-right font-medium">{t.stock.listPrice}</th>
+                            <th className="py-1.5 pr-3 text-right font-medium">{t.stock.shopPrice}</th>
+                            <th className="py-1.5 text-right font-medium">{t.stock.currentDiscount}</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-line">
@@ -236,7 +259,15 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
                                   )}
                                 </td>
                                 <td className="py-1.5 pr-3 text-right tabular-nums">{money(s.avgCost)}</td>
-                                <td className="py-1.5 text-right tabular-nums">{fmt.money(Math.round(s.stockValue * 100))}</td>
+                                <td className="py-1.5 pr-3 text-right tabular-nums">{fmt.money(Math.round(s.stockValue * 100))}</td>
+                                <td className="py-1.5 pr-3 text-right tabular-nums">{money(s.listPrice)}</td>
+                                <td className="py-1.5 pr-3 text-right font-semibold tabular-nums">{money(s.shopPrice)}</td>
+                                <td className="py-1.5 text-right tabular-nums">
+                                  {(() => {
+                                    const d = saleDiscount(s.listPrice, s.shopPrice);
+                                    return d == null ? t.common.none : minus(d);
+                                  })()}
+                                </td>
                               </tr>
                             );
                           })}

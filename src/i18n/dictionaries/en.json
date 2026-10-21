@@ -204,7 +204,13 @@
     "discountLabel": "Discount",
     "discountNote": "Profit after tax = profit ex VAT minus income tax and contributions, which here take {n} of every extra euro (the year's bracket). Real profit at a discount = the same calculation at the discounted price.",
     "discountedPrice": "Price at {n}% off",
-    "realProfit": "Real profit at {n}% off"
+    "realProfit": "Real profit at {n}% off",
+    "listPrice": "List price (VAT incl.)",
+    "shopPrice": "Shop price today (VAT incl.)",
+    "currentDiscount": "Current discount",
+    "listShort": "list",
+    "inSale": "{n} of {m} on sale",
+    "discountRange": "from {a} to {b}"
   },
   "ledger": {
     "title": "Shop account movements",
