@@ -20,7 +20,9 @@
     "save": "Save",
     "total": "Total",
     "none": "—",
-    "close": "Close"
+    "close": "Close",
+    "yes": "Yes",
+    "no": "No"
   },
   "language": {
     "label": "Language",
@@ -312,7 +314,8 @@
       "historyOnly": "Sales history only",
       "historyOnlyHelp": "For periods before your starting date: adds the sales without an account balance or opening stock for those months. Nothing else changes.",
       "historyAdded": "Sales history added back to {date}."
-    }
+    },
+    "socialDeductible": "Contributions deducted from taxable income"
   },
   "orders": {
     "title": "Orders",

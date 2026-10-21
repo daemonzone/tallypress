@@ -475,3 +475,10 @@ months as they stand (purchases are not touched; `-- --remove` takes them out ag
 for Q3, 16 March of the next year for Q4; the quarter before the starting point is booked as a payment for an
 earlier period). Income tax and contributions for year Y-1 come out in two instalments, 30 June and 30 November
 of year Y. A due date still in the future, or before the starting point, is not booked: it stays "still to pay".
+
+## Income tax and contributions
+
+The yearly tax is the contributions (flat percent of profit, e.g. INPS) plus the progressive income tax (e.g. IRPEF)
+on the profit. With `social_deductible` (the default) the contributions are deducted from the income the
+brackets apply to, as INPS is for IRPEF. The reserve of a month is the extra tax that month's profit adds to the
+year so far. Local surcharges, contribution minimums and ceilings are not modelled.

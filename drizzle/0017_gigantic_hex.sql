@@ -1,0 +1,1 @@
+ALTER TABLE "shops" ADD COLUMN "social_deductible" boolean DEFAULT true NOT NULL;

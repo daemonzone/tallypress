@@ -120,6 +120,13 @@
       "when": 1792601278328,
       "tag": "0016_high_king_cobra",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1792602271391,
+      "tag": "0017_gigantic_hex",
+      "breakpoints": true
     }
   ]
 }

@@ -20,7 +20,9 @@
     "save": "Salva",
     "total": "Totale",
     "none": "—",
-    "close": "Chiudi"
+    "close": "Chiudi",
+    "yes": "Sì",
+    "no": "No"
   },
   "language": {
     "label": "Lingua",
@@ -312,7 +314,8 @@
       "historyOnly": "Solo storico delle vendite",
       "historyOnlyHelp": "Per periodi precedenti alla data di inizio: aggiunge le vendite senza saldo del conto né magazzino iniziale per quei mesi. Il resto non cambia.",
       "historyAdded": "Storico delle vendite aggiunto fino al {date}."
-    }
+    },
+    "socialDeductible": "Contributi deducibili dal reddito imponibile"
   },
   "orders": {
     "title": "Ordini",

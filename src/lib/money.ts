@@ -20,6 +20,7 @@ export interface TaxProfile {
   incomeTaxRate: number; // flat percent, used when there are no brackets
   brackets: TaxBracket[] | null; // progressive yearly income tax (e.g. IRPEF)
   socialRate: number; // flat percent of profit (e.g. INPS)
+  socialDeductible: boolean; // contributions reduce the income the progressive tax applies to
   taxBase: "revenue" | "profit";
 }
 
@@ -48,8 +49,10 @@ function progressiveTax(baseCents: number, brackets: TaxBracket[]): number {
 /** Income tax plus social contributions owed on a year's cumulative profit (cents). */
 export function annualTax(profitCents: number, p: TaxProfile): number {
   const base = Math.max(profitCents, 0);
-  const income = p.brackets?.length ? progressiveTax(base, p.brackets) : (base * p.incomeTaxRate) / 100;
-  return Math.round(income + (base * p.socialRate) / 100);
+  const social = (base * p.socialRate) / 100;
+  const taxable = p.socialDeductible ? base - social : base;
+  const income = p.brackets?.length ? progressiveTax(taxable, p.brackets) : (taxable * p.incomeTaxRate) / 100;
+  return Math.round(income + social);
 }
 
 /**
@@ -74,6 +77,7 @@ export function profileOf(shop: {
   incomeTaxRate: string;
   incomeTaxBrackets: TaxBracket[] | null;
   socialSecurityRate: string;
+  socialDeductible: boolean;
   taxBase: "revenue" | "profit";
 }): TaxProfile {
   return {
@@ -81,6 +85,7 @@ export function profileOf(shop: {
     incomeTaxRate: Number(shop.incomeTaxRate),
     brackets: shop.incomeTaxBrackets,
     socialRate: Number(shop.socialSecurityRate),
+    socialDeductible: shop.socialDeductible,
     taxBase: shop.taxBase,
   };
 }

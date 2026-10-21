@@ -56,6 +56,8 @@ export const shops = pgTable("shops", {
   incomeTaxBrackets: jsonb("income_tax_brackets").$type<TaxBracket[]>(),
   // Social security contributions (e.g. INPS), a flat percent of profit.
   socialSecurityRate: numeric("social_security_rate", { precision: 5, scale: 2 }).notNull().default("0"),
+  // The contributions paid are deducted from the income the progressive tax applies to (as INPS is for IRPEF).
+  socialDeductible: boolean("social_deductible").notNull().default(true),
   // Estimated purchase cost as a percent of the selling price without VAT. Used for sold lines
   // that have no catalogue item (a product that was trashed or deleted) or no cost of their own.
   defaultCostPct: numeric("default_cost_pct", { precision: 5, scale: 2 }),

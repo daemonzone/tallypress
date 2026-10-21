@@ -72,7 +72,10 @@ export default async function SetupPage() {
                 }
               : { label: t.setup.incomeTax, value: `${shop.incomeTaxRate}%` },
             ...(Number(shop.socialSecurityRate) > 0
-              ? [{ label: t.setup.social, value: `${shop.socialSecurityRate}%` }]
+              ? [
+                  { label: t.setup.social, value: `${shop.socialSecurityRate}%` },
+                  { label: t.setup.socialDeductible, value: shop.socialDeductible ? t.common.yes : t.common.no },
+                ]
               : []),
             {
               label: t.setup.taxBase,
