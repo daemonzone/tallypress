@@ -500,3 +500,13 @@ Each product row has a `%` button that opens the discount simulator in a popup: 
 product's cost, list price, profit ex VAT, profit after tax and the profit simulated at the chosen discount, and the
 step-by-step calculation with notes. It uses the list price and the average unit cost of the variations; the
 arithmetic is the same as the discount calculator (`src/lib/discount.ts`).
+
+## What-if copy of the database
+
+`docker compose --profile test up -d app-test` starts a second panel on port 9001 that reads the
+database `tallypress_test`, so experiments never touch the real data on port 9000. Create the copy with
+`pg_dump -Fc tallypress | pg_restore -d tallypress_test` inside the postgres container (after
+`CREATE DATABASE tallypress_test`), and point the scripts at it with
+`DATABASE_URL=postgres://tallypress:tallypress@localhost:9432/tallypress_test npm run shop:...`.
+`npm run shop:estimate-payments -- --vat-due=month-end --tax=june` books the quarterly VAT on the last
+day of the month after the quarter and the tax of the previous year in one payment on 30 June.

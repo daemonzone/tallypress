@@ -38,6 +38,28 @@ services:
       start_period: 10s
     restart: unless-stopped
 
+  # Second panel on a copy of the database (tallypress_test), for what-if runs that must not touch
+  # the real data. Not started by default: docker compose --profile test up -d app-test
+  # Create the copy first:  pg_dump tallypress | psql tallypress_test  (see the README).
+  app-test:
+    profiles: ["test"]
+    build:
+      context: .
+      target: runner
+    depends_on:
+      postgres:
+        condition: service_healthy
+      wordpress:
+        condition: service_started
+    ports:
+      - "${APP_TEST_PORT:-9001}:9000"
+    environment:
+      DATABASE_URL: postgres://tallypress:tallypress@postgres:5432/tallypress_test
+      DEFAULT_SHOP_ID: "00000000-0000-4000-8000-000000000001"
+      CRON_SECRET: dev-cron-secret
+      WOO_URL_REWRITE: "http://localhost:${WP_PORT:-9080}=http://wordpress"
+    restart: unless-stopped
+
   # One-shot: applies migrations and creates the dev shop if it does not exist yet.
   migrate:
     build:

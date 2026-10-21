@@ -4,6 +4,13 @@ import { ledgerEntries, monthClosings, shops } from "@/db/schema";
 import { ensureMonthsClosed } from "./closing";
 import { buildReport } from "./report";
 
+export interface PaymentRules {
+  /** Quarterly VAT due dates: the Italian ones (16 May, 20 Aug, 16 Nov, 16 Mar) or the last day of the month after the quarter. */
+  vatDue?: "italian" | "month-end";
+  /** Tax of the previous year: two instalments (30 June, 30 November) or all at once on 30 June. */
+  taxPayments?: "two" | "june";
+}
+
 export interface PaymentsResult {
   vat: number; // cents of estimated VAT payments
   tax: number; // cents of estimated income tax / contribution payments
@@ -39,8 +46,10 @@ export async function clearEstimatedPayments(shopId: string): Promise<number> {
  *
  * Income tax and contributions (as the tax profile computes them over the calendar year) are paid with
  * a delay: the tax of year Y-1 comes out in two equal instalments, 30 June and 30 November of year Y.
+ *
+ * `rules` swaps the due dates for simpler ones (see PaymentRules); the defaults are the ones above.
  */
-export async function estimatePayments(shopId: string): Promise<PaymentsResult> {
+export async function estimatePayments(shopId: string, rules: PaymentRules = {}): Promise<PaymentsResult> {
   const [shop] = await db.select().from(shops).where(eq(shops.id, shopId));
   if (!shop?.baselineAt) throw new Error("The shop has no starting point");
   await clearEstimatedPayments(shopId);
@@ -63,7 +72,10 @@ export async function estimatePayments(shopId: string): Promise<PaymentsResult> 
     for (const [q, { vat, cash }] of [...quarters.entries()].sort()) {
       const year = Number(q.slice(0, 4));
       const n = Number(q.slice(5));
-      const on = n === 1 ? at(year, 5, 16) : n === 2 ? at(year, 8, 20) : n === 3 ? at(year, 11, 16) : at(year + 1, 3, 16);
+      const on =
+        rules.vatDue === "month-end"
+          ? n === 1 ? at(year, 4, 30) : n === 2 ? at(year, 7, 31) : n === 3 ? at(year, 10, 31) : at(year + 1, 1, 31)
+          : n === 1 ? at(year, 5, 16) : n === 2 ? at(year, 8, 20) : n === 3 ? at(year, 11, 16) : at(year + 1, 3, 16);
       if (vat <= 0 || on > now || on < start) continue;
       entries.push({
         what: "vat",
@@ -94,7 +106,11 @@ export async function estimatePayments(shopId: string): Promise<PaymentsResult> 
     const owed = yearTax.get(String(Number(year) - 1)) ?? 0;
     if (owed <= 0) continue;
     const first = Math.round(owed / 2);
-    for (const [month, day, amount, label] of [[6, 30, first, "rata di giugno"], [11, 30, owed - first, "rata di novembre"]] as const) {
+    const instalments =
+      rules.taxPayments === "june"
+        ? ([[6, 30, owed, "saldo al 30 giugno"]] as const)
+        : ([[6, 30, first, "rata di giugno"], [11, 30, owed - first, "rata di novembre"]] as const);
+    for (const [month, day, amount, label] of instalments) {
       const on = at(Number(year), month, day);
       if (on > now || on < start) continue;
       // A payment for a year whose months are part of the cash figures settles what was set aside for it;
