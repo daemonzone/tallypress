@@ -57,6 +57,29 @@ export function DiscountSimulator({ name, imageUrl, price, cost, vatRate, taxPct
         <div className="text-xl font-semibold tracking-tight">{name}</div>
       </div>
 
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[40rem] table-fixed">
+          <thead>
+            <tr className="border-b border-ink/25 align-bottom">
+              <th className={th}>{t.cost}</th>
+              <th className={th}>{t.list}</th>
+              <th className={th}>{t.profit}</th>
+              <th className={th}>{t.afterTax}</th>
+              <th className={`${th} pr-0 text-accent`}>{fill(t.simulated)}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr className="tabular-nums">
+              <td className="py-3 pr-3 text-right">{m(cost)}</td>
+              <td className="py-3 pr-3 text-right">{m(price)}</td>
+              <td className={`py-3 pr-3 text-right ${tone(full.profitBeforeTax)}`}>{m(full.profitBeforeTax)}</td>
+              <td className={`py-3 pr-3 text-right font-semibold ${tone(full.profitAfterTax)}`}>{m(full.profitAfterTax)}</td>
+              <td className={`py-3 text-right font-semibold ${toCent(sim.profitAfterTax) < 0 ? "text-bad" : "text-accent"}`}>{m(sim.profitAfterTax)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
       <div className="space-y-4 text-center">
         <p>
           <strong>{t.introBold}</strong>
@@ -88,31 +111,8 @@ export function DiscountSimulator({ name, imageUrl, price, cost, vatRate, taxPct
         )}
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[40rem] table-fixed">
-          <thead>
-            <tr className="border-b border-ink/25 align-bottom">
-              <th className={th}>{t.cost}</th>
-              <th className={th}>{t.list}</th>
-              <th className={th}>{t.profit}</th>
-              <th className={th}>{t.afterTax}</th>
-              <th className={`${th} pr-0 text-accent`}>{fill(t.simulated)}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr className="tabular-nums">
-              <td className="py-3 pr-3 text-right">{m(cost)}</td>
-              <td className="py-3 pr-3 text-right">{m(price)}</td>
-              <td className={`py-3 pr-3 text-right ${tone(full.profitBeforeTax)}`}>{m(full.profitBeforeTax)}</td>
-              <td className={`py-3 pr-3 text-right font-semibold ${tone(full.profitAfterTax)}`}>{m(full.profitAfterTax)}</td>
-              <td className={`py-3 text-right font-semibold ${toCent(sim.profitAfterTax) < 0 ? "text-bad" : "text-accent"}`}>{m(sim.profitAfterTax)}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
       <div className="rounded-xl border border-ink/20 bg-surface-2 px-4 py-3">
-        <h3 className="mb-1 font-semibold">{fill(t.stepsTitle)}</h3>
+        <h3 className="mb-2 text-lg font-semibold tracking-tight">{fill(t.stepsTitle)}</h3>
         <div className="divide-y divide-ink/20">
           {step(t.stepList, m(price), { bold: true })}
           {step(fill(t.stepDiscount), m(sim.priceGross), { blue: true })}
