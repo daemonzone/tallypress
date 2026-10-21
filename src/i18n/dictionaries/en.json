@@ -210,7 +210,8 @@
     "currentDiscount": "Current discount",
     "listShort": "list",
     "inSale": "{n} of {m} on sale",
-    "discountRange": "from {a} to {b}"
+    "discountRange": "from {a} to {b}",
+    "discountWord": "discount"
   },
   "ledger": {
     "title": "Shop account movements",

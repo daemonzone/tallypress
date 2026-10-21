@@ -201,7 +201,7 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
                             <div className="text-xs text-muted">
                               {g.pricing.onSale < g.pricing.priced &&
                                 `${t.stock.inSale.replace("{n}", String(g.pricing.onSale)).replace("{m}", String(g.pricing.priced))} · `}
-                              {discountText(g.pricing.discount)}
+                              {t.stock.discountWord} {discountText(g.pricing.discount)}
                             </div>
                           </>
                         )}

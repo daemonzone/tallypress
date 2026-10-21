@@ -210,7 +210,8 @@
     "currentDiscount": "Sconto attuale",
     "listShort": "listino",
     "inSale": "{n} su {m} in saldo",
-    "discountRange": "da {a} a {b}"
+    "discountRange": "da {a} a {b}",
+    "discountWord": "sconto"
   },
   "ledger": {
     "title": "Movimenti del conto del negozio",
