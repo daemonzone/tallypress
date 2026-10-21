@@ -9,17 +9,16 @@ import { buttonClass, Notice, Section } from "@/components/ui";
 import { getDictionary } from "@/i18n";
 import { resolveDifference } from "@/lib/actions";
 import { getDifferences, getProductPage, saleDiscount, type Range } from "@/lib/costs";
-import { DiscountButtons, DiscountHeader, DiscountProvider, DiscountedCell } from "@/components/stock-discount";
-import { bracketRateFor, discountResult, marginalTaxPct } from "@/lib/discount";
+import { InfoModal } from "@/components/info-modal";
+import { DiscountSimulator } from "@/components/stock-discount";
+import { bracketRateFor, marginalTaxPct } from "@/lib/discount";
 import { buildReport } from "@/lib/report";
 import { getCurrentShop } from "@/lib/shop";
 
 const PER_PAGE = 20;
 // product | quantity | cost | value | chevron
 const DIFF_COLUMNS = "grid-cols-[minmax(0,1fr)_6rem_minmax(0,1.5fr)]";
-// a vertical rule that separates the figures that follow the selling price
-const DIVIDER = "border-l border-line pl-3";
-const COLUMNS = "grid-cols-[minmax(12rem,1fr)_2.5rem_11.5rem_10.5rem_10.5rem_9rem_1.25rem]";
+const COLUMNS = "grid-cols-[minmax(12rem,1fr)_2.5rem_11.5rem_10.5rem_10.5rem_9rem_2rem_1.25rem]";
 
 export default async function StockPage({ searchParams }: PageProps<"/stock">) {
   const { locale, t } = await getDictionary();
@@ -140,8 +139,6 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
         {groups.length === 0 ? (
           <p className="text-sm text-muted">{t.stock.noResults}</p>
         ) : (
-          <DiscountProvider vatRate={vatRate} taxPct={taxPct} locale={locale} currency={shop.currency}>
-          <DiscountButtons label={t.stock.discountLabel} note={t.stock.discountNote.replace("{n}", fmt.pct(taxPct / 100))} />
           <div className="-mx-1 overflow-x-auto px-1">
             <div className="min-w-[58rem]">
               <div className={`grid ${COLUMNS} gap-3 border-b border-line py-2 text-xs font-medium uppercase tracking-wide text-muted`}>
@@ -151,6 +148,7 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
                 <div className="text-right">{t.stock.listPrice}</div>
                 <div className="text-right">{t.stock.shopPrice}</div>
                 <div className="text-right">{t.stock.shopDiscount}</div>
+                <div />
                 <div />
               </div>
 
@@ -199,6 +197,26 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
                           <span className="text-muted">{t.common.none}</span>
                         )}
                       </div>
+                      <div className="flex justify-center">
+                        <InfoModal
+                          icon="percent"
+                          wide
+                          label={t.stock.sim.open}
+                          title={t.stock.sim.title}
+                          subtitle={g.name}
+                          closeLabel={t.common.close}
+                        >
+                          <DiscountSimulator
+                            price={g.price}
+                            cost={g.unitCost}
+                            vatRate={vatRate}
+                            taxPct={taxPct}
+                            locale={locale}
+                            currency={shop.currency}
+                            labels={t.stock.sim}
+                          />
+                        </InfoModal>
+                      </div>
                       <Icon name="chevron" className="h-4 w-4 text-muted transition group-open:rotate-180" />
                     </summary>
 
@@ -212,23 +230,11 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
                             <th className="w-36 py-1.5 pr-3 text-right font-medium">{t.stock.listPrice}</th>
                             <th className="w-40 py-1.5 pr-3 text-right font-medium">{t.stock.shopPrice}</th>
                             <th className="w-20 py-1.5 pr-3 text-right font-medium">{t.stock.currentDiscount}</th>
-                            <th className={`w-24 py-1.5 pr-3 text-right font-medium ${DIVIDER}`}>{t.stock.profit}</th>
-                            <th className="w-24 py-1.5 pr-3 text-right font-medium">{t.stock.pocket}</th>
-                            <th className="w-36 py-1.5 font-medium">
-                              <DiscountHeader label={t.stock.realProfit} />
-                            </th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-line">
                           {g.items.map((s) => {
                             const mismatch = s.wooStock != null && s.trackedStock != null && s.wooStock !== s.trackedStock;
-                            const vSale =
-                              s.listPrice != null && s.avgCost != null
-                                ? discountResult(
-                                    { costGross: 0, priceGross: s.listPrice, vatRate, marginalTaxPct: taxPct, shippingPaidGross: 0, shippingChargedGross: 0, otherCostsNet: s.avgCost },
-                                    0,
-                                  )
-                                : null;
                             return (
                               <tr key={s.id}>
                                 <td className="whitespace-nowrap py-1.5 pr-3">{s.variation ?? t.stock.noVariant}</td>
@@ -256,15 +262,6 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
                                     return d == null ? t.common.none : pctText(d);
                                   })()}
                                 </td>
-                                <td className={`py-1.5 pr-3 text-right tabular-nums ${DIVIDER}`}>
-                                  <span className={vSale && vSale.profitBeforeTax < -0.005 ? "text-bad" : ""}>{vSale ? money(vSale.profitBeforeTax) : t.common.none}</span>
-                                </td>
-                                <td className={`py-1.5 pr-3 text-right font-semibold tabular-nums ${vSale && vSale.profitAfterTax < -0.005 ? "text-bad" : ""}`}>
-                                  {vSale ? money(vSale.profitAfterTax) : t.common.none}
-                                </td>
-                                <td className="py-1.5">
-                                  <DiscountedCell price={s.listPrice} cost={s.avgCost} />
-                                </td>
                               </tr>
                             );
                           })}
@@ -276,7 +273,6 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
               })}
             </div>
           </div>
-          </DiscountProvider>
         )}
         <Pager basePath="/stock" extra={extra} q={q} page={page} pages={pages} total={total} locale={locale} labels={t.stock} />
         {groups.length > 0 && (

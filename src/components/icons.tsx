@@ -1,6 +1,13 @@
 import type { ReactNode } from "react";
 
 const paths: Record<string, ReactNode> = {
+  percent: (
+    <>
+      <path d="M19 5L5 19" />
+      <circle cx="7.5" cy="7.5" r="2.5" />
+      <circle cx="16.5" cy="16.5" r="2.5" />
+    </>
+  ),
   grid: (
     <>
       <rect x="3" y="3" width="7" height="7" rx="1.5" />

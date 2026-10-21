@@ -1,81 +1,113 @@
 "use client";
 
-import { createContext, useContext, useState, type ReactNode } from "react";
+import Link from "next/link";
+import { useState } from "react";
 import { discountResult, toCent } from "@/lib/discount";
 
 const LEVELS = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
 
-interface Ctx {
-  pct: number;
-  set: (pct: number) => void;
+interface Props {
+  price: number | null; // list price, VAT included
+  cost: number | null; // unit cost, VAT excluded
   vatRate: number;
-  taxPct: number;
+  taxPct: number; // share of an extra euro of profit that goes to income tax and contributions
   locale: string;
   currency: string;
+  labels: Record<string, string>;
 }
 
-const DiscountContext = createContext<Ctx | null>(null);
-const useDiscount = () => {
-  const c = useContext(DiscountContext);
-  if (!c) throw new Error("DiscountProvider is missing");
-  return c;
-};
+/** The body of the discount simulator popup: pick a discount, read what is left in the pocket and why. */
+export function DiscountSimulator({ price, cost, vatRate, taxPct, locale, currency, labels: t }: Props) {
+  const [pct, setPct] = useState(0);
+  if (price == null || cost == null) return <p className="text-sm text-muted">{t.missing}</p>;
 
-/** Holds the discount picked for the list: the buttons set it, the "discounted" column reads it. */
-export function DiscountProvider({
-  vatRate,
-  taxPct,
-  locale,
-  currency,
-  initial = 0,
-  children,
-}: Omit<Ctx, "pct" | "set"> & { initial?: number; children: ReactNode }) {
-  const [pct, set] = useState(initial);
-  return <DiscountContext.Provider value={{ pct, set, vatRate, taxPct, locale, currency }}>{children}</DiscountContext.Provider>;
-}
+  const money = new Intl.NumberFormat(locale, { style: "currency", currency, useGrouping: "always" });
+  const num = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 });
+  const input = { costGross: 0, priceGross: price, vatRate, marginalTaxPct: taxPct, shippingPaidGross: 0, shippingChargedGross: 0, otherCostsNet: cost };
+  const full = discountResult(input, 0);
+  const sim = discountResult(input, pct);
+  const m = (n: number) => money.format(toCent(n));
+  const tone = (n: number) => (toCent(n) < 0 ? "text-bad" : "");
+  const fill = (text: string) =>
+    text.replace(/\{n\}/g, String(pct)).replace(/\{v\}/g, num.format(vatRate)).replace(/\{t\}/g, num.format(taxPct));
 
-export function DiscountButtons({ label, note }: { label: string; note: string }) {
-  const { pct, set } = useDiscount();
-  return (
-    <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2">
-      <span className="text-sm font-medium">{label}</span>
-      <div className="inline-flex flex-wrap gap-1" role="group" aria-label={label}>
-        {LEVELS.map((d) => (
-          <button
-            key={d}
-            type="button"
-            onClick={() => set(d)}
-            aria-pressed={pct === d}
-            className={`rounded-lg border px-3 py-1.5 text-sm tabular-nums transition ${
-              pct === d ? "border-accent bg-accent-soft font-semibold text-ink" : "border-line bg-surface text-muted hover:text-ink"
-            }`}
-          >
-            {d}%
-          </button>
-        ))}
-      </div>
-      <span className="text-xs text-muted">{note}</span>
+  const th = "py-2 pr-3 text-right text-xs font-medium uppercase leading-tight tracking-wide text-muted";
+  const step = (label: string, value: string, opts: { strong?: boolean; negative?: boolean; className?: string } = {}) => (
+    <div className={`flex items-baseline justify-between gap-4 py-1.5 ${opts.strong ? "border-t border-line font-semibold" : ""}`}>
+      <span className={opts.strong ? "" : "text-muted"}>{label}</span>
+      <span className={`tabular-nums ${opts.className ?? ""}`}>{value}</span>
     </div>
   );
-}
 
-/** A column title that carries the discount picked: "{n}" in the label is replaced by the percentage. */
-export function DiscountHeader({ label }: { label: string }) {
-  const { pct } = useDiscount();
-  return <div className="text-right text-accent">{label.replace("{n}", String(pct))}</div>;
-}
-
-/** What one piece leaves in the pocket at the chosen discount (VAT and tax out): a simulation, so it has its own colour. */
-export function DiscountedCell({ price, cost }: { price: number | null; cost: number | null }) {
-  const { pct, vatRate, taxPct, locale, currency } = useDiscount();
-  if (price == null || cost == null) return <div className="text-right text-muted">—</div>;
-  const r = discountResult(
-    { costGross: 0, priceGross: price, vatRate, marginalTaxPct: taxPct, shippingPaidGross: 0, shippingChargedGross: 0, otherCostsNet: cost },
-    pct,
-  );
-  const money = new Intl.NumberFormat(locale, { style: "currency", currency, useGrouping: "always" });
-  const value = toCent(r.profitAfterTax);
   return (
-    <div className={`text-right font-medium tabular-nums ${value < 0 ? "text-bad" : "text-accent"}`}>{money.format(value)}</div>
+    <div className="space-y-6 text-sm">
+      <p className="text-muted">{t.intro}</p>
+
+      <div>
+        <div className="mb-2 font-medium">{t.discount}</div>
+        <div className="flex flex-wrap gap-1" role="group" aria-label={t.discount}>
+          {LEVELS.map((d) => (
+            <button
+              key={d}
+              type="button"
+              onClick={() => setPct(d)}
+              aria-pressed={pct === d}
+              className={`rounded-lg border px-3 py-1.5 tabular-nums transition ${
+                pct === d ? "border-accent bg-accent-soft font-semibold text-ink" : "border-line bg-surface text-muted hover:text-ink"
+              }`}
+            >
+              {d}%
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[40rem] table-fixed">
+          <thead>
+            <tr className="border-b border-line align-bottom">
+              <th className={th}>{t.cost}</th>
+              <th className={th}>{t.list}</th>
+              <th className={th}>{t.profit}</th>
+              <th className={th}>{t.afterTax}</th>
+              <th className={`${th} pr-0 text-accent`}>{fill(t.simulated)}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr className="tabular-nums">
+              <td className="py-3 pr-3 text-right">{m(cost)}</td>
+              <td className="py-3 pr-3 text-right">{m(price)}</td>
+              <td className={`py-3 pr-3 text-right ${tone(full.profitBeforeTax)}`}>{m(full.profitBeforeTax)}</td>
+              <td className={`py-3 pr-3 text-right font-semibold ${tone(full.profitAfterTax)}`}>{m(full.profitAfterTax)}</td>
+              <td className={`py-3 text-right font-semibold ${toCent(sim.profitAfterTax) < 0 ? "text-bad" : "text-accent"}`}>{m(sim.profitAfterTax)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div className="rounded-xl border border-line bg-surface-2 p-4">
+        <h3 className="mb-2 font-semibold">{fill(t.stepsTitle)}</h3>
+        {step(t.stepList, m(price))}
+        {step(fill(t.stepDiscount), m(sim.priceGross))}
+        {step(fill(t.stepNet), m(sim.netRevenue))}
+        {step(t.stepCost, `− ${m(cost)}`)}
+        {step(t.stepProfit, m(sim.profitBeforeTax), { strong: true, className: tone(sim.profitBeforeTax) })}
+        {step(fill(t.stepTax), `${sim.tax < 0 ? "+" : "−"} ${m(Math.abs(sim.tax))}`)}
+        {step(t.stepResult, m(sim.profitAfterTax), { strong: true, className: toCent(sim.profitAfterTax) < 0 ? "text-bad" : "text-accent" })}
+      </div>
+
+      <ul className="list-disc space-y-1.5 pl-5 text-xs text-muted">
+        <li>{t.noteVat}</li>
+        <li>{fill(t.noteTax)}</li>
+        <li>{t.noteCost}</li>
+        <li>{t.noteGift}</li>
+        <li>
+          {t.noteScope}{" "}
+          <Link href="/calculator" className="underline">
+            {t.noteCalculator}
+          </Link>
+        </li>
+      </ul>
+    </div>
   );
 }

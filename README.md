@@ -489,3 +489,10 @@ year so far. Local surcharges, contribution minimums and ceilings are not modell
 −50%, −70% and a free slider), after VAT and taxes, and compares selling it with giving it away. The arithmetic
 is in `src/lib/discount.ts` (pure functions) and the UI in `src/components/discount-calculator.tsx`, which only
 needs the tax defaults (VAT, contributions, brackets) as props, so it can be reused elsewhere.
+
+## Discount simulator in the stock list
+
+Each product row has a `%` button that opens the discount simulator in a popup: a selector from 0 to 100%, the
+product's cost, list price, profit ex VAT, profit after tax and the profit simulated at the chosen discount, and the
+step-by-step calculation with notes. It uses the list price and the average unit cost of the variations; the
+arithmetic is the same as the discount calculator (`src/lib/discount.ts`).
