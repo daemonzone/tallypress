@@ -58,6 +58,8 @@ export async function estimateRestocks(shopId: string, opts: { payments?: boolea
   const pct = shop.defaultCostPct == null ? null : Number(shop.defaultCostPct);
 
   const keep = await pendingDifferences(shopId);
+  // The purchases mirror the frozen cost of the sales: bring those up to date with the items' current costs first.
+  await rebuildCosts(shopId);
   await clearEstimates(shopId);
 
   // Cost of what was sold, per item and month (lines already carry their frozen cost).
