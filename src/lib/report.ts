@@ -44,6 +44,7 @@ export interface MonthReport extends Figures {
   history: boolean; // before the starting point: sales only, no account balance
   orders: number;
   lateAdjustments: number; // changes to earlier closed months, folded into this one
+  lateDetails: { month: string; amount: number }[]; // which closed months they come from (empty when it cannot be told)
   missingCostLines: number;
   start: number; // balance carried in
   flows: Flows;
@@ -217,6 +218,14 @@ export async function buildReport(shopId: string): Promise<Report | null> {
     const missingCostLines = items.reduce((s, i) => s + i.missingCost, 0);
 
     const lateAdjustments = closing ? toCents(closing.adjustments) : key === firstOpenKey ? pendingLate : 0;
+    // Which closed months the late changes come from. Only told apart while nothing has been absorbed yet.
+    const lateDetails =
+      !closing && key === firstOpenKey && !closingRows.some((c) => toCents(c.adjustments) !== 0)
+        ? closingRows
+            .map((c) => ({ month: c.month, amount: (ordersByMonth.get(c.month)?.gross ?? 0) - toCents(c.grossTotal) }))
+            .filter((d) => d.amount !== 0)
+            .sort((a, b) => a.month.localeCompare(b.month))
+        : [];
     const gross = closing ? toCents(closing.grossTotal) : live.gross;
     flows.sales = gross + lateAdjustments;
 
@@ -256,6 +265,7 @@ export async function buildReport(shopId: string): Promise<Report | null> {
       history,
       orders: closing ? closing.ordersCount : live.orders,
       lateAdjustments,
+      lateDetails,
       missingCostLines,
       start,
       flows: history ? emptyFlows() : flows,

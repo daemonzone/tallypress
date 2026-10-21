@@ -96,7 +96,7 @@ export function StatTile({
 }) {
   return (
     <div className={align === "right" ? "text-right" : undefined}>
-      <div className={`flex items-center gap-1.5 text-xs font-medium text-muted ${align === "right" ? "justify-end" : ""}`}>
+      <div className={`flex min-h-5 items-center gap-1.5 text-xs font-medium text-muted ${align === "right" ? "justify-end" : ""}`}>
         {icon && <Icon name={icon} className="h-3.5 w-3.5" />}
         {label}
         {labelExtra}

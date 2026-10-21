@@ -158,6 +158,31 @@ function MonthNav({ report, selected, locale, label }: { report: Report; selecte
   );
 }
 
+/** What "late changes" means, the amount it adds to this month and where it comes from. */
+function LateChanges({ month: m, t, fmt, locale }: { month: MonthReport; t: Dictionary; fmt: Formatters; locale: string }) {
+  return (
+    <div className="space-y-4 text-sm">
+      <p>{t.month.lateBody}</p>
+      <div className="flex items-baseline justify-between gap-4 rounded-lg bg-surface-2 px-3 py-2.5 font-semibold">
+        <span>{t.month.lateAmount}</span>
+        <span className="tabular-nums">{fmt.money(m.lateAdjustments)}</span>
+      </div>
+      {m.lateDetails.length > 0 && (
+        <div>
+          <div className="mb-1 text-xs font-medium uppercase tracking-wide text-muted">{t.month.lateFrom}</div>
+          <KeyValues
+            rows={m.lateDetails.map((d) => ({
+              label: monthLabel(d.month, locale),
+              value: `${d.amount > 0 ? "+" : ""}${fmt.money(d.amount)}`,
+            }))}
+          />
+        </div>
+      )}
+      <p className="text-xs text-muted">{t.month.lateNote}</p>
+    </div>
+  );
+}
+
 /** The month's calculation as a statement: running results in the middle, the outcome in the footer. */
 function GrossToNet({ month: m, t, fmt }: { month: MonthReport; t: Dictionary; fmt: Formatters }) {
   const line = (label: string, value: string, minus = false) => (
@@ -304,14 +329,23 @@ function MonthPanel({
       )}
 
       <Card className="mb-6">
-        <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-5">
+        <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-5">
           <StatTile
             label={t.month.gross}
             icon="wallet"
             value={fmt.money(m.gross)}
-            note={m.lateAdjustments !== 0 ? `${t.month.lateAdjustments}: ${fmt.money(m.lateAdjustments)}` : undefined}
+            note={
+              m.lateAdjustments !== 0 ? (
+                <span className="inline-flex items-center gap-1.5">
+                  {t.month.lateShort}: {fmt.money(m.lateAdjustments)}
+                  <InfoModal label={t.month.lateTitle} title={t.month.lateTitle} closeLabel={t.common.close}>
+                    <LateChanges month={m} t={t} fmt={fmt} locale={locale} />
+                  </InfoModal>
+                </span>
+              ) : undefined
+            }
           />
-          <div className="flex items-end gap-8">
+          <div className="flex items-start gap-8">
             <StatTile label={t.month.orders} icon="bag" value={fmt.int(m.orders)} align="right" />
             <StatTile
               hero

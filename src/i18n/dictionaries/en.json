@@ -81,7 +81,6 @@
     "profit": "Profit before income tax",
     "taxReserve": "Income tax set aside",
     "netEarnings": "Net earnings",
-    "lateAdjustments": "includes late changes to earlier months",
     "missingCost": "{n} sold line(s) have no purchase cost yet, so profit is overstated. Set it in Stock.",
     "cashTitle": "Shop account",
     "start": "Previous month balance",
@@ -127,7 +126,13 @@
     "estimatedVatPayments": "VAT paid (estimated)",
     "estimatedTaxPayments": "Income tax and contributions paid (estimated)",
     "priorPayments": "Payments for earlier periods",
-    "estimatedPriorPayments": "Payments for earlier periods (estimated)"
+    "estimatedPriorPayments": "Payments for earlier periods (estimated)",
+    "lateShort": "Incl. late changes",
+    "lateTitle": "Late changes",
+    "lateAmount": "Added to this month",
+    "lateFrom": "Coming from",
+    "lateBody": "Some orders of months that were already closed changed afterwards (a product added, a refund, a new status). A closed month is never rewritten, so the difference is counted in the first open month, which is this one.",
+    "lateNote": "The money moves in this month, so the account balance is right. Sales, VAT and profit of the original month stay as they were when it was closed."
   },
   "stock": {
     "title": "Stock and purchase prices",

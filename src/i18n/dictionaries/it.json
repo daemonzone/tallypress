@@ -81,7 +81,6 @@
     "profit": "Utile prima delle imposte",
     "taxReserve": "Imposte accantonate",
     "netEarnings": "Guadagno netto",
-    "lateAdjustments": "include modifiche tardive a mesi precedenti",
     "missingCost": "{n} riga/righe vendute senza costo d'acquisto: l'utile è sovrastimato. Impostalo in Magazzino.",
     "cashTitle": "Conto del negozio",
     "start": "Saldo mese precedente",
@@ -127,7 +126,13 @@
     "estimatedVatPayments": "IVA versata (stima)",
     "estimatedTaxPayments": "Imposte e contributi versati (stima)",
     "priorPayments": "Pagamenti di periodi precedenti",
-    "estimatedPriorPayments": "Pagamenti di periodi precedenti (stima)"
+    "estimatedPriorPayments": "Pagamenti di periodi precedenti (stima)",
+    "lateShort": "Incl. modifiche tardive",
+    "lateTitle": "Modifiche tardive",
+    "lateAmount": "Aggiunto a questo mese",
+    "lateFrom": "Provengono da",
+    "lateBody": "Alcuni ordini di mesi già chiusi sono cambiati dopo la chiusura (un prodotto aggiunto, un rimborso, un nuovo stato). Un mese chiuso non si riscrive, quindi la differenza viene contata nel primo mese aperto, cioè questo.",
+    "lateNote": "I soldi si muovono in questo mese, quindi il saldo del conto è giusto. Vendite, IVA e utile del mese di origine restano come erano alla chiusura."
   },
   "stock": {
     "title": "Magazzino e prezzi d'acquisto",
