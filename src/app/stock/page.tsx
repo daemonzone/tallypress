@@ -4,6 +4,7 @@ import { Pager, SearchBox } from "@/components/pager";
 import { DifferenceForm } from "@/components/difference-form";
 import { Thumb } from "@/components/thumb";
 import Link from "next/link";
+import { Fragment } from "react";
 import { buttonClass, Notice, Section } from "@/components/ui";
 import { getDictionary } from "@/i18n";
 import { resolveDifference } from "@/lib/actions";
@@ -12,6 +13,7 @@ import { getCurrentShop } from "@/lib/shop";
 
 const PER_PAGE = 20;
 // product | quantity | cost | value | chevron
+const DIFF_COLUMNS = "grid-cols-[minmax(0,1fr)_6rem_minmax(0,1.5fr)]";
 const COLUMNS = "grid-cols-[minmax(0,1fr)_6rem_10rem_8rem_1.25rem]";
 
 export default async function StockPage({ searchParams }: PageProps<"/stock">) {
@@ -24,7 +26,7 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
   const onlyDiff = sp.diff === "1";
   const differences = await getDifferences(shop.id);
   const toClassify = differences.filter((d) => d.items.some((i) => i.diff > 0));
-  const fewer = differences.filter((d) => !d.items.some((i) => i.diff > 0)).length;
+  const fewer = differences.filter((d) => !d.items.some((i) => i.diff > 0));
   const extra: Record<string, string> = onlyDiff ? { diff: "1" } : {};
   const { groups, total, page, pages } = await getProductPage(shop.id, {
     productIds: onlyDiff ? differences.map((d) => d.productId) : undefined,
@@ -48,25 +50,56 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
         <Section title={t.stock.diffTitle}>
           {toClassify.length > 0 && (
             <>
-              <Notice tone="warn">{t.stock.diffBanner.replace("{n}", String(toClassify.length))}</Notice>
-              <div className="divide-y divide-line">
-                {toClassify.map((d) => (
-                  <div key={d.productId} className="flex flex-wrap items-start gap-4 py-4 first:pt-0">
-                    <div className="w-56 shrink-0 font-medium">{d.name}</div>
-                    <DifferenceForm
-                      productId={d.productId}
-                      rows={d.items.filter((i) => i.diff > 0).map((i) => ({ label: i.label, diff: i.diff }))}
-                      locale={locale}
-                      currency={shop.currency}
-                      labels={t.stock.diffForm}
-                      action={resolveDifference}
-                    />
+              <Notice tone="warn">{(toClassify.length === 1 ? t.stock.diffBannerOne : t.stock.diffBanner).replace("{n}", String(toClassify.length))}</Notice>
+              <div className="overflow-x-auto">
+                <div className="min-w-[44rem]">
+                  <div className={`grid ${DIFF_COLUMNS} gap-x-4 border-b border-line py-2 text-xs font-medium uppercase tracking-wide text-muted`}>
+                    <div>{t.stock.product}</div>
+                    <div className="text-center">{t.stock.diffAdded}</div>
+                    <div>{t.stock.diffReconcile}</div>
                   </div>
-                ))}
+                  {toClassify.map((d) => {
+                    const arrived = d.items.filter((i) => i.diff > 0);
+                    return (
+                      <div key={d.productId} className={`grid ${DIFF_COLUMNS} items-center gap-x-4 gap-y-1 border-b border-line py-3`}>
+                        <div className="col-span-2 flex items-center gap-3" style={{ gridRow: 1 }}>
+                          <Thumb src={d.imageUrl} alt={d.name} />
+                          <span className="font-medium">{d.name}</span>
+                        </div>
+                        {arrived.map((i, n) => (
+                          <Fragment key={i.id}>
+                            <div className="pl-[3.25rem] text-sm text-muted" style={{ gridRow: n + 2, gridColumn: 1 }}>
+                              {i.label || t.stock.noVariant}
+                            </div>
+                            <div style={{ gridRow: n + 2, gridColumn: 2 }} className="flex justify-center">
+                              <span className="inline-flex h-9 min-w-9 items-center justify-center rounded-lg border border-[var(--warn-line)] bg-[var(--warn-bg)] px-2 font-semibold tabular-nums">
+                                +{i.diff}
+                              </span>
+                            </div>
+                          </Fragment>
+                        ))}
+                        <div style={{ gridRow: `1 / span ${arrived.length + 1}`, gridColumn: 3 }}>
+                          <DifferenceForm
+                            productId={d.productId}
+                            pieces={arrived.reduce((sum, i) => sum + i.diff, 0)}
+                            locale={locale}
+                            currency={shop.currency}
+                            labels={t.stock.diffForm}
+                            action={resolveDifference}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </>
           )}
-          {fewer > 0 && <p className="mt-3 text-sm text-muted">{t.stock.diffMissing.replace("{n}", String(fewer))}</p>}
+          {fewer.length > 0 && (
+            <Notice tone="info">
+              {(fewer.length === 1 ? t.stock.diffFewerOne : t.stock.diffFewer).replace("{n}", String(fewer.length))}
+            </Notice>
+          )}
         </Section>
       )}
       <Section

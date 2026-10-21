@@ -6,18 +6,17 @@ import { buttonClass, inputClass, primaryButtonClass } from "./ui";
 
 interface Props {
   productId: number;
-  rows: { label: string; diff: number }[];
+  pieces: number;
   locale: string;
   currency: string;
-  labels: Record<"total" | "summary" | "restock" | "adjust" | "working" | "done" | "invalid" | "tooHigh" | "gone" | "help", string>;
+  labels: Record<"total" | "summary" | "restock" | "adjust" | "working" | "done" | "invalid" | "tooHigh" | "gone", string>;
   action: (prev: DifferenceState, formData: FormData) => Promise<DifferenceState>;
 }
 
 /** Pieces that came in unrecorded: the quantities are read-only; only the total paid is entered. */
-export function DifferenceForm({ productId, rows, locale, currency, labels, action }: Props) {
+export function DifferenceForm({ productId, pieces, locale, currency, labels, action }: Props) {
   const [state, formAction, pending] = useActionState(action, { status: "idle" } as DifferenceState);
   const [total, setTotal] = useState("");
-  const pieces = rows.reduce((sum, r) => sum + r.diff, 0);
   const n = Number(total.replace(",", "."));
   const money = new Intl.NumberFormat(locale, { style: "currency", currency, useGrouping: "always" });
   const msg = state.status === "ok" ? labels.done : { invalid: labels.invalid, tooHigh: labels.tooHigh, gone: labels.gone, idle: "" }[state.status];
@@ -25,13 +24,6 @@ export function DifferenceForm({ productId, rows, locale, currency, labels, acti
   return (
     <form action={formAction} className="space-y-2">
       <input type="hidden" name="productId" value={productId} />
-      <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
-        {rows.map((r) => (
-          <span key={r.label} className="tabular-nums">
-            {r.label || "—"} <strong>+{r.diff}</strong>
-          </span>
-        ))}
-      </div>
       <div className="flex flex-wrap items-end gap-3">
         <label className="flex flex-col gap-1 text-sm">
           {labels.total}
@@ -58,7 +50,6 @@ export function DifferenceForm({ productId, rows, locale, currency, labels, acti
         )}
         {msg && !pending && <span className={`text-sm ${state.status === "ok" ? "text-good" : "text-bad"}`}>{msg}</span>}
       </div>
-      <p className="max-w-xl text-xs text-muted">{labels.help}</p>
     </form>
   );
 }

@@ -173,8 +173,7 @@
     "onlyDiff": "Solo quantità non corrispondenti ({n})",
     "allProducts": "Tutti i prodotti",
     "diffTitle": "Quantità da catalogare",
-    "diffBanner": "In {n} prodotti la giacenza in WooCommerce è cambiata e le entrate non sono ancora registrate. Se sono entrati capi, indica se è un riassortimento (scrivi il totale pagato) o una correzione.",
-    "diffMissing": "{n} prodotti hanno meno capi dei conti: filtra l'elenco per vederli.",
+    "diffBanner": "In {n} prodotti la giacenza in WooCommerce è salita rispetto ai conti. Per ogni prodotto indica se i capi entrati sono un riassortimento (scrivi il totale pagato) o una correzione.",
     "diffForm": {
       "total": "Totale pagato per questi capi (senza IVA)",
       "summary": "{n} capi · {unit} l'uno",
@@ -184,9 +183,13 @@
       "done": "Registrato.",
       "invalid": "Indica il totale pagato.",
       "tooHigh": "Il costo per capo supera il prezzo di vendita: controlla l'importo.",
-      "gone": "Per questo prodotto non c'è più nulla da catalogare.",
-      "help": "I capi sono quelli trovati in WooCommerce e non si modificano. Il riassortimento registra il totale una volta sola nei Movimenti; la correzione li aggiunge al costo medio attuale, senza movimenti di denaro."
-    }
+      "gone": "Per questo prodotto non c'è più nulla da catalogare."
+    },
+    "diffAdded": "Entrati",
+    "diffReconcile": "Riconciliazione",
+    "diffFewer": "In {n} prodotti WooCommerce segna meno capi dei conti (di solito giacenza a −1: venduto un capo che non risultava a magazzino). Correggi la giacenza in WooCommerce: se i capi erano arrivati davvero, qui apparirà come entrata da riconciliare. Filtra l'elenco per vederli.",
+    "diffBannerOne": "In 1 prodotto la giacenza in WooCommerce è salita rispetto ai conti. Indica se i capi entrati sono un riassortimento (scrivi il totale pagato) o una correzione.",
+    "diffFewerOne": "In 1 prodotto WooCommerce segna meno capi dei conti (di solito giacenza a −1: venduto un capo che non risultava a magazzino). Correggi la giacenza in WooCommerce: se il capo era arrivato davvero, qui apparirà come entrata da riconciliare. Filtra l'elenco per vederlo."
   },
   "ledger": {
     "title": "Movimenti del conto del negozio",
