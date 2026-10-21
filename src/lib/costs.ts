@@ -290,6 +290,8 @@ export interface PricingSummary {
   discount: Range | null; // over the variations that are on sale
   onSale: number; // variations on sale
   priced: number; // variations that have a price
+  avgDiscount: number | null; // 1 - average shop price / average list price (a ratio), null when nothing is on sale
+  mixed: boolean; // the variations are not all on sale at the same discount
 }
 
 function summarizePricing(states: ItemState[]): PricingSummary {
@@ -298,12 +300,17 @@ function summarizePricing(states: ItemState[]): PricingSummary {
   const base = (live.length ? live : states).filter((s) => s.listPrice != null || s.shopPrice != null);
   const range = (values: number[]): Range | null => (values.length ? { min: Math.min(...values), max: Math.max(...values) } : null);
   const discounts = base.map((s) => saleDiscount(s.listPrice, s.shopPrice)).filter((d): d is number => d != null);
+  const both = base.filter((s) => s.listPrice != null && s.shopPrice != null);
+  const mean = (values: number[]) => (values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0);
+  const discountRange = range(discounts);
   return {
     list: range(base.map((s) => s.listPrice).filter((n): n is number => n != null)),
     shop: range(base.map((s) => s.shopPrice).filter((n): n is number => n != null)),
-    discount: range(discounts),
+    discount: discountRange,
     onSale: discounts.length,
     priced: base.length,
+    avgDiscount: discounts.length ? saleDiscount(mean(both.map((s) => s.listPrice!)), mean(both.map((s) => s.shopPrice!))) : null,
+    mixed: discounts.length > 0 && (discounts.length < base.length || (discountRange != null && discountRange.max - discountRange.min > 0.0005)),
   };
 }
 

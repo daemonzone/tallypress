@@ -238,7 +238,10 @@
       "noteCalculator": "Discount calculator",
       "introBold": "Pick a discount percentage",
       "introRest": " and simulate what is really left in your pocket for this product after deducting VAT, the product's purchase cost and taxes (under your tax regime).",
-      "introNote": "(the calculation starts from the list price, and the cost is the average over the variations)"
+      "introNote": "(the calculation starts from the list price, and the cost is the average over the variations)",
+      "currentNote": "Preselected the discount the product is on sale at today: {n}%.",
+      "currentMixed": "The variations do not all have the same discount: it is the average between list price and shop price.",
+      "currentButton": "Discount in the shop today"
     }
   },
   "ledger": {

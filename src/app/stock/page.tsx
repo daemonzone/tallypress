@@ -212,6 +212,8 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
                             cost={g.unitCost}
                             vatRate={vatRate}
                             taxPct={taxPct}
+                            currentDiscount={g.pricing.avgDiscount}
+                            mixed={g.pricing.mixed}
                             locale={locale}
                             currency={shop.currency}
                             labels={t.stock.sim}

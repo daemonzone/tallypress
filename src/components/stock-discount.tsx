@@ -14,14 +14,22 @@ interface Props {
   cost: number | null; // unit cost, VAT excluded
   vatRate: number;
   taxPct: number; // share of an extra euro of profit that goes to income tax and contributions
+  currentDiscount: number | null; // the discount the product is on sale at today (a ratio), null when none
+  mixed: boolean; // the variations are not all at the same discount
   locale: string;
   currency: string;
   labels: Record<string, string>;
 }
 
 /** The body of the discount simulator popup: pick a discount, read what is left in the pocket and why. */
-export function DiscountSimulator({ name, imageUrl, price, cost, vatRate, taxPct, locale, currency, labels: t }: Props) {
-  const [pct, setPct] = useState(0);
+export function DiscountSimulator({ name, imageUrl, price, cost, vatRate, taxPct, currentDiscount, mixed, locale, currency, labels: t }: Props) {
+  // A product already on sale starts at its current discount: a standard button when it matches one,
+  // else an extra button (e.g. 65% or 65,5%) placed between its neighbours.
+  const current = currentDiscount == null ? null : Math.round(currentDiscount * 1000) / 10;
+  const matching = current == null ? undefined : LEVELS.find((l) => Math.abs(l - current) < 0.05);
+  const extra = current != null && matching == null ? current : null;
+  const levels = extra == null ? LEVELS : [...LEVELS, extra].sort((a, b) => a - b);
+  const [pct, setPct] = useState(matching ?? current ?? 0);
   if (price == null || cost == null) return <p className="text-sm text-muted">{t.missing}</p>;
 
   const money = new Intl.NumberFormat(locale, { style: "currency", currency, useGrouping: "always" });
@@ -32,7 +40,7 @@ export function DiscountSimulator({ name, imageUrl, price, cost, vatRate, taxPct
   const m = (n: number) => money.format(toCent(n));
   const tone = (n: number) => (toCent(n) < 0 ? "text-bad" : "");
   const fill = (text: string) =>
-    text.replace(/\{n\}/g, String(pct)).replace(/\{v\}/g, num.format(vatRate)).replace(/\{t\}/g, num.format(taxPct));
+    text.replace(/\{n\}/g, num.format(pct)).replace(/\{v\}/g, num.format(vatRate)).replace(/\{t\}/g, num.format(taxPct));
 
   const th = "py-2 pr-3 text-right text-xs font-medium uppercase leading-tight tracking-wide text-muted";
   const step = (label: string, value: string, opts: { bold?: boolean; blue?: boolean; valueClass?: string } = {}) => (
@@ -57,20 +65,27 @@ export function DiscountSimulator({ name, imageUrl, price, cost, vatRate, taxPct
           <em className="text-muted">{t.introNote}</em>
         </p>
         <div className="flex flex-wrap justify-center gap-1" role="group" aria-label={t.introBold}>
-          {LEVELS.map((d) => (
+          {levels.map((d) => (
             <button
               key={d}
               type="button"
               onClick={() => setPct(d)}
               aria-pressed={pct === d}
+              title={d === extra ? t.currentButton : undefined}
               className={`rounded-lg border px-3 py-1.5 tabular-nums transition ${
                 pct === d ? "border-accent bg-accent-soft font-semibold text-ink" : "border-line bg-surface text-muted hover:text-ink"
               }`}
             >
-              {d}%
+              {num.format(d)}%
             </button>
           ))}
         </div>
+        {current != null && (
+          <p className="text-xs text-muted">
+            {t.currentNote.replace("{n}", num.format(current))}
+            {mixed ? ` ${t.currentMixed}` : ""}
+          </p>
+        )}
       </div>
 
       <div className="overflow-x-auto">

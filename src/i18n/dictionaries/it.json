@@ -238,7 +238,10 @@
       "noteCalculator": "Calcolatore sconti",
       "introBold": "Scegli una percentuale di sconto",
       "introRest": " e simula cosa ti resta davvero in tasca per questo prodotto dopo aver detratto l'IVA, il costo di acquisto del prodotto e le imposte (secondo il tuo regime fiscale).",
-      "introNote": "(il calcolo parte dal prezzo di listino, e il costo è la media dei costi delle varianti)"
+      "introNote": "(il calcolo parte dal prezzo di listino, e il costo è la media dei costi delle varianti)",
+      "currentNote": "Preselezionato lo sconto attuale in negozio: {n}%.",
+      "currentMixed": "Le varianti non hanno tutte lo stesso sconto: è la media tra prezzo di listino e prezzo in negozio.",
+      "currentButton": "Sconto attuale in negozio"
     }
   },
   "ledger": {
