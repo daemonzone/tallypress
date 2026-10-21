@@ -44,10 +44,14 @@ export function DiscountSimulator({ info, name, imageUrl, price, cost, vatRate, 
     text.replace(/\{n\}/g, num.format(pct)).replace(/\{v\}/g, num.format(vatRate)).replace(/\{t\}/g, num.format(taxPct));
 
   const th = "py-2 pr-3 text-right text-xs font-medium uppercase leading-tight tracking-wide text-muted";
-  const step = (label: string, value: string, opts: { bold?: boolean; blue?: boolean; valueClass?: string } = {}) => (
+  const step = (label: string, value: string, opts: { bold?: boolean; blue?: boolean; big?: boolean; valueClass?: string } = {}) => (
     <div className="flex items-baseline justify-between gap-4 py-2">
       <span className={opts.blue ? "text-accent" : opts.bold ? "font-semibold" : "text-muted"}>{label}</span>
-      <span className={`tabular-nums ${opts.blue ? "text-accent" : ""} ${opts.bold ? "font-semibold" : ""} ${opts.valueClass ?? ""}`}>{value}</span>
+      <span
+        className={`tabular-nums ${opts.blue ? "text-accent" : ""} ${opts.bold ? "font-semibold" : ""} ${opts.big ? "text-xl font-semibold" : ""} ${opts.valueClass ?? ""}`}
+      >
+        {value}
+      </span>
     </div>
   );
 
@@ -122,15 +126,15 @@ export function DiscountSimulator({ info, name, imageUrl, price, cost, vatRate, 
       </div>
 
       <div className="rounded-xl border border-ink/20 bg-surface-2 px-4 py-3">
-        <h3 className="mb-2 text-lg font-semibold tracking-tight">{fill(t.stepsTitle)}</h3>
+        <h3 className="mb-2 text-lg font-semibold tracking-tight">{t.stepsTitle}</h3>
         <div className="divide-y divide-ink/20">
-          {step(t.stepList, m(price), { bold: true })}
-          {step(fill(t.stepDiscount), m(sim.priceGross), { blue: true })}
+          {step(t.stepList, m(price), { bold: true, big: true })}
+          {step(fill(t.stepDiscount), m(sim.priceGross), { blue: true, big: true })}
           {step(fill(t.stepNet), m(sim.netRevenue))}
           {step(t.stepCost, `− ${m(cost)}`)}
           {step(t.stepProfit, m(sim.profitBeforeTax), { valueClass: tone(sim.profitBeforeTax) })}
           {step(fill(t.stepTax), `${sim.tax < 0 ? "+" : "−"} ${m(Math.abs(sim.tax))}`)}
-          {step(t.stepResult, m(sim.profitAfterTax), { bold: true, valueClass: toCent(sim.profitAfterTax) < 0 ? "text-bad" : "text-accent" })}
+          {step(fill(t.simulated), m(sim.profitAfterTax), { bold: true, big: true, valueClass: toCent(sim.profitAfterTax) < 0 ? "text-bad" : "text-accent" })}
         </div>
       </div>
 
