@@ -42,8 +42,11 @@ multi-shop by design.
   ROI) and the owner-share simulator with a live bar of where the account money goes.
 - **Orders** (`/orders`): every order, newest first, 10 per page, with one search box that looks at
   the order number, the products sold, coupon codes, payment, channel, origin and status (also by
-  their names in the current language). Columns: date, order, status, products, total (with refunds
-  noted), discount and coupons, payment, channel, origin. Orders that do not count as sales
+  their names in the current language). Columns: date and time on two lines, order, status, products
+  (one per line, small), total and discount (right-aligned, refunds and coupon codes noted), payment
+  and channel as icons (PayPal, Klarna, Satispay, Apple Pay, card, bank, entered by hand; app or
+  website), and the origin as one word with a small icon (Instagram, Facebook, Google, Direct, App,
+  Link), with the source and medium in the tooltip. Orders that do not count as sales
   (cancelled, failed...) are greyed out. First version: more filters and columns to come.
 - **Stock** (`/stock`): 25 items per page with a search on product name, variation or SKU, a
   photo thumbnail for each item (its own colour's photo, from WordPress's 150x150 copy), a

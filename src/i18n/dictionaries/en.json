@@ -281,11 +281,10 @@
   },
   "orders": {
     "title": "Orders",
-    "searchPlaceholder": "Search order, product, coupon, payment…",
+    "searchPlaceholder": "Search order, product, coupon…",
     "results": "{n} orders",
     "noResults": "No orders match your search.",
     "empty": "No orders yet.",
-    "summary": "{gross} gross in the orders counted as sales (processing or completed, net of refunds).",
     "notCounted": "Not counted in sales",
     "moreProducts": "+{n} more",
     "refunded": "refunded {amount}",
@@ -335,6 +334,17 @@
       "typein": "Direct",
       "mobile_app": "Mobile app",
       "admin": "Admin"
+    },
+    "originShort": {
+      "instagram": "Instagram",
+      "facebook": "Facebook",
+      "google": "Google",
+      "direct": "Direct",
+      "app": "App",
+      "link": "Link",
+      "search": "Search",
+      "admin": "Admin",
+      "other": "Other"
     }
   }
 }

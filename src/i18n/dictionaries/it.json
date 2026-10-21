@@ -281,11 +281,10 @@
   },
   "orders": {
     "title": "Ordini",
-    "searchPlaceholder": "Cerca ordine, prodotto, coupon, pagamento…",
+    "searchPlaceholder": "Cerca ordine, prodotto, coupon…",
     "results": "{n} ordini",
     "noResults": "Nessun ordine corrisponde alla ricerca.",
     "empty": "Ancora nessun ordine.",
-    "summary": "{gross} lordi negli ordini contati come vendite (in lavorazione o completati, al netto dei rimborsi).",
     "notCounted": "Non contato nelle vendite",
     "moreProducts": "+{n} altri",
     "refunded": "rimborsati {amount}",
@@ -335,6 +334,17 @@
       "typein": "Diretto",
       "mobile_app": "App mobile",
       "admin": "Admin"
+    },
+    "originShort": {
+      "instagram": "Instagram",
+      "facebook": "Facebook",
+      "google": "Google",
+      "direct": "Diretto",
+      "app": "App",
+      "link": "Link",
+      "search": "Ricerca",
+      "admin": "Admin",
+      "other": "Altro"
     }
   }
 }
