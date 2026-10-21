@@ -132,7 +132,7 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
         {groups.length === 0 ? (
           <p className="text-sm text-muted">{t.stock.noResults}</p>
         ) : (
-          <DiscountProvider vatRate={vatRate} taxPct={taxPct} locale={locale} currency={shop.currency} initial={50}>
+          <DiscountProvider vatRate={vatRate} taxPct={taxPct} locale={locale} currency={shop.currency}>
           <DiscountButtons label={t.stock.discountLabel} note={t.stock.discountNote.replace("{n}", fmt.pct(taxPct / 100))} />
           <div className="-mx-1 overflow-x-auto px-1">
             <div className="min-w-[66rem]">
