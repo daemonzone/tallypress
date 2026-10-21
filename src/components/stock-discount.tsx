@@ -50,7 +50,7 @@ export function DiscountButtons({ label, note }: { label: string; note: string }
               pct === d ? "border-accent bg-accent-soft font-semibold text-ink" : "border-line bg-surface text-muted hover:text-ink"
             }`}
           >
-            {d === 0 ? "0%" : `−${d}%`}
+            {d}%
           </button>
         ))}
       </div>

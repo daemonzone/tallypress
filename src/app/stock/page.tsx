@@ -56,9 +56,9 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
 
   const rangeMoney = (r: Range | null) =>
     !r ? t.common.none : Math.abs(r.max - r.min) < 0.005 ? money(r.min) : `${money(r.min)} – ${money(r.max)}`;
-  const minus = (d: number) => `−${fmt.pct(d)}`;
+  const pctText = (d: number) => fmt.pct(d); // discounts are shown as positive percentages
   const discountText = (r: Range | null) =>
-    !r ? null : Math.abs(r.max - r.min) < 0.0005 ? minus(r.min) : t.stock.discountRange.replace("{a}", minus(r.min)).replace("{b}", minus(r.max));
+    !r ? null : Math.abs(r.max - r.min) < 0.0005 ? pctText(r.min) : t.stock.discountRange.replace("{a}", pctText(r.min)).replace("{b}", pctText(r.max));
 
   const warn = <Icon name="alert" className="h-3.5 w-3.5 text-[var(--warn-line)] opacity-60" />;
   const chip = "rounded-full border border-line bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-muted";
@@ -261,7 +261,7 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
                                 <td className="py-1.5 text-right tabular-nums">
                                   {(() => {
                                     const d = saleDiscount(s.listPrice, s.shopPrice);
-                                    return d == null ? t.common.none : minus(d);
+                                    return d == null ? t.common.none : pctText(d);
                                   })()}
                                 </td>
                               </tr>
