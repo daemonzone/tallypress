@@ -50,7 +50,7 @@ export async function estimatePayments(shopId: string): Promise<PaymentsResult> 
   const now = new Date();
   const start = shop.baselineAt;
 
-  type Entry = { what: "vat" | "tax"; kind: "vat_payment" | "prior_payment"; amount: number; on: Date; note: string };
+  type Entry = { what: "vat" | "tax"; kind: "vat_payment" | "tax_payment" | "prior_payment"; amount: number; on: Date; note: string };
   const entries: Entry[] = [];
 
   if (shop.vatPeriod === "quarterly") {
@@ -97,7 +97,10 @@ export async function estimatePayments(shopId: string): Promise<PaymentsResult> 
     for (const [month, day, amount, label] of [[6, 30, first, "rata di giugno"], [11, 30, owed - first, "rata di novembre"]] as const) {
       const on = at(Number(year), month, day);
       if (on > now || on < start) continue;
-      entries.push({ what: "tax", kind: "prior_payment", amount, on, note: `Imposte ${Number(year) - 1} stimate (IRPEF + INPS), ${label}` });
+      // A payment for a year whose months are part of the cash figures settles what was set aside for it;
+      // one for a year before the starting point is an obligation from an earlier period.
+      const settles = all.some((m) => m.key.startsWith(String(Number(year) - 1)) && !m.history);
+      entries.push({ what: "tax", kind: settles ? "tax_payment" : "prior_payment", amount, on, note: `Imposte ${Number(year) - 1} stimate (IRPEF + INPS), ${label}` });
     }
   }
 
