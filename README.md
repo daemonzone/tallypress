@@ -444,3 +444,13 @@ These are deliberate MVP simplifications or gaps, not hidden behaviour.
 5. Vercel deployment on Neon, with `vercel.ts` cron for `/api/cron/sync`.
 6. Optional: payment confirmation from the event store, payment fees, ordinary-regime VAT
    on purchases.
+
+## Returns
+
+When a refund puts items back in stock, WooCommerce writes a note on the order ("Item #123 stock increased
+from 1 to 3."). The sync reads those notes for orders that have refunds and records the units on the order
+line (`returned_qty`): a returned unit is not a sale, so stock and cost of goods sold both follow, and the
+panel does not ask about it. A refund without restocking leaves no note and changes nothing; a cancelled
+order is not counted as a sale at all. `npm run shop:returns` does the same for every refunded order
+already imported (read-only against the shop), then recomputes costs and months. Differences between
+WooCommerce and the tracked stock that nobody has classified yet survive that recomputation.

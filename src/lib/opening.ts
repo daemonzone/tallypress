@@ -77,9 +77,9 @@ export async function recordOpening(shopId: string, input: OpeningInput): Promis
  * WooCommerce stock was read (the last sync); later orders are not part of that stock.
  * The unit cost is the item's previous opening cost, else its cost estimate.
  */
-export async function computeOpeningLots(shopId: string, from: Date, asOf: Date | null) {
+export async function computeOpeningLots(shopId: string, from: Date, asOf: Date | null, keep: Map<string, number> = new Map()) {
   const soldRows = await db
-    .select({ itemId: orderLines.itemId, qty: sql<string>`sum(${orderLines.quantity})` })
+    .select({ itemId: orderLines.itemId, qty: sql<string>`sum(${orderLines.quantity} - ${orderLines.returnedQty})` })
     .from(orderLines)
     .innerJoin(orders, eq(orders.id, orderLines.orderId))
     .where(
@@ -103,7 +103,8 @@ export async function computeOpeningLots(shopId: string, from: Date, asOf: Date 
   const itemRows = await db.select().from(items).where(eq(items.shopId, shopId));
   return itemRows.flatMap((item) => {
     if (!item.managesStock || item.stockQty == null) return [];
-    const quantity = Number(item.stockQty) + (sold.get(item.id) ?? 0) - (restocked.get(item.id) ?? 0);
+    // `keep`: differences still to be classified (WooCommerce minus tracked) stay differences instead of being absorbed.
+    const quantity = Number(item.stockQty) + (sold.get(item.id) ?? 0) - (restocked.get(item.id) ?? 0) - (keep.get(item.id) ?? 0);
     const unitCost = oldOpeningCost.get(item.id) ?? (item.manualUnitCost == null ? null : Number(item.manualUnitCost));
     return quantity > 0 && unitCost != null
       ? [{ shopId, itemId: item.id, quantity: String(quantity), unitCost: unitCost.toFixed(4), purchasedAt: from, source: "opening" as const }]
@@ -112,10 +113,10 @@ export async function computeOpeningLots(shopId: string, from: Date, asOf: Date 
 }
 
 /** Replaces the opening lots with freshly computed ones at the shop's current starting date. */
-export async function rebuildOpeningLots(shopId: string): Promise<number> {
+export async function rebuildOpeningLots(shopId: string, keep: Map<string, number> = new Map()): Promise<number> {
   const [shop] = await db.select().from(shops).where(eq(shops.id, shopId));
   if (!shop?.baselineAt) throw new Error("The shop has no starting point");
-  const newLots = await computeOpeningLots(shopId, shop.baselineAt, shop.lastSyncedAt);
+  const newLots = await computeOpeningLots(shopId, shop.baselineAt, shop.lastSyncedAt, keep);
   await db.transaction(async (tx) => {
     await tx.delete(restockLots).where(and(eq(restockLots.shopId, shopId), eq(restockLots.source, "opening")));
     for (let i = 0; i < newLots.length; i += 500) await tx.insert(restockLots).values(newLots.slice(i, i + 500));

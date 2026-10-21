@@ -2,7 +2,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { ledgerEntries, monthClosings, restockLots, shops } from "@/db/schema";
 import { ensureMonthsClosed } from "./closing";
-import { COUNTED_STATUSES } from "./costs";
+import { COUNTED_STATUSES, getItemStates } from "./costs";
 import { rebuildOpeningLots } from "./opening";
 import { rebuildCosts } from "./rebuild-costs";
 import { buildReport } from "./report";
@@ -15,6 +15,14 @@ export interface EstimateResult {
   closedMonths: number;
   vat: number; // cents of estimated VAT payments
   tax: number; // cents of estimated income tax / contribution payments
+}
+
+/**
+ * Differences between WooCommerce and the tracked stock that nobody has classified yet. They must
+ * survive a rebuild of the opening stock, which would otherwise absorb them without a trace.
+ */
+async function pendingDifferences(shopId: string): Promise<Map<string, number>> {
+  return new Map((await getItemStates(shopId)).filter((s) => s.diff).map((s) => [s.id, s.diff!]));
 }
 
 /** Removes every estimated purchase (lots and ledger entries). Returns how many ledger entries went. */
@@ -50,13 +58,14 @@ export async function estimateRestocks(shopId: string, opts: { payments?: boolea
   const tz = shop.timezone.replace(/'/g, "");
   const pct = shop.defaultCostPct == null ? null : Number(shop.defaultCostPct);
 
+  const keep = await pendingDifferences(shopId);
   await clearEstimates(shopId);
 
   // Cost of what was sold, per item and month (lines already carry their frozen cost).
   const sold = (
     await db.execute(sql`
       SELECT l.item_id AS item, to_char(date_trunc('month', o.placed_at AT TIME ZONE ${tz}), 'YYYY-MM-01') AS month,
-             sum(l.quantity)::text AS qty, sum(l.quantity * l.unit_cost_snapshot)::text AS cost
+             sum(l.quantity - l.returned_qty)::text AS qty, sum((l.quantity - l.returned_qty) * l.unit_cost_snapshot)::text AS cost
       FROM order_lines l JOIN orders o ON o.id = l.order_id
       WHERE l.shop_id = ${shopId} AND o.status IN (${sql.join(COUNTED_STATUSES.map((s) => sql`${s}`), sql`, `)})
         AND o.placed_at >= ${shop.baselineAt.toISOString()}::timestamptz AND l.unit_cost_snapshot IS NOT NULL
@@ -99,7 +108,7 @@ export async function estimateRestocks(shopId: string, opts: { payments?: boolea
     });
   }
 
-  const openingLots = await rebuildOpeningLots(shopId);
+  const openingLots = await rebuildOpeningLots(shopId, keep);
   const rebuilt = await rebuildCosts(shopId);
 
   // VAT and taxes come from the months as they now stand (costs are final at this point).
@@ -165,8 +174,9 @@ export async function estimateRestocks(shopId: string, opts: { payments?: boolea
 
 /** Takes every estimated purchase out again and recomputes the opening stock and costs. */
 export async function removeEstimatedRestocks(shopId: string): Promise<{ entries: number; openingLots: number }> {
+  const keep = await pendingDifferences(shopId);
   const entries = await clearEstimates(shopId);
-  const openingLots = await rebuildOpeningLots(shopId);
+  const openingLots = await rebuildOpeningLots(shopId, keep);
   await rebuildCosts(shopId);
   return { entries, openingLots };
 }

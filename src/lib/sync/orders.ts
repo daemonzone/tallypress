@@ -1,6 +1,7 @@
 import { and, eq, notInArray } from "drizzle-orm";
 import { db } from "@/db";
 import { items, orderCoupons, orderLines, orders, type shops } from "@/db/schema";
+import { applyReturns, refreshAfterReturns } from "@/lib/returns";
 import { sumMoney, wooGetAll } from "@/lib/woo";
 
 type Shop = typeof shops.$inferSelect;
@@ -64,6 +65,7 @@ async function upsertOrders(shop: Shop, wooOrders: WooOrder[], notBefore: Date):
   );
 
   let saved = 0;
+  const refunded: number[] = [];
   for (const o of wooOrders) {
     const placedAt = new Date(`${o.date_created_gmt}Z`);
     if (placedAt < notBefore) continue;
@@ -137,7 +139,10 @@ async function upsertOrders(shop: Shop, wooOrders: WooOrder[], notBefore: Date):
         );
     });
     saved++;
+    if (o.refunds?.length) refunded.push(o.id);
   }
+  // Units that came back to stock after a refund are read from the order notes.
+  if (refunded.length && (await applyReturns(shop, refunded)) > 0) await refreshAfterReturns(shop.id);
   return saved;
 }
 

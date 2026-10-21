@@ -1,0 +1,1 @@
+ALTER TABLE "order_lines" ADD COLUMN "returned_qty" numeric(14, 3) DEFAULT '0' NOT NULL;

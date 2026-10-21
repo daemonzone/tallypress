@@ -119,7 +119,7 @@ async function main() {
   // Opening stock = what WooCommerce holds now + what sold since the start date.
   const sold = new Map<string, number>();
   const soldRows = await db
-    .select({ itemId: orderLines.itemId, qty: sql<string>`sum(${orderLines.quantity})` })
+    .select({ itemId: orderLines.itemId, qty: sql<string>`sum(${orderLines.quantity} - ${orderLines.returnedQty})` })
     .from(orderLines)
     .innerJoin(orders, eq(orders.id, orderLines.orderId))
     .where(and(eq(orderLines.shopId, shopId), inArray(orders.status, COUNTED_STATUSES), gte(orders.placedAt, baselineAt)))

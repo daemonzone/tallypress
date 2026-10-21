@@ -163,6 +163,8 @@ export const orderLines = pgTable(
     subtotalGross: numeric("subtotal_gross", { precision: 14, scale: 2 }),
     itemId: uuid("item_id").references(() => items.id),
     quantity: numeric("quantity", { precision: 14, scale: 3 }).notNull(),
+    // Units that came back to stock after a refund (read from the order notes): the sale counts quantity - returned.
+    returnedQty: numeric("returned_qty", { precision: 14, scale: 3 }).notNull().default("0"),
     grossTotal: numeric("gross_total", { precision: 14, scale: 2 }).notNull(),
     taxTotal: numeric("tax_total", { precision: 14, scale: 2 }).notNull(),
     // Frozen once computed so closed months never move. NULL = cost not known yet.

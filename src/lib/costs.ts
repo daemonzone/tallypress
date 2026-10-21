@@ -82,7 +82,7 @@ async function loadHistory(shopId: string, itemIds?: string[]) {
       .select({
         id: orderLines.id,
         itemId: orderLines.itemId,
-        quantity: orderLines.quantity,
+        quantity: sql<string>`${orderLines.quantity} - ${orderLines.returnedQty}`,
         snapshot: orderLines.unitCostSnapshot,
         placedAt: orders.placedAt,
       })

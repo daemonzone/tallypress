@@ -117,8 +117,8 @@ export async function buildReport(shopId: string): Promise<Report | null> {
     rowsOf(sql`
       SELECT ${monthSql("o.placed_at")} AS month, l.item_id, i.sku, i.status AS item_status,
              coalesce(i.product_name, CASE WHEN l.item_id IS NULL THEN l.name END, '?') AS product_name, i.variation_label,
-             sum(l.quantity)::text AS qty, sum(l.gross_total)::text AS gross,
-             sum(l.quantity * coalesce(l.unit_cost_snapshot, 0))::text AS cogs,
+             sum(l.quantity - l.returned_qty)::text AS qty, sum(l.gross_total)::text AS gross,
+             sum((l.quantity - l.returned_qty) * coalesce(l.unit_cost_snapshot, 0))::text AS cogs,
              (count(*) FILTER (WHERE l.unit_cost_snapshot IS NULL))::int AS missing
       FROM order_lines l
       JOIN orders o ON o.id = l.order_id
