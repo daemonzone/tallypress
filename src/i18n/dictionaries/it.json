@@ -217,8 +217,6 @@
       "open": "Simula uno sconto",
       "title": "Simulatore sconto",
       "missing": "Per questo prodotto mancano il prezzo di listino o il costo: non si può simulare.",
-      "intro": "Scegli uno sconto e guarda cosa resta davvero in tasca per un pezzo di questo prodotto, tolti IVA, costo d'acquisto e imposte. Il calcolo parte dal prezzo di listino, e il costo è la media dei costi delle varianti.",
-      "discount": "Sconto",
       "cost": "Costo acquisto senza IVA",
       "list": "Prezzo di listino (IVA incl.)",
       "profit": "Utile senza IVA",
@@ -229,15 +227,18 @@
       "stepDiscount": "Prezzo scontato del {n}% (IVA inclusa)",
       "stepNet": "Prezzo scontato senza IVA (IVA {v}%)",
       "stepCost": "Costo di acquisto senza IVA",
-      "stepProfit": "Utile prima delle imposte",
+      "stepProfit": "Utile al netto dell'IVA",
       "stepTax": "Imposte e contributi ({t}% di ogni euro di utile)",
-      "stepResult": "Utile dopo le tasse",
+      "stepResult": "Utile al netto dell'IVA e delle imposte (da pagare)",
       "noteVat": "L'IVA non è un costo: la incassi sulla vendita e la recuperi sull'acquisto, quindi tutto si calcola senza IVA.",
       "noteTax": "Le imposte sono INPS e IRPEF sull'utile: qui valgono il {t}% di ogni euro in più (scaglione dell'anno). Se il risultato è una perdita, riduce le imposte sul resto dell'utile, quindi la perdita mostrata è già al netto di quel risparmio.",
       "noteCost": "Il costo di acquisto è una stima (il 30% del listino senza IVA) finché non c'è un costo vero: con un costo diverso i numeri cambiano.",
       "noteGift": "Con lo sconto del 100% si regala il prodotto: si perde il costo, ridotto dal risparmio di imposte.",
       "noteScope": "Il calcolo riguarda un solo pezzo e non include spedizione, imballaggi o commissioni di pagamento. Per metterli usa il",
-      "noteCalculator": "Calcolatore sconti"
+      "noteCalculator": "Calcolatore sconti",
+      "introBold": "Scegli una percentuale di sconto",
+      "introRest": " e simula cosa ti resta davvero in tasca per questo prodotto dopo aver detratto l'IVA, il costo di acquisto del prodotto e le imposte (secondo il tuo regime fiscale).",
+      "introNote": "(il calcolo parte dal prezzo di listino, e il costo è la media dei costi delle varianti)"
     }
   },
   "ledger": {

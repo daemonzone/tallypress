@@ -3,10 +3,13 @@
 import Link from "next/link";
 import { useState } from "react";
 import { discountResult, toCent } from "@/lib/discount";
+import { Thumb } from "./thumb";
 
 const LEVELS = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
 
 interface Props {
+  name: string;
+  imageUrl: string | null;
   price: number | null; // list price, VAT included
   cost: number | null; // unit cost, VAT excluded
   vatRate: number;
@@ -17,7 +20,7 @@ interface Props {
 }
 
 /** The body of the discount simulator popup: pick a discount, read what is left in the pocket and why. */
-export function DiscountSimulator({ price, cost, vatRate, taxPct, locale, currency, labels: t }: Props) {
+export function DiscountSimulator({ name, imageUrl, price, cost, vatRate, taxPct, locale, currency, labels: t }: Props) {
   const [pct, setPct] = useState(0);
   if (price == null || cost == null) return <p className="text-sm text-muted">{t.missing}</p>;
 
@@ -32,20 +35,28 @@ export function DiscountSimulator({ price, cost, vatRate, taxPct, locale, curren
     text.replace(/\{n\}/g, String(pct)).replace(/\{v\}/g, num.format(vatRate)).replace(/\{t\}/g, num.format(taxPct));
 
   const th = "py-2 pr-3 text-right text-xs font-medium uppercase leading-tight tracking-wide text-muted";
-  const step = (label: string, value: string, opts: { strong?: boolean; negative?: boolean; className?: string } = {}) => (
-    <div className={`flex items-baseline justify-between gap-4 py-1.5 ${opts.strong ? "border-t border-line font-semibold" : ""}`}>
-      <span className={opts.strong ? "" : "text-muted"}>{label}</span>
-      <span className={`tabular-nums ${opts.className ?? ""}`}>{value}</span>
+  const step = (label: string, value: string, opts: { bold?: boolean; blue?: boolean; valueClass?: string } = {}) => (
+    <div className="flex items-baseline justify-between gap-4 py-2">
+      <span className={opts.blue ? "text-accent" : opts.bold ? "font-semibold" : "text-muted"}>{label}</span>
+      <span className={`tabular-nums ${opts.blue ? "text-accent" : ""} ${opts.bold ? "font-semibold" : ""} ${opts.valueClass ?? ""}`}>{value}</span>
     </div>
   );
 
   return (
     <div className="space-y-6 text-sm">
-      <p className="text-muted">{t.intro}</p>
+      <div className="flex items-center justify-center gap-4">
+        <Thumb src={imageUrl} alt={name} size="lg" />
+        <div className="text-xl font-semibold tracking-tight">{name}</div>
+      </div>
 
-      <div>
-        <div className="mb-2 font-medium">{t.discount}</div>
-        <div className="flex flex-wrap gap-1" role="group" aria-label={t.discount}>
+      <div className="space-y-4 text-center">
+        <p>
+          <strong>{t.introBold}</strong>
+          {t.introRest}
+          <br />
+          <em className="text-muted">{t.introNote}</em>
+        </p>
+        <div className="flex flex-wrap justify-center gap-1" role="group" aria-label={t.introBold}>
           {LEVELS.map((d) => (
             <button
               key={d}
@@ -65,7 +76,7 @@ export function DiscountSimulator({ price, cost, vatRate, taxPct, locale, curren
       <div className="overflow-x-auto">
         <table className="w-full min-w-[40rem] table-fixed">
           <thead>
-            <tr className="border-b border-line align-bottom">
+            <tr className="border-b border-ink/25 align-bottom">
               <th className={th}>{t.cost}</th>
               <th className={th}>{t.list}</th>
               <th className={th}>{t.profit}</th>
@@ -85,15 +96,17 @@ export function DiscountSimulator({ price, cost, vatRate, taxPct, locale, curren
         </table>
       </div>
 
-      <div className="rounded-xl border border-line bg-surface-2 p-4">
-        <h3 className="mb-2 font-semibold">{fill(t.stepsTitle)}</h3>
-        {step(t.stepList, m(price))}
-        {step(fill(t.stepDiscount), m(sim.priceGross))}
-        {step(fill(t.stepNet), m(sim.netRevenue))}
-        {step(t.stepCost, `− ${m(cost)}`)}
-        {step(t.stepProfit, m(sim.profitBeforeTax), { strong: true, className: tone(sim.profitBeforeTax) })}
-        {step(fill(t.stepTax), `${sim.tax < 0 ? "+" : "−"} ${m(Math.abs(sim.tax))}`)}
-        {step(t.stepResult, m(sim.profitAfterTax), { strong: true, className: toCent(sim.profitAfterTax) < 0 ? "text-bad" : "text-accent" })}
+      <div className="rounded-xl border border-ink/20 bg-surface-2 px-4 py-3">
+        <h3 className="mb-1 font-semibold">{fill(t.stepsTitle)}</h3>
+        <div className="divide-y divide-ink/20">
+          {step(t.stepList, m(price), { bold: true })}
+          {step(fill(t.stepDiscount), m(sim.priceGross), { blue: true })}
+          {step(fill(t.stepNet), m(sim.netRevenue))}
+          {step(t.stepCost, `− ${m(cost)}`)}
+          {step(t.stepProfit, m(sim.profitBeforeTax), { valueClass: tone(sim.profitBeforeTax) })}
+          {step(fill(t.stepTax), `${sim.tax < 0 ? "+" : "−"} ${m(Math.abs(sim.tax))}`)}
+          {step(t.stepResult, m(sim.profitAfterTax), { bold: true, valueClass: toCent(sim.profitAfterTax) < 0 ? "text-bad" : "text-accent" })}
+        </div>
       </div>
 
       <ul className="list-disc space-y-1.5 pl-5 text-xs text-muted">

@@ -203,10 +203,11 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
                           wide
                           label={t.stock.sim.open}
                           title={t.stock.sim.title}
-                          subtitle={g.name}
                           closeLabel={t.common.close}
                         >
                           <DiscountSimulator
+                            name={g.name}
+                            imageUrl={g.imageUrl}
                             price={g.price}
                             cost={g.unitCost}
                             vatRate={vatRate}
