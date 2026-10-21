@@ -59,13 +59,18 @@ export function DiscountButtons({ label, note }: { label: string; note: string }
   );
 }
 
+/** A column title that carries the discount picked: "{n}" in the label is replaced by the percentage. */
 export function DiscountHeader({ label }: { label: string }) {
   const { pct } = useDiscount();
-  return (
-    <div className="text-right text-accent">
-      {label} {pct === 0 ? "0%" : `−${pct}%`}
-    </div>
-  );
+  return <div className="text-right text-accent">{label.replace("{n}", String(pct))}</div>;
+}
+
+/** The list price after the chosen discount (VAT included): a simulation, in the accent colour. */
+export function DiscountedPriceCell({ price }: { price: number | null }) {
+  const { pct, locale, currency } = useDiscount();
+  if (price == null) return <div className="text-right text-muted">—</div>;
+  const money = new Intl.NumberFormat(locale, { style: "currency", currency, useGrouping: "always" });
+  return <div className="text-right tabular-nums text-accent">{money.format(toCent(price * (1 - pct / 100)))}</div>;
 }
 
 /** What one piece leaves in the pocket at the chosen discount (VAT and tax out): a simulation, so it has its own colour. */

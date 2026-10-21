@@ -9,7 +9,7 @@ import { buttonClass, Notice, Section } from "@/components/ui";
 import { getDictionary } from "@/i18n";
 import { resolveDifference } from "@/lib/actions";
 import { getDifferences, getProductPage } from "@/lib/costs";
-import { DiscountButtons, DiscountHeader, DiscountProvider, DiscountedCell } from "@/components/stock-discount";
+import { DiscountButtons, DiscountHeader, DiscountProvider, DiscountedCell, DiscountedPriceCell } from "@/components/stock-discount";
 import { bracketRateFor, discountResult, marginalTaxPct } from "@/lib/discount";
 import { buildReport } from "@/lib/report";
 import { getCurrentShop } from "@/lib/shop";
@@ -19,7 +19,7 @@ const PER_PAGE = 20;
 const DIFF_COLUMNS = "grid-cols-[minmax(0,1fr)_6rem_minmax(0,1.5fr)]";
 // a vertical rule that separates the figures that follow the selling price
 const DIVIDER = "border-l border-line pl-3";
-const COLUMNS = "grid-cols-[minmax(12rem,1fr)_3.5rem_8rem_5.5rem_6.5rem_6.5rem_6.5rem_6.5rem_1.25rem]";
+const COLUMNS = "grid-cols-[minmax(11rem,1fr)_2.5rem_6.75rem_6rem_5rem_5.5rem_5.5rem_5.5rem_6.5rem_1.25rem]";
 
 export default async function StockPage({ searchParams }: PageProps<"/stock">) {
   const { locale, t } = await getDictionary();
@@ -137,16 +137,17 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
           <DiscountProvider vatRate={vatRate} taxPct={taxPct} locale={locale} currency={shop.currency}>
           <DiscountButtons label={t.stock.discountLabel} note={t.stock.discountNote.replace("{n}", fmt.pct(taxPct / 100))} />
           <div className="-mx-1 overflow-x-auto px-1">
-            <div className="min-w-[66rem]">
+            <div className="min-w-[62rem]">
               <div className={`grid ${COLUMNS} gap-3 border-b border-line py-2 text-xs font-medium uppercase tracking-wide text-muted`}>
                 <div>{t.stock.product}</div>
                 <div className="text-right">{t.stock.woo}</div>
                 <div className="text-right">{t.stock.cost}</div>
                 <div className="text-right">{t.stock.value}</div>
                 <div className="text-right">{t.stock.price}</div>
+                <DiscountHeader label={t.stock.discountedPrice} />
                 <div className={`-my-2 self-stretch py-2 text-right ${DIVIDER}`}>{t.stock.profit}</div>
                 <div className="text-right">{t.stock.pocket}</div>
-                <DiscountHeader label={t.stock.discounted} />
+                <DiscountHeader label={t.stock.realProfit} />
                 <div />
               </div>
 
@@ -188,6 +189,7 @@ export default async function StockPage({ searchParams }: PageProps<"/stock">) {
                       </div>
                       <div className="text-right tabular-nums">{fmt.money(Math.round(g.stockValue * 100))}</div>
                       <div className="text-right font-semibold tabular-nums">{g.price == null ? t.common.none : money(g.price)}</div>
+                      <DiscountedPriceCell price={g.price} />
                       <div className={`-my-2.5 flex items-center justify-end self-stretch py-2.5 tabular-nums ${DIVIDER}`}>
                         {sale ? (
                           <span className={sale.profitBeforeTax < -0.005 ? "text-bad" : ""}>{money(sale.profitBeforeTax)}</span>

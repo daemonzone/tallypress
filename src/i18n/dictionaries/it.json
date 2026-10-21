@@ -146,7 +146,7 @@
     "tracked": "Registrato qui",
     "avg": "Costo medio",
     "manual": "Costo manuale",
-    "value": "Valore a magazzino",
+    "value": "Valore netto a magazzino",
     "mismatch": "La quantità non coincide con i conteggi interni (acquisti meno vendite): può mancare un riassortimento o uno scarico.",
     "restockTitle": "Registra un riassortimento",
     "unitCost": "Costo unitario (senza IVA)",
@@ -170,7 +170,7 @@
     "product": "Prodotto",
     "code": "Codice",
     "variant": "Variante",
-    "cost": "Costo d'acquisto",
+    "cost": "Costo acquisto senza IVA",
     "estimated": "stima",
     "mixed": "misto",
     "noVariant": "Senza variante",
@@ -200,10 +200,11 @@
     "diffFewerOne": "In 1 prodotto WooCommerce segna meno unità dei conteggi (di solito giacenza a −1: venduto un prodotto che non risultava a magazzino). Correggi la giacenza in WooCommerce: se il prodotto era arrivato davvero, qui apparirà come entrata da riconciliare. Filtra l'elenco per vederlo.",
     "price": "Prezzo (IVA incl.)",
     "profit": "Utile senza IVA",
-    "pocket": "In tasca",
-    "discounted": "In tasca con sconto",
+    "pocket": "Utile dopo le tasse",
     "discountLabel": "Sconto",
-    "discountNote": "In tasca = utile senza IVA al netto delle imposte, che qui valgono il {n} di ogni euro in più (scaglione dell'anno)."
+    "discountNote": "Utile dopo le tasse = utile senza IVA meno imposte e contributi, che qui valgono il {n} di ogni euro in più (scaglione dell'anno). Utile reale con sconto = lo stesso calcolo al prezzo scontato.",
+    "discountedPrice": "Prezzo scontato del {n}%",
+    "realProfit": "Utile reale con sconto del {n}%"
   },
   "ledger": {
     "title": "Movimenti del conto del negozio",

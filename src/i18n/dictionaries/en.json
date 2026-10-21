@@ -146,7 +146,7 @@
     "tracked": "Tracked here",
     "avg": "Average cost",
     "manual": "Manual cost",
-    "value": "Stock value",
+    "value": "Net stock value",
     "mismatch": "The quantity does not match the internal figures (purchases minus sales): a restock or a stock write-off may be missing.",
     "restockTitle": "Record a restock",
     "unitCost": "Unit cost (without VAT)",
@@ -170,7 +170,7 @@
     "product": "Product",
     "code": "Code",
     "variant": "Variant",
-    "cost": "Purchase cost",
+    "cost": "Purchase cost ex VAT",
     "estimated": "estimate",
     "mixed": "mixed",
     "noVariant": "No variant",
@@ -200,10 +200,11 @@
     "diffFewerOne": "In 1 product WooCommerce shows fewer units than the counts (usually stock at −1: a product was sold that was not in stock). Fix the stock in WooCommerce: if the product really arrived, it will show up here as an entry to reconcile. Filter the list to see it.",
     "price": "Price (VAT incl.)",
     "profit": "Profit ex VAT",
-    "pocket": "In pocket",
-    "discounted": "In pocket at",
+    "pocket": "Profit after tax",
     "discountLabel": "Discount",
-    "discountNote": "In pocket = profit ex VAT after taxes, which here take {n} of every extra euro (the year's bracket)."
+    "discountNote": "Profit after tax = profit ex VAT minus income tax and contributions, which here take {n} of every extra euro (the year's bracket). Real profit at a discount = the same calculation at the discounted price.",
+    "discountedPrice": "Price at {n}% off",
+    "realProfit": "Real profit at {n}% off"
   },
   "ledger": {
     "title": "Shop account movements",
