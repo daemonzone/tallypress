@@ -315,6 +315,8 @@
     "baselineMissing": "non ancora impostato",
     "syncTitle": "Dati WooCommerce",
     "syncNow": "Sincronizza ora",
+    "syncing": "Sincronizzazione in corso…",
+    "syncDone": "Sincronizzato. Ordini nuovi o modificati: {orders}.",
     "lastSync": "Ultima sincronizzazione",
     "never": "mai",
     "products": "Prodotti e varianti",

@@ -1,8 +1,9 @@
 import { and, count, eq, gte, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { items, ledgerEntries, orderLines, orders } from "@/db/schema";
-import { KeyValues, Notice, Section, buttonClass, primaryButtonClass, inputClass } from "@/components/ui";
+import { KeyValues, Notice, Section, primaryButtonClass, inputClass } from "@/components/ui";
 import { getDictionary } from "@/i18n";
+import { SyncButton } from "@/components/sync-button";
 import { ImportRangeForm } from "@/components/import-range-form";
 import { importPeriod, saveOpening } from "@/lib/actions";
 import { COUNTED_STATUSES } from "@/lib/costs";
@@ -92,11 +93,10 @@ export default async function SetupPage() {
       <Section
         title={t.setup.syncTitle}
         aside={
-          <form action={syncNow}>
-            <button type="submit" className={buttonClass}>
-              {t.setup.syncNow}
-            </button>
-          </form>
+          <SyncButton
+            action={syncNow}
+            labels={{ sync: t.setup.syncNow, syncing: t.setup.syncing, done: t.setup.syncDone, failed: t.setup.syncFailed }}
+          />
         }
       >
         {shop.lastSyncError && (
