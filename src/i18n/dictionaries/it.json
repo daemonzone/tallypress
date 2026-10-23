@@ -56,6 +56,8 @@
     "tax": "Accantonato per le imposte",
     "invested": "Investito in magazzino",
     "roi": "ROI (guadagno netto ÷ investito)",
+    "realReturn": "Rendimento reale",
+    "realReturnHelp": "Come il ROI, ma tiene conto anche delle rettifiche del saldo ({adjustments} finora): soldi spariti o ritrovati senza spiegazione, contati per intero e senza effetto sulle imposte. I prelievi non contano.",
     "roiHelp": "Investito = valore del magazzino iniziale + tutti i riassortimenti.",
     "stockValue": "Prezzo di acquisto",
     "netRemaining": "Al netto delle tasse e costi",

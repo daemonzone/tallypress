@@ -39,7 +39,7 @@ multi-shop by design.
   gross-to-net detail, the shop account for the month and the per-product table. On the
   right, a sidebar that stays the same whichever month is open: the shop overview (money in
   the account, VAT and tax set aside, net earnings, withdrawals, stock value, invested,
-  ROI) and the owner-share simulator with a live bar of where the account money goes (a collapsible
+  ROI and the *real return*) and the owner-share simulator with a live bar of where the account money goes (a collapsible
   box, closed by default). The legend of the month bar reads "income tax set aside this month".
   - **Sync now** sits next to the month's name (and in Setup). It reads what changed in WooCommerce
     (see "The sync is incremental"), the button pulses in blue with a spinner while it runs and the
@@ -556,3 +556,11 @@ there; every figure stays in this Postgres). The panel has no sign-up page: acco
 
 Not done yet: password reset and sign-up (they need the redirect URL of this app to be allowed in the
 Supabase project), and tying users to shops (`shop_members`) for real multi-shop use.
+
+## ROI and real return
+
+*ROI* = net earnings / invested in stock: it measures the trading of goods (sales, cost of goods, income tax and the
+expenses recorded as `expense`). It does not move when a balance adjustment is recorded, by design.
+*Real return* = (net earnings + balance adjustments) / invested. An adjustment (for example aligning the account to the
+bank) is money that left or turned up without an explanation, so it is counted in full, with no tax effect. Withdrawals
+are not counted: they are the owner taking profit, not a loss. With no adjustments the two figures are equal.

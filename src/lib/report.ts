@@ -81,6 +81,8 @@ export interface Overview {
   withdrawn: number;
   invested: number; // opening stock value + restock spend
   roi: number | null; // net earnings / invested
+  adjustments: number; // manual corrections of the account (e.g. aligning it to the bank): money that is gone or found without an explanation
+  realReturn: number | null; // (net earnings + adjustments) / invested
 }
 
 export interface Report {
@@ -383,6 +385,8 @@ export async function buildReport(shopId: string): Promise<Report | null> {
       withdrawn: -sum((m) => m.flows.withdrawal),
       invested,
       roi: invested > 0 ? netEarnings / invested : null,
+      adjustments: sum((m) => m.flows.adjustment),
+      realReturn: invested > 0 ? (netEarnings + sum((m) => m.flows.adjustment)) / invested : null,
     },
   };
 }

@@ -139,6 +139,15 @@ function Overview({ report, t, fmt, locale }: { report: Report; t: Dictionary; f
         <span className="whitespace-nowrap">{t.overview.roi}</span>
         <span className="tabular-nums">{o.roi == null ? t.common.none : fmt.pct(o.roi)}</span>
       </div>
+      <div className="mt-2 flex items-baseline justify-between gap-3 text-sm font-semibold">
+        <span className="whitespace-nowrap">{t.overview.realReturn}</span>
+        <span className={`tabular-nums ${o.realReturn != null && o.realReturn < 0 ? "text-bad" : ""}`}>
+          {o.realReturn == null ? t.common.none : fmt.pct(o.realReturn)}
+        </span>
+      </div>
+      <p className="mt-1 text-xs font-normal text-muted">
+        {t.overview.realReturnHelp.replace("{adjustments}", fmt.money(o.adjustments))}
+      </p>
     </Card>
   );
 }

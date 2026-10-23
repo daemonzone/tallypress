@@ -56,6 +56,8 @@
     "tax": "Set aside for income tax",
     "invested": "Invested in stock",
     "roi": "ROI (net earnings ÷ invested)",
+    "realReturn": "Real return",
+    "realReturnHelp": "Like the ROI, but it also counts the balance adjustments ({adjustments} so far): money gone or found without an explanation, counted in full and with no tax effect. Withdrawals do not count.",
     "roiHelp": "Invested = opening stock value + all restocks.",
     "stockValue": "Purchase price",
     "netRemaining": "After taxes and costs",
