@@ -38,13 +38,13 @@ export function SyncButton({ action, labels }: Props) {
           {labels.failed}: {error}
         </span>
       )}
-      <button type="button" onClick={run} disabled={pending} aria-busy={pending} className={`${buttonClass} inline-flex items-center gap-2 disabled:opacity-60`}>
-        {pending && (
-          <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="3" opacity="0.25" />
-            <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-          </svg>
-        )}
+      <button
+        type="button"
+        onClick={run}
+        disabled={pending}
+        aria-busy={pending}
+        className={`${buttonClass} ${pending ? "animate-pulse !border-accent/50 !bg-accent-soft" : "disabled:opacity-60"}`}
+      >
         {pending ? labels.syncing : labels.sync}
       </button>
     </div>
