@@ -46,6 +46,7 @@ export interface Reserve {
   paid: number; // paid this month (negative)
   end: number; // still set aside at the end of the month (for VAT: only the quarters already ended)
   pending: number; // set aside but not due yet: the quarter in progress (VAT only)
+  closed: number; // the part of `end` that belongs to periods already ended and is waiting to be paid
 }
 
 export interface MonthReport extends Figures {
@@ -296,8 +297,8 @@ export async function buildReport(shopId: string): Promise<Report | null> {
       missingCostLines,
       start,
       flows: history ? emptyFlows() : flows,
-      vatReserve: { accrued: 0, paid: 0, end: 0, pending: 0 },
-      taxAside: { accrued: 0, paid: 0, end: 0, pending: 0 },
+      vatReserve: { accrued: 0, paid: 0, end: 0, pending: 0, closed: 0 },
+      taxAside: { accrued: 0, paid: 0, end: 0, pending: 0, closed: 0 },
       end,
       items,
       shipping: { ...shippingFig, taxReserve: shippingTax, netEarnings: shippingFig.profit - shippingTax },
@@ -307,8 +308,8 @@ export async function buildReport(shopId: string): Promise<Report | null> {
   // What is set aside for VAT and for taxes, month by month from the starting point on.
   // VAT is settled by quarter: the account shows the quarters already ended and not yet paid (a payment
   // clears the oldest quarters first, so once it is made the reserve is back to zero), and keeps the VAT
-  // of the quarter in progress apart as "pending" until that quarter ends. Taxes work the same way by
-  // calendar year: the years already ended and not yet paid, with the year in progress kept apart.
+  // of the quarter in progress apart as "pending" until that quarter ends. Taxes are set aside every month
+  // and a payment takes away the oldest years first.
   let vatAccruedAll = 0; // VAT set aside since the start
   let vatAccruedAtQuarterEnd = 0; // the same, up to the last quarter that has ended
   let vatPaidAll = 0;
@@ -323,14 +324,15 @@ export async function buildReport(shopId: string): Promise<Report | null> {
     if (Number(m.key.slice(5, 7)) % 3 === 0) vatAccruedAtQuarterEnd = vatAccruedAll;
     const total = vatAccruedAll - vatPaidAll;
     const due = Math.max(Math.min(vatAccruedAtQuarterEnd - vatPaidAll, total), 0);
-    m.vatReserve = { accrued: vatAccrued, paid: vatPaid, end: due, pending: total - due };
+    m.vatReserve = { accrued: vatAccrued, paid: vatPaid, end: due, pending: total - due, closed: due };
     const taxPaid = m.flows.taxPayment + m.flows.estimatedTaxPayment;
     taxAccruedAll += m.taxReserve;
     taxPaidAll -= taxPaid;
     if (m.key.slice(5, 7) === "12") taxAccruedAtYearEnd = taxAccruedAll;
     const taxTotal = taxAccruedAll - taxPaidAll;
     const taxDueEnded = Math.max(Math.min(taxAccruedAtYearEnd - taxPaidAll, taxTotal), 0);
-    m.taxAside = { accrued: m.taxReserve, paid: taxPaid, end: taxDueEnded, pending: taxTotal - taxDueEnded };
+    // Taxes accrue month by month, so the account shows everything set aside; the years already ended are told apart.
+    m.taxAside = { accrued: m.taxReserve, paid: taxPaid, end: Math.max(taxTotal, 0), pending: 0, closed: taxDueEnded };
   }
 
   // The overview (cash, reserves, ROI) covers the months from the starting point on, not the sales history.

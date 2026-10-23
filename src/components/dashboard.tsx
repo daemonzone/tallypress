@@ -191,10 +191,10 @@ function MonthNav({ report, selected, locale, label }: { report: Report; selecte
 }
 
 /** "+1.234 set aside this month, −2.000 paid" under an account reserve row. */
-function reserveNote(r: Reserve, t: Dictionary, fmt: Formatters, pending: string): string {
+function reserveNote(r: Reserve, t: Dictionary, fmt: Formatters, extra: string, extraAmount: number): string {
   const parts = [t.month.reserveAccrued.replace("{amount}", fmt.money(r.accrued))];
   if (r.paid !== 0) parts.push(t.month.reservePaid.replace("{amount}", fmt.money(-r.paid)));
-  if (r.pending > 0) parts.push(pending.replace("{amount}", fmt.money(r.pending)));
+  if (extraAmount > 0) parts.push(extra.replace("{amount}", fmt.money(extraAmount)));
   return parts.join(" · ");
 }
 
@@ -476,12 +476,12 @@ function MonthPanel({
             {
               label: t.month.reserveVat,
               value: fmt.money(m.vatReserve.end),
-              note: reserveNote(m.vatReserve, t, fmt, t.month.reservePending),
+              note: reserveNote(m.vatReserve, t, fmt, t.month.reservePending, m.vatReserve.pending),
             },
             {
               label: t.month.reserveTax,
               value: fmt.money(m.taxAside.end),
-              note: reserveNote(m.taxAside, t, fmt, t.month.reservePendingYear),
+              note: reserveNote(m.taxAside, t, fmt, t.month.reserveClosedYears, m.taxAside.closed),
             },
           ]}
         />

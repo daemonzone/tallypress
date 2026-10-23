@@ -99,7 +99,7 @@
     "reserveAccrued": "set aside this month: {amount}",
     "reservePaid": "paid this month: {amount}",
     "reservePending": "quarter in progress, not due yet: {amount}",
-    "reservePendingYear": "year in progress, not due yet: {amount}",
+    "reserveClosedYears": "of which years already ended, to be paid: {amount}",
     "end": "Expected balance at month end",
     "variantsTitle": "By product and variation",
     "product": "Product",
