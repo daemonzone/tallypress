@@ -62,6 +62,8 @@
     "netRemainingHelp": "Soldi sul conto, meno l'IVA e le imposte ancora da versare e meno il costo della merce venduta non ancora ricomprata.",
     "stockTitle": "Magazzino",
     "stockValueHelp": "La merce che hai ancora in casa, valutata a quanto ti è costata (non al prezzo di vendita).",
+    "onSaleValue": "Valore della merce attualmente in vendita",
+    "onSaleValueHelp": "Giacenza degli articoli pubblicati ({pieces} pezzi) ai prezzi di oggi, con i saldi in corso, IVA inclusa. Senza IVA: {net}.",
     "investedHelp": "Soldi messi in merce: il magazzino iniziale più tutti i riassortimenti fatti. Il ROI si misura rispetto a questa cifra.",
     "provisional": "Cifre provvisorie: il saldo del conto non è ancora allineato alla banca, quindi i saldi qui sotto non sono reali.",
     "provisionalLink": "Allinealo in Movimenti",

@@ -43,7 +43,16 @@ export async function Dashboard({ monthKey }: { monthKey?: string }) {
   const selected = monthKey ? report.months.find((m) => m.key === monthKey) : report.months.at(-1);
   if (!selected) notFound();
 
-  const stockValue = (await getItemStates(shop.id)).reduce((s, i) => s + Math.round(i.stockValue * 100), 0);
+  const states = await getItemStates(shop.id);
+  const stockValue = states.reduce((s, i) => s + Math.round(i.stockValue * 100), 0);
+  // What is on sale right now: published items with stock, at the price the customer pays today (sales included), VAT included.
+  const forSale = states.filter((i) => i.status === "publish" && (i.wooStock ?? 0) > 0 && (i.shopPrice ?? 0) > 0);
+  const retailValue = forSale.reduce((s, i) => s + Math.round(i.wooStock! * i.shopPrice! * 100), 0);
+  const retail = {
+    gross: retailValue,
+    net: Math.round(retailValue / (1 + Number(shop.vatRate) / 100)),
+    pieces: forSale.reduce((s, i) => s + i.wooStock!, 0),
+  };
   const fmt = formatters(locale, report.currency);
   const sync = (
     <div className="flex flex-col items-end gap-1">
@@ -87,7 +96,7 @@ export async function Dashboard({ monthKey }: { monthKey?: string }) {
           labels={{ ...t.simulator, vat: t.overview.vat, tax: t.overview.tax }}
           saveAction={saveOwnerShare}
         />
-        <StockBox stockValue={stockValue} invested={report.overview.invested} t={t} fmt={fmt} />
+        <StockBox stockValue={stockValue} retail={retail} invested={report.overview.invested} t={t} fmt={fmt} />
       </aside>
     </div>
   );
@@ -286,7 +295,19 @@ function BigRow({ label, icon, value, note }: { label: string; icon: IconName; v
   );
 }
 
-function StockBox({ stockValue, invested, t, fmt }: { stockValue: number; invested: number; t: Dictionary; fmt: Formatters }) {
+function StockBox({
+  stockValue,
+  retail,
+  invested,
+  t,
+  fmt,
+}: {
+  stockValue: number;
+  retail: { gross: number; net: number; pieces: number };
+  invested: number;
+  t: Dictionary;
+  fmt: Formatters;
+}) {
   return (
     <Card>
       <h3 className="mb-2 flex items-center gap-2 text-base font-semibold tracking-tight">
@@ -296,6 +317,11 @@ function StockBox({ stockValue, invested, t, fmt }: { stockValue: number; invest
       <KeyValues
         rows={[
           { label: t.overview.stockValue, value: fmt.money(stockValue), note: t.overview.stockValueHelp },
+          {
+            label: t.overview.onSaleValue,
+            value: fmt.money(retail.gross),
+            note: t.overview.onSaleValueHelp.replace("{pieces}", fmt.int(retail.pieces)).replace("{net}", fmt.money(retail.net)),
+          },
           { label: t.overview.invested, value: fmt.money(invested), note: t.overview.investedHelp },
         ]}
       />
