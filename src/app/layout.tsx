@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { LanguageSelector } from "@/components/language-selector";
 import { Logo } from "@/components/logo";
 import { Nav } from "@/components/nav";
+import { UserMenu } from "@/components/user-menu";
 import { getDictionary } from "@/i18n";
 import { currentUser } from "@/lib/auth";
 import { logout } from "@/lib/auth-actions";
@@ -56,16 +57,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             )}
             <div className="flex items-center gap-3">
               <LanguageSelector current={locale} t={t} />
-              {user && (
-                <form action={logout} className="flex items-center gap-2 text-xs text-muted">
-                  <span className="hidden max-w-40 truncate md:inline" title={user.email}>
-                    {user.email}
-                  </span>
-                  <button type="submit" className="rounded-full border border-line bg-surface px-3 py-1 font-semibold shadow-sm transition hover:bg-surface-2 hover:text-ink">
-                    {t.auth.logout}
-                  </button>
-                </form>
-              )}
+              {user && <UserMenu email={user.email} label={t.auth.logout} action={logout} />}
             </div>
           </div>
         </header>

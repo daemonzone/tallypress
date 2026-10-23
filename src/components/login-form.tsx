@@ -36,7 +36,7 @@ export function LoginForm({ action, labels }: Props) {
           {message}
         </p>
       )}
-      <button type="submit" disabled={pending} className={`${primaryButtonClass} disabled:opacity-60`}>
+      <button type="submit" disabled={pending} className={`${primaryButtonClass} w-full justify-center disabled:opacity-60`}>
         {pending ? labels.signingIn : labels.submit}
       </button>
     </form>
