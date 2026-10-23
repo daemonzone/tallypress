@@ -39,7 +39,19 @@ multi-shop by design.
   gross-to-net detail, the shop account for the month and the per-product table. On the
   right, a sidebar that stays the same whichever month is open: the shop overview (money in
   the account, VAT and tax set aside, net earnings, withdrawals, stock value, invested,
-  ROI) and the owner-share simulator with a live bar of where the account money goes.
+  ROI) and the owner-share simulator with a live bar of where the account money goes (a collapsible
+  box, closed by default). The legend of the month bar reads "income tax set aside this month".
+  - **Sync now** sits next to the month's name (and in Setup). It reads what changed in WooCommerce
+    (see "The sync is incremental"), the button pulses in blue with a spinner while it runs and the
+    page reloads with the new figures when it ends. If another sync is already running, or the sync
+    fails, a badge next to the button says so for a few seconds.
+  - **The shop account of the month** ends with two set-aside rows. *VAT set aside (paid quarterly)* is
+    the VAT of the quarters already ended and not yet paid, so it drops to zero when the quarterly
+    payment is recorded; the VAT of the quarter in progress is kept apart in the note under the row.
+    *Taxes set aside (paid yearly)* grows month by month and a payment takes away the oldest year
+    first; below it, indented rows say what it is made of, e.g. "of which taxes due in 2026 (accrued
+    in 2025)" and "of which taxes due in 2027 (accrued in 2026)". Both rows agree with the totals
+    in the sidebar.
 - **Orders** (`/orders`): every order, newest first, 10 per page, with one search box that looks at
   the order number, the products sold, coupon codes, payment, channel, origin and status (also by
   their names in the current language). Columns: date and time on two lines, order, status, products
