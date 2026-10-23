@@ -91,21 +91,14 @@ body {
   background: var(--accent-soft);
 }
 
-/* The "Sync now" button while a sync runs: a heartbeat in blue, two quick beats ("tu-tum") and a rest. */
+/* The "Sync now" button while a sync runs: one beat at a time in blue, a quick rise and a long fade ("tummm"). */
 @keyframes sync-pulse {
   0%,
-  50%,
   100% {
     background-color: color-mix(in srgb, var(--accent) 8%, var(--surface));
   }
-  10% {
+  12% {
     background-color: color-mix(in srgb, var(--accent) 58%, var(--surface));
-  }
-  22% {
-    background-color: color-mix(in srgb, var(--accent) 22%, var(--surface));
-  }
-  34% {
-    background-color: color-mix(in srgb, var(--accent) 48%, var(--surface));
   }
 }
 .sync-pulse {
