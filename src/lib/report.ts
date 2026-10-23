@@ -40,6 +40,13 @@ const emptyFlows = (): Flows => ({
 const manualFlows = (f: Flows) =>
   f.opening + f.deposit + f.restock + f.estimatedRestock + f.withdrawal + f.expense + f.vatPayment + f.estimatedVatPayment + f.taxPayment + f.estimatedTaxPayment + f.priorPayment + f.estimatedPriorPayment + f.adjustment + f.other;
 
+/** What is set aside for the state: it grows with the month's accrual and shrinks with the payments recorded. */
+export interface Reserve {
+  accrued: number; // set aside this month
+  paid: number; // paid this month (negative)
+  end: number; // still set aside at the end of the month
+}
+
 export interface MonthReport extends Figures {
   key: string; // first day of the month, "YYYY-MM-01"
   closed: boolean;
@@ -50,6 +57,8 @@ export interface MonthReport extends Figures {
   missingCostLines: number;
   start: number; // balance carried in
   flows: Flows;
+  vatReserve: Reserve; // VAT collected minus the deductible VAT paid, less the VAT payments (settled quarterly)
+  taxAside: Reserve; // income tax and contributions, less the tax payments (settled every June)
   end: number; // balance carried out
   items: ItemRow[];
   shipping: Figures; // everything not tied to an item: shipping, refunds, adjustments
@@ -286,10 +295,25 @@ export async function buildReport(shopId: string): Promise<Report | null> {
       missingCostLines,
       start,
       flows: history ? emptyFlows() : flows,
+      vatReserve: { accrued: 0, paid: 0, end: 0 },
+      taxAside: { accrued: 0, paid: 0, end: 0 },
       end,
       items,
       shipping: { ...shippingFig, taxReserve: shippingTax, netEarnings: shippingFig.profit - shippingTax },
     });
+  }
+
+  // What is set aside for VAT and for taxes, month by month from the starting point on.
+  let vatBalance = 0;
+  let taxBalance = 0;
+  for (const m of months.filter((x) => !x.history)) {
+    const vatAccrued = m.vat - m.flows.restockVat - m.flows.expenseVat;
+    const vatPaid = m.flows.vatPayment + m.flows.estimatedVatPayment;
+    vatBalance += vatAccrued + vatPaid;
+    m.vatReserve = { accrued: vatAccrued, paid: vatPaid, end: vatBalance };
+    const taxPaid = m.flows.taxPayment + m.flows.estimatedTaxPayment;
+    taxBalance += m.taxReserve + taxPaid;
+    m.taxAside = { accrued: m.taxReserve, paid: taxPaid, end: taxBalance };
   }
 
   // The overview (cash, reserves, ROI) covers the months from the starting point on, not the sales history.

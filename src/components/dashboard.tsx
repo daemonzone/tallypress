@@ -4,7 +4,7 @@ import { getDictionary, type Dictionary } from "@/i18n";
 import { saveOwnerShare } from "@/lib/actions";
 import { ensureMonthsClosed } from "@/lib/closing";
 import { getItemStates } from "@/lib/costs";
-import { buildReport, type MonthReport, type Report } from "@/lib/report";
+import { buildReport, type MonthReport, type Report, type Reserve } from "@/lib/report";
 import { getCurrentShop } from "@/lib/shop";
 import { syncNow } from "@/lib/sync/actions";
 import { MonthColumns, StackedBar, VIZ } from "./charts";
@@ -188,6 +188,13 @@ function MonthNav({ report, selected, locale, label }: { report: Report; selecte
       </div>
     </nav>
   );
+}
+
+/** "+1.234 set aside this month, −2.000 paid" under an account reserve row. */
+function reserveNote(r: Reserve, t: Dictionary, fmt: Formatters): string {
+  const parts = [t.month.reserveAccrued.replace("{amount}", fmt.money(r.accrued))];
+  if (r.paid !== 0) parts.push(t.month.reservePaid.replace("{amount}", fmt.money(-r.paid)));
+  return parts.join(" · ");
 }
 
 /** What "late changes" means, the amount it adds to this month and where it comes from. */
@@ -464,6 +471,16 @@ function MonthPanel({
                   </div>
                 </InfoModal>
               ),
+            },
+            {
+              label: t.month.reserveVat,
+              value: fmt.money(m.vatReserve.end),
+              note: reserveNote(m.vatReserve, t, fmt),
+            },
+            {
+              label: t.month.reserveTax,
+              value: fmt.money(m.taxAside.end),
+              note: reserveNote(m.taxAside, t, fmt),
             },
           ]}
         />
