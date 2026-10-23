@@ -65,8 +65,11 @@ export function Simulator({ locale, currency, defaultPct, net, withdrawn, cash, 
   ];
 
   return (
-    <div className="rounded-2xl border border-line bg-surface p-5 shadow-card">
-      <h3 className="text-base font-semibold tracking-tight">{labels.title}</h3>
+    <details open className="group rounded-2xl border border-line bg-surface p-5 shadow-card">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 [&::-webkit-details-marker]:hidden">
+        <h3 className="text-base font-semibold tracking-tight">{labels.title}</h3>
+        <Icon name="chevron" className="h-4 w-4 shrink-0 text-muted transition group-open:rotate-180" />
+      </summary>
       <p className="mb-4 mt-0.5 text-xs text-muted">{labels.help}</p>
 
       <form action={saveAction} className="mb-5">
@@ -144,6 +147,6 @@ export function Simulator({ locale, currency, defaultPct, net, withdrawn, cash, 
           ))}
         </tbody>
       </table>
-    </div>
+    </details>
   );
 }
