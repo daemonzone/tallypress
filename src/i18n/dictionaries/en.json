@@ -98,6 +98,7 @@
     "reserveTax": "Taxes set aside (settled every June)",
     "reserveAccrued": "set aside this month: {amount}",
     "reservePaid": "paid this month: {amount}",
+    "reservePending": "quarter in progress, not due yet: {amount}",
     "end": "Expected balance at month end",
     "variantsTitle": "By product and variation",
     "product": "Product",

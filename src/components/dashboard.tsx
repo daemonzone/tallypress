@@ -194,6 +194,7 @@ function MonthNav({ report, selected, locale, label }: { report: Report; selecte
 function reserveNote(r: Reserve, t: Dictionary, fmt: Formatters): string {
   const parts = [t.month.reserveAccrued.replace("{amount}", fmt.money(r.accrued))];
   if (r.paid !== 0) parts.push(t.month.reservePaid.replace("{amount}", fmt.money(-r.paid)));
+  if (r.pending > 0) parts.push(t.month.reservePending.replace("{amount}", fmt.money(r.pending)));
   return parts.join(" · ");
 }
 

@@ -98,6 +98,7 @@
     "reserveTax": "Accantonamento tasse (saldo ogni giugno)",
     "reserveAccrued": "accantonati nel mese: {amount}",
     "reservePaid": "versati nel mese: {amount}",
+    "reservePending": "trimestre in corso, non ancora dovuto: {amount}",
     "end": "Saldo previsto a fine mese",
     "variantsTitle": "Per prodotto e variante",
     "product": "Prodotto",
