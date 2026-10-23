@@ -307,11 +307,14 @@ export async function buildReport(shopId: string): Promise<Report | null> {
   // What is set aside for VAT and for taxes, month by month from the starting point on.
   // VAT is settled by quarter: the account shows the quarters already ended and not yet paid (a payment
   // clears the oldest quarters first, so once it is made the reserve is back to zero), and keeps the VAT
-  // of the quarter in progress apart as "pending" until that quarter ends.
+  // of the quarter in progress apart as "pending" until that quarter ends. Taxes work the same way by
+  // calendar year: the years already ended and not yet paid, with the year in progress kept apart.
   let vatAccruedAll = 0; // VAT set aside since the start
   let vatAccruedAtQuarterEnd = 0; // the same, up to the last quarter that has ended
   let vatPaidAll = 0;
-  let taxBalance = 0;
+  let taxAccruedAll = 0;
+  let taxAccruedAtYearEnd = 0;
+  let taxPaidAll = 0;
   for (const m of months.filter((x) => !x.history)) {
     const vatAccrued = m.vat - m.flows.restockVat - m.flows.expenseVat;
     const vatPaid = m.flows.vatPayment + m.flows.estimatedVatPayment;
@@ -322,8 +325,12 @@ export async function buildReport(shopId: string): Promise<Report | null> {
     const due = Math.max(Math.min(vatAccruedAtQuarterEnd - vatPaidAll, total), 0);
     m.vatReserve = { accrued: vatAccrued, paid: vatPaid, end: due, pending: total - due };
     const taxPaid = m.flows.taxPayment + m.flows.estimatedTaxPayment;
-    taxBalance += m.taxReserve + taxPaid;
-    m.taxAside = { accrued: m.taxReserve, paid: taxPaid, end: taxBalance, pending: 0 };
+    taxAccruedAll += m.taxReserve;
+    taxPaidAll -= taxPaid;
+    if (m.key.slice(5, 7) === "12") taxAccruedAtYearEnd = taxAccruedAll;
+    const taxTotal = taxAccruedAll - taxPaidAll;
+    const taxDueEnded = Math.max(Math.min(taxAccruedAtYearEnd - taxPaidAll, taxTotal), 0);
+    m.taxAside = { accrued: m.taxReserve, paid: taxPaid, end: taxDueEnded, pending: taxTotal - taxDueEnded };
   }
 
   // The overview (cash, reserves, ROI) covers the months from the starting point on, not the sales history.
