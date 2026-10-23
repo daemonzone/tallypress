@@ -487,6 +487,7 @@ function MonthPanel({
             ...m.taxAside.byYear.map((x) => ({
               label: t.month.taxDueIn.replace("{due}", String(Number(x.year) + 1)).replace("{year}", x.year),
               value: fmt.money(x.amount),
+              indent: true,
             })),
           ]}
         />

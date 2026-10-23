@@ -113,14 +113,14 @@ export function StatTile({
 export function KeyValues({
   rows,
 }: {
-  rows: { label: string; value: ReactNode; note?: string; strong?: boolean; labelExtra?: ReactNode }[];
+  rows: { label: string; value: ReactNode; note?: string; strong?: boolean; labelExtra?: ReactNode; indent?: boolean }[];
 }) {
   return (
     <table className="w-full text-left text-sm">
       <tbody className="divide-y divide-line">
         {rows.map((r) => (
           <tr key={r.label} className={r.strong ? "font-semibold" : undefined}>
-            <th scope="row" className="w-2/3 py-2.5 pr-4 align-top font-normal">
+            <th scope="row" className={`w-2/3 py-2.5 pr-4 align-top font-normal ${r.indent ? "pl-6" : ""}`}>
               <span className={`inline-flex items-center gap-1.5 ${r.strong ? "" : "text-muted"}`}>
                 {r.label}
                 {r.labelExtra}
