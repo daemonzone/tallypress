@@ -7,8 +7,8 @@ import { buildReport } from "./report";
 export interface PaymentRules {
   /** Quarterly VAT due dates: the Italian ones (16 May, 20 Aug, 16 Nov, 16 Mar) or the last day of the month after the quarter. */
   vatDue?: "italian" | "month-end";
-  /** Tax of the previous year: two instalments (30 June, 30 November) or all at once on 30 June. */
-  taxPayments?: "two" | "june";
+  /** Tax of the previous year: two instalments (30 June, 30 November), or all at once on 30 June or on 31 July. */
+  taxPayments?: "two" | "june" | "july";
 }
 
 export interface PaymentsResult {
@@ -109,9 +109,11 @@ export async function estimatePayments(shopId: string, rules: PaymentRules = {})
     if (owed <= 0) continue;
     const first = Math.round(owed / 2);
     const instalments =
-      rules.taxPayments === "june"
-        ? ([[6, 30, owed, "saldo al 30 giugno"]] as const)
-        : ([[6, 30, first, "rata di giugno"], [11, 30, owed - first, "rata di novembre"]] as const);
+      rules.taxPayments === "july"
+        ? ([[7, 31, owed, "saldo al 31 luglio"]] as const)
+        : rules.taxPayments === "june"
+          ? ([[6, 30, owed, "saldo al 30 giugno"]] as const)
+          : ([[6, 30, first, "rata di giugno"], [11, 30, owed - first, "rata di novembre"]] as const);
     for (const [month, day, amount, label] of instalments) {
       const on = at(Number(year), month, day);
       if (on > now || on < start) continue;

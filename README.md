@@ -508,7 +508,7 @@ database `tallypress_test`, so experiments never touch the real data on port 900
 `pg_dump -Fc tallypress | pg_restore -d tallypress_test` inside the postgres container (after
 `CREATE DATABASE tallypress_test`), and point the scripts at it with
 `DATABASE_URL=postgres://tallypress:tallypress@localhost:9432/tallypress_test npm run shop:...`.
-`npm run shop:estimate-payments -- --vat-due=month-end --tax=june` books the quarterly VAT on the last
+`npm run shop:estimate-payments -- --vat-due=month-end --tax=june` (or `--tax=july`) books the quarterly VAT on the last
 day of the month after the quarter and the tax of the previous year in one payment on 30 June.
 `npm run shop:estimate-restocks -- --upfront-until=2023-12` buys the stock of the months up to that one in a
 single purchase right after the opening balance (later months are bought month by month as usual).
