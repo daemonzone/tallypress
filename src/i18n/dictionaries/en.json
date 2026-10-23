@@ -408,7 +408,8 @@
       "status": "Status",
       "products": "Products",
       "total": "Total",
-      "discount": "Discount",
+      "discountPct": "Discount %",
+      "discount": "Discount €",
       "payment": "Payment",
       "channel": "Channel",
       "origin": "Origin"

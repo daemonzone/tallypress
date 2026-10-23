@@ -70,7 +70,7 @@ export default async function OrdersPage({ searchParams }: PageProps<"/orders">)
   const ids = rows.map((r) => r.id);
   const lines = ids.length
     ? await db
-        .select({ orderId: orderLines.orderId, name: orderLines.name, quantity: orderLines.quantity })
+        .select({ orderId: orderLines.orderId, name: orderLines.name, quantity: orderLines.quantity, subtotalGross: orderLines.subtotalGross })
         .from(orderLines)
         .where(inArray(orderLines.orderId, ids))
     : [];
@@ -95,8 +95,8 @@ export default async function OrdersPage({ searchParams }: PageProps<"/orders">)
       ) : (
         <>
           <DataTable
-            head={[o.columns.date, o.columns.order, o.columns.status, o.columns.products, o.columns.total, o.columns.discount, o.columns.payment, o.columns.channel, o.columns.origin]}
-            align={["left", "left", "left", "left", "right", "right", "left", "left", "left"]}
+            head={[o.columns.date, o.columns.order, o.columns.status, o.columns.products, o.columns.total, o.columns.discountPct, o.columns.discount, o.columns.payment, o.columns.channel, o.columns.origin]}
+            align={["left", "left", "left", "left", "right", "right", "right", "left", "left", "left"]}
             minWidth="58rem"
           >
             {rows.map((r) => {
@@ -112,6 +112,9 @@ export default async function OrdersPage({ searchParams }: PageProps<"/orders">)
               const originDetail = [r.utmSource, r.utmMedium].filter((x) => x && x !== "(direct)").join(" / ") || null;
               const codes = couponsOf(r.id);
               const refunded = toCents(r.refundedTotal);
+              // The discount as a share of what the products cost before any discount (VAT included, shipping left out).
+              const discount = toCents(r.discountTotal);
+              const before = items.reduce((sum, l) => sum + toCents(l.subtotalGross), 0);
               return (
                 <tr key={r.id} className={counted ? undefined : "text-muted"} title={counted ? undefined : o.notCounted}>
                   <td className="whitespace-nowrap py-2.5 pr-3 align-top">
@@ -142,6 +145,9 @@ export default async function OrdersPage({ searchParams }: PageProps<"/orders">)
                   <Td className="whitespace-nowrap align-top">
                     {fmt.money(toCents(r.grossTotal))}
                     {refunded > 0 && <div className="text-xs text-muted">{o.refunded.replace("{amount}", fmt.money(refunded))}</div>}
+                  </Td>
+                  <Td className="whitespace-nowrap align-top">
+                    {discount > 0 && before > 0 ? `−${fmt.pct(Math.min(discount / before, 1))}` : <span className="text-muted">—</span>}
                   </Td>
                   <Td className="whitespace-nowrap align-top">
                     {codes.length || toCents(r.discountTotal) > 0 ? (
