@@ -43,15 +43,18 @@ export async function Dashboard({ monthKey }: { monthKey?: string }) {
   const selected = monthKey ? report.months.find((m) => m.key === monthKey) : report.months.at(-1);
   if (!selected) notFound();
 
-  const states = await getItemStates(shop.id);
-  const stockValue = states.reduce((s, i) => s + Math.round(i.stockValue * 100), 0);
-  // What is on sale right now: published items with stock, at the price the customer pays today (sales included), VAT included.
-  const forSale = states.filter((i) => i.status === "publish" && (i.wooStock ?? 0) > 0 && (i.shopPrice ?? 0) > 0);
-  const retailValue = forSale.reduce((s, i) => s + Math.round(i.wooStock! * i.shopPrice! * 100), 0);
-  const retail = {
-    gross: retailValue,
-    net: Math.round(retailValue / (1 + Number(shop.vatRate) / 100)),
-    pieces: forSale.reduce((s, i) => s + i.wooStock!, 0),
+  // The warehouse: the pieces the panel tracks (articles no longer in the shop hold none), valued twice, at what
+  // they cost (VAT excluded; with VAT is what was paid) and at today's selling prices (sales included, VAT included).
+  const vatRate = Number(shop.vatRate);
+  const states = (await getItemStates(shop.id)).filter((i) => i.status !== "trash" && i.status !== "deleted");
+  const inStock = states.filter((i) => (i.trackedStock ?? 0) > 0);
+  const stockPieces = inStock.reduce((s, i) => s + i.trackedStock!, 0);
+  const costNet = states.reduce((s, i) => s + Math.round(i.stockValue * 100), 0);
+  const retailGross = inStock.reduce((s, i) => s + Math.round(i.trackedStock! * (i.shopPrice ?? 0) * 100), 0);
+  const warehouse = {
+    pieces: stockPieces,
+    cost: { net: costNet, gross: Math.round(costNet * (1 + vatRate / 100)) },
+    retail: { net: Math.round(retailGross / (1 + vatRate / 100)), gross: retailGross },
   };
   const fmt = formatters(locale, report.currency);
   const sync = (
@@ -96,7 +99,7 @@ export async function Dashboard({ monthKey }: { monthKey?: string }) {
           labels={{ ...t.simulator, vat: t.overview.vat, tax: t.overview.tax }}
           saveAction={saveOwnerShare}
         />
-        <StockBox stockValue={stockValue} retail={retail} invested={report.overview.invested} t={t} fmt={fmt} />
+        <StockBox warehouse={warehouse} vatRate={vatRate} invested={report.overview.invested} t={t} fmt={fmt} />
       </aside>
     </div>
   );
@@ -296,18 +299,19 @@ function BigRow({ label, icon, value, note }: { label: string; icon: IconName; v
 }
 
 function StockBox({
-  stockValue,
-  retail,
+  warehouse,
+  vatRate,
   invested,
   t,
   fmt,
 }: {
-  stockValue: number;
-  retail: { gross: number; net: number; pieces: number };
+  warehouse: { pieces: number; cost: { net: number; gross: number }; retail: { net: number; gross: number } };
+  vatRate: number;
   invested: number;
   t: Dictionary;
   fmt: Formatters;
 }) {
+  const withVat = t.overview.withVat.replace("{rate}", fmt.num(vatRate));
   return (
     <Card>
       <h3 className="mb-2 flex items-center gap-2 text-base font-semibold tracking-tight">
@@ -316,12 +320,12 @@ function StockBox({
       </h3>
       <KeyValues
         rows={[
-          { label: t.overview.stockValue, value: fmt.money(stockValue), note: t.overview.stockValueHelp },
-          {
-            label: t.overview.onSaleValue,
-            value: fmt.money(retail.gross),
-            note: t.overview.onSaleValueHelp.replace("{pieces}", fmt.int(retail.pieces)).replace("{net}", fmt.money(retail.net)),
-          },
+          { label: t.overview.stockValue, value: "", strong: true, note: t.overview.stockValueHelp.replace("{pieces}", fmt.int(warehouse.pieces)) },
+          { label: t.overview.withoutVat, value: fmt.money(warehouse.cost.net), indent: true },
+          { label: withVat, value: fmt.money(warehouse.cost.gross), indent: true },
+          { label: t.overview.onSaleValue, value: "", strong: true, note: t.overview.onSaleValueHelp },
+          { label: t.overview.withoutVat, value: fmt.money(warehouse.retail.net), indent: true },
+          { label: withVat, value: fmt.money(warehouse.retail.gross), indent: true },
           { label: t.overview.invested, value: fmt.money(invested), note: t.overview.investedHelp },
         ]}
       />
