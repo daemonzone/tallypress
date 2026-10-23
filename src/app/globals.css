@@ -90,3 +90,17 @@ body {
 ::selection {
   background: var(--accent-soft);
 }
+
+/* The "Sync now" button while a sync runs: light blue to white and back, one second each way. */
+@keyframes sync-pulse {
+  0%,
+  100% {
+    background-color: color-mix(in srgb, var(--accent) 38%, var(--surface));
+  }
+  50% {
+    background-color: var(--surface);
+  }
+}
+.sync-pulse {
+  animation: sync-pulse 2s ease-in-out infinite;
+}

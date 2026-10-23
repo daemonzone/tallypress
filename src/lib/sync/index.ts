@@ -8,7 +8,7 @@ import { syncOrders } from "./orders";
 
 export type SyncResult =
   | { shopId: string; ok: true; items: number; orders: number }
-  | { shopId: string; ok: false; error: string };
+  | { shopId: string; ok: false; error: string; busy?: true };
 
 /**
  * Syncs one shop; by default only what changed since the last run (`full` re-reads the whole
@@ -22,7 +22,7 @@ export async function syncShop(shopId: string, { full = false }: { full?: boolea
       "SELECT pg_try_advisory_lock(hashtext($1)) AS locked",
       [`tallypress:sync:${shopId}`],
     );
-    if (!rows[0].locked) return { shopId, ok: false, error: "A sync is already running" };
+    if (!rows[0].locked) return { shopId, ok: false, error: "A sync is already running", busy: true };
 
     const startedAt = new Date();
     try {

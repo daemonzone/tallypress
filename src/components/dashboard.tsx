@@ -49,7 +49,7 @@ export async function Dashboard({ monthKey }: { monthKey?: string }) {
     <div className="flex flex-col items-end gap-1">
       <SyncButton
         action={syncNow}
-        labels={{ sync: t.setup.syncNow, syncing: t.setup.syncing, failed: t.setup.syncFailed }}
+        labels={{ sync: t.setup.syncNow, syncing: t.setup.syncing, busy: t.setup.syncBusy, failed: t.setup.syncFailed }}
       />
       <div className="text-xs text-muted">
         {t.setup.lastSync}:{" "}
@@ -339,7 +339,7 @@ function MonthPanel({
     { key: "cogs", label: t.month.cogs, value: m.cogs, slot: VIZ.cogs, display: fmt.money(m.cogs) },
     { key: "vat", label: t.month.vat, value: m.vat, slot: VIZ.vat, display: fmt.money(m.vat) },
     ...(m.expenses > 0 ? [{ key: "expenses", label: t.month.expensesNet, value: m.expenses, slot: VIZ.personal, display: fmt.money(m.expenses) }] : []),
-    { key: "tax", label: t.month.taxReserve, value: m.taxReserve, slot: VIZ.tax, display: fmt.money(m.taxReserve) },
+    { key: "tax", label: t.month.taxReserveMonth, value: m.taxReserve, slot: VIZ.tax, display: fmt.money(m.taxReserve) },
   ];
 
   return (
