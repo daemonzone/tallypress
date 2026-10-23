@@ -532,3 +532,27 @@ amount is the money out, VAT included; `vat_amount` is the deductible VAT it con
 is deducted from the month's profit (so it lowers the income tax set aside, shown as "Spese (senza IVA)" in
 the month), and the VAT is deducted from the VAT due (the estimated quarterly payments net it too).
 Entries entered by hand in the Movements page have no VAT yet, so they are deducted in full.
+
+## Authentication
+
+Sign-in and sessions use **Supabase Auth**, the same project KleosHQ uses (only accounts and sessions live
+there; every figure stays in this Postgres). The panel has no sign-up page: accounts are created elsewhere.
+
+- `src/proxy.ts` sends everyone who is not signed in to `/login`. Reachable without signing in: `/login`,
+  `/auth/*`, `/api/health` and `/api/cron/*` (that one has its own bearer secret). If the Supabase
+  settings are missing the panel answers 503 instead of serving anything. The session is verified
+  with Supabase on every request, never trusted from the cookie alone.
+- **Being a Supabase user is not enough.** The project is shared, so any account there would pass the
+  login. `ALLOWED_EMAILS` (comma-separated, case-insensitive) lists who may use the panel; the email
+  must also be confirmed. Anything else is signed out with "this account is not allowed". Empty list =
+  nobody gets in.
+- The header shows the signed-in email and a sign-out button; the login page shows nothing about the
+  shop.
+- Settings, read at runtime on the server (no `NEXT_PUBLIC_` variables, nothing is baked into the
+  image), in `.env`, which is not committed, and passed to both app containers by `docker-compose.yml`:
+  `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `ALLOWED_EMAILS`.
+- Code: `src/lib/supabase/server.ts` (client on the request cookies), `src/lib/auth.ts` (current allowed
+  user), `src/lib/auth-policy.ts` (the allow-list rule), `src/lib/auth-actions.ts` (login, logout).
+
+Not done yet: password reset and sign-up (they need the redirect URL of this app to be allowed in the
+Supabase project), and tying users to shops (`shop_members`) for real multi-shop use.

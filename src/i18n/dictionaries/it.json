@@ -3,6 +3,18 @@
     "name": "Tallypress",
     "tagline": "Vendite, margini e cassa mensili del tuo negozio WooCommerce"
   },
+  "auth": {
+    "title": "Accedi",
+    "subtitle": "Accesso riservato.",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Accedi",
+    "signingIn": "Accesso in corso…",
+    "invalid": "Email o password non corretti.",
+    "notAllowed": "Questo account non è autorizzato ad accedere.",
+    "error": "Servizio di accesso non raggiungibile, riprova tra poco.",
+    "logout": "Esci"
+  },
   "nav": {
     "panel": "Pannello",
     "stock": "Magazzino",

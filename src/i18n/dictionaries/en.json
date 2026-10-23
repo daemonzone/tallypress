@@ -3,6 +3,18 @@
     "name": "Tallypress",
     "tagline": "Monthly sales, margin and cash for your WooCommerce shop"
   },
+  "auth": {
+    "title": "Sign in",
+    "subtitle": "Restricted access.",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign in",
+    "signingIn": "Signing in…",
+    "invalid": "Wrong email or password.",
+    "notAllowed": "This account is not allowed to sign in.",
+    "error": "The sign-in service cannot be reached, try again shortly.",
+    "logout": "Sign out"
+  },
   "nav": {
     "panel": "Panel",
     "stock": "Stock",

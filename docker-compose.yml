@@ -27,6 +27,9 @@ services:
       DATABASE_URL: postgres://tallypress:tallypress@postgres:5432/tallypress
       DEFAULT_SHOP_ID: "00000000-0000-4000-8000-000000000001"
       CRON_SECRET: dev-cron-secret
+      SUPABASE_URL: ${SUPABASE_URL:-}
+      SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY:-}
+      ALLOWED_EMAILS: ${ALLOWED_EMAILS:-}
       # The shop is saved as http://localhost:9080 (what you open in a browser);
       # from inside this network the same site is just http://wordpress.
       WOO_URL_REWRITE: "http://localhost:${WP_PORT:-9080}=http://wordpress"
@@ -57,6 +60,9 @@ services:
       DATABASE_URL: postgres://tallypress:tallypress@postgres:5432/tallypress_test
       DEFAULT_SHOP_ID: "00000000-0000-4000-8000-000000000001"
       CRON_SECRET: dev-cron-secret
+      SUPABASE_URL: ${SUPABASE_URL:-}
+      SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY:-}
+      ALLOWED_EMAILS: ${ALLOWED_EMAILS:-}
       WOO_URL_REWRITE: "http://localhost:${WP_PORT:-9080}=http://wordpress"
     restart: unless-stopped
 

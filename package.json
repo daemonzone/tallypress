@@ -22,6 +22,8 @@
     "shop:estimate-payments": "tsx scripts/estimate-payments.ts"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.10.3",
+    "@supabase/supabase-js": "^2.118.0",
     "dotenv": "^18.0.8",
     "drizzle-orm": "^0.45.4",
     "next": "16.4.2",

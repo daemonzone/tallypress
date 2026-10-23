@@ -5,6 +5,8 @@ import { LanguageSelector } from "@/components/language-selector";
 import { Logo } from "@/components/logo";
 import { Nav } from "@/components/nav";
 import { getDictionary } from "@/i18n";
+import { currentUser } from "@/lib/auth";
+import { logout } from "@/lib/auth-actions";
 import { getCurrentShop } from "@/lib/shop";
 import "./globals.css";
 
@@ -25,7 +27,9 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const { locale, t } = await getDictionary();
-  const shop = await getCurrentShop();
+  const user = await currentUser();
+  // Nothing about the shop is shown to someone who is not signed in.
+  const shop = user ? await getCurrentShop() : null;
 
   return (
     <html
@@ -37,18 +41,32 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 py-3">
             <Link href="/" className="flex flex-col leading-tight" aria-label={t.app.name}>
               <Logo name={t.app.name} />
-              <span className="mt-0.5 pl-[46px] text-xs text-muted">{shop?.name ?? t.app.tagline}</span>
+              <span className="mt-0.5 pl-[46px] text-xs text-muted">{user ? (shop?.name ?? t.app.tagline) : t.app.tagline}</span>
             </Link>
-            <Nav
-              links={[
-                { href: "/", label: t.nav.panel, icon: "grid" },
-                { href: "/orders", label: t.nav.orders, icon: "bag" },
-                { href: "/stock", label: t.nav.stock, icon: "box" },
-                { href: "/ledger", label: t.nav.ledger, icon: "book" },
-                { href: "/setup", label: t.nav.setup, icon: "sliders" },
-              ]}
-            />
-            <LanguageSelector current={locale} t={t} />
+            {user && (
+              <Nav
+                links={[
+                  { href: "/", label: t.nav.panel, icon: "grid" },
+                  { href: "/orders", label: t.nav.orders, icon: "bag" },
+                  { href: "/stock", label: t.nav.stock, icon: "box" },
+                  { href: "/ledger", label: t.nav.ledger, icon: "book" },
+                  { href: "/setup", label: t.nav.setup, icon: "sliders" },
+                ]}
+              />
+            )}
+            <div className="flex items-center gap-3">
+              <LanguageSelector current={locale} t={t} />
+              {user && (
+                <form action={logout} className="flex items-center gap-2 text-xs text-muted">
+                  <span className="hidden max-w-40 truncate md:inline" title={user.email}>
+                    {user.email}
+                  </span>
+                  <button type="submit" className="rounded-full border border-line bg-surface px-3 py-1 font-semibold shadow-sm transition hover:bg-surface-2 hover:text-ink">
+                    {t.auth.logout}
+                  </button>
+                </form>
+              )}
+            </div>
           </div>
         </header>
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">{children}</main>
