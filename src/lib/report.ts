@@ -47,6 +47,7 @@ export interface Reserve {
   end: number; // still set aside at the end of the month (for VAT: only the quarters already ended)
   pending: number; // set aside but not due yet: the quarter in progress (VAT only)
   closed: number; // the part of `end` that belongs to periods already ended and is waiting to be paid
+  byYear: { year: string; amount: number }[]; // taxes only: what is still set aside, by the calendar year it accrued in
 }
 
 export interface MonthReport extends Figures {
@@ -297,8 +298,8 @@ export async function buildReport(shopId: string): Promise<Report | null> {
       missingCostLines,
       start,
       flows: history ? emptyFlows() : flows,
-      vatReserve: { accrued: 0, paid: 0, end: 0, pending: 0, closed: 0 },
-      taxAside: { accrued: 0, paid: 0, end: 0, pending: 0, closed: 0 },
+      vatReserve: { accrued: 0, paid: 0, end: 0, pending: 0, closed: 0, byYear: [] },
+      taxAside: { accrued: 0, paid: 0, end: 0, pending: 0, closed: 0, byYear: [] },
       end,
       items,
       shipping: { ...shippingFig, taxReserve: shippingTax, netEarnings: shippingFig.profit - shippingTax },
@@ -313,9 +314,7 @@ export async function buildReport(shopId: string): Promise<Report | null> {
   let vatAccruedAll = 0; // VAT set aside since the start
   let vatAccruedAtQuarterEnd = 0; // the same, up to the last quarter that has ended
   let vatPaidAll = 0;
-  let taxAccruedAll = 0;
-  let taxAccruedAtYearEnd = 0;
-  let taxPaidAll = 0;
+  const taxOwed = new Map<string, number>(); // still set aside, by the calendar year it accrued in
   for (const m of months.filter((x) => !x.history)) {
     const vatAccrued = m.vat - m.flows.restockVat - m.flows.expenseVat;
     const vatPaid = m.flows.vatPayment + m.flows.estimatedVatPayment;
@@ -324,15 +323,21 @@ export async function buildReport(shopId: string): Promise<Report | null> {
     if (Number(m.key.slice(5, 7)) % 3 === 0) vatAccruedAtQuarterEnd = vatAccruedAll;
     const total = vatAccruedAll - vatPaidAll;
     const due = Math.max(Math.min(vatAccruedAtQuarterEnd - vatPaidAll, total), 0);
-    m.vatReserve = { accrued: vatAccrued, paid: vatPaid, end: due, pending: total - due, closed: due };
+    m.vatReserve = { accrued: vatAccrued, paid: vatPaid, end: due, pending: total - due, closed: due, byYear: [] };
+
+    // Taxes accrue month by month; a payment takes away the oldest years first.
+    const year = m.key.slice(0, 4);
     const taxPaid = m.flows.taxPayment + m.flows.estimatedTaxPayment;
-    taxAccruedAll += m.taxReserve;
-    taxPaidAll -= taxPaid;
-    if (m.key.slice(5, 7) === "12") taxAccruedAtYearEnd = taxAccruedAll;
-    const taxTotal = taxAccruedAll - taxPaidAll;
-    const taxDueEnded = Math.max(Math.min(taxAccruedAtYearEnd - taxPaidAll, taxTotal), 0);
-    // Taxes accrue month by month, so the account shows everything set aside; the years already ended are told apart.
-    m.taxAside = { accrued: m.taxReserve, paid: taxPaid, end: Math.max(taxTotal, 0), pending: 0, closed: taxDueEnded };
+    taxOwed.set(year, (taxOwed.get(year) ?? 0) + m.taxReserve);
+    let toSettle = -taxPaid;
+    for (const y of [...taxOwed.keys()].sort()) {
+      const used = Math.min(Math.max(toSettle, 0), Math.max(taxOwed.get(y)!, 0));
+      taxOwed.set(y, taxOwed.get(y)! - used);
+      toSettle -= used;
+    }
+    const byYear = [...taxOwed.entries()].filter(([, amount]) => amount > 0).sort(([a], [b]) => a.localeCompare(b)).map(([y, amount]) => ({ year: y, amount }));
+    const closedTax = byYear.filter((x) => x.year < year).reduce((sum, x) => sum + x.amount, 0);
+    m.taxAside = { accrued: m.taxReserve, paid: taxPaid, end: byYear.reduce((sum, x) => sum + x.amount, 0), pending: 0, closed: closedTax, byYear };
   }
 
   // The overview (cash, reserves, ROI) covers the months from the starting point on, not the sales history.

@@ -99,7 +99,7 @@
     "reserveAccrued": "accantonati nel mese: {amount}",
     "reservePaid": "versati nel mese: {amount}",
     "reservePending": "trimestre in corso, non ancora dovuto: {amount}",
-    "reserveClosedYears": "di cui anni chiusi da versare: {amount}",
+    "taxDueIn": "di cui tasse dovute nel {due} (maturate nel {year})",
     "end": "Saldo previsto a fine mese",
     "variantsTitle": "Per prodotto e variante",
     "product": "Prodotto",

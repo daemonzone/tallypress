@@ -481,8 +481,13 @@ function MonthPanel({
             {
               label: t.month.reserveTax,
               value: fmt.money(m.taxAside.end),
-              note: reserveNote(m.taxAside, t, fmt, t.month.reserveClosedYears, m.taxAside.closed),
+              note: reserveNote(m.taxAside, t, fmt, "", 0),
             },
+            // What the total is made of: the taxes of each year and the year they will be due in.
+            ...m.taxAside.byYear.map((x) => ({
+              label: t.month.taxDueIn.replace("{due}", String(Number(x.year) + 1)).replace("{year}", x.year),
+              value: fmt.money(x.amount),
+            })),
           ]}
         />
       </Section>
