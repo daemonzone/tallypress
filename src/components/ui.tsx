@@ -120,19 +120,14 @@ export function KeyValues({
       <tbody className="divide-y divide-line">
         {rows.map((r) => (
           <tr key={r.label} className={r.strong ? "font-semibold" : undefined}>
-            <th
-              scope="row"
-              // A row with no value is a heading: its text takes the whole width.
-              colSpan={r.value === "" ? 2 : undefined}
-              className={`${r.value === "" ? "" : "w-2/3"} py-2.5 pr-4 align-top font-normal ${r.indent ? "pl-6" : ""}`}
-            >
+            <th scope="row" className={`w-2/3 py-2.5 pr-4 align-top font-normal ${r.indent ? "pl-6" : ""}`}>
               <span className={`inline-flex items-center gap-1.5 ${r.strong ? "" : "text-muted"}`}>
                 {r.label}
                 {r.labelExtra}
               </span>
               {r.note && <span className="block text-xs font-normal text-muted">{r.note}</span>}
             </th>
-            {r.value !== "" && <td className="py-2.5 text-right align-top tabular-nums">{r.value}</td>}
+            <td className="py-2.5 text-right align-top tabular-nums">{r.value}</td>
           </tr>
         ))}
       </tbody>

@@ -311,24 +311,47 @@ function StockBox({
   t: Dictionary;
   fmt: Formatters;
 }) {
-  const withVat = t.overview.withVat.replace("{rate}", fmt.num(vatRate));
+  const rows = [
+    { label: t.overview.stockValue, help: t.overview.stockValueHelp, value: warehouse.cost },
+    { label: t.overview.onSaleValue, help: t.overview.onSaleValueHelp, value: warehouse.retail },
+  ];
   return (
     <Card>
-      <h3 className="mb-2 flex items-center gap-2 text-base font-semibold tracking-tight">
+      <h3 className="flex items-center gap-2 text-base font-semibold tracking-tight">
         <Icon name="box" className="h-4 w-4 text-muted" />
         {t.overview.stockTitle}
       </h3>
-      <KeyValues
-        rows={[
-          { label: t.overview.stockValue, value: "", strong: true, note: t.overview.stockValueHelp.replace("{pieces}", fmt.int(warehouse.pieces)) },
-          { label: t.overview.withoutVat, value: fmt.money(warehouse.cost.net), indent: true },
-          { label: withVat, value: fmt.money(warehouse.cost.gross), indent: true },
-          { label: t.overview.onSaleValue, value: "", strong: true, note: t.overview.onSaleValueHelp },
-          { label: t.overview.withoutVat, value: fmt.money(warehouse.retail.net), indent: true },
-          { label: withVat, value: fmt.money(warehouse.retail.gross), indent: true },
-          { label: t.overview.invested, value: fmt.money(invested), note: t.overview.investedHelp },
-        ]}
-      />
+      <p className="mb-3 mt-0.5 text-xs text-muted">{t.overview.stockPieces.replace("{pieces}", fmt.int(warehouse.pieces))}</p>
+
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="text-xs text-muted">
+            <th className="pb-1.5 text-left font-normal" />
+            <th className="pb-1.5 pl-4 text-right font-normal">{t.overview.withoutVat}</th>
+            <th className="pb-1.5 pl-4 text-right font-normal">{t.overview.withVat.replace("{rate}", fmt.num(vatRate))}</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-line border-t border-line">
+          {rows.map((r) => (
+            <tr key={r.label}>
+              <th scope="row" className="py-2.5 pr-2 text-left align-top font-normal">
+                {r.label}
+                <span className="block text-xs text-muted">{r.help}</span>
+              </th>
+              <td className="py-2.5 pl-4 text-right align-top font-semibold tabular-nums">{fmt.money(r.value.net)}</td>
+              <td className="py-2.5 pl-4 text-right align-top tabular-nums">{fmt.money(r.value.gross)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div className="mt-4 border-t border-line pt-3 text-sm">
+        <div className="flex items-baseline justify-between gap-4">
+          <span>{t.overview.invested}</span>
+          <span className="font-semibold tabular-nums">{fmt.money(invested)}</span>
+        </div>
+        <p className="mt-0.5 text-xs text-muted">{t.overview.investedHelp}</p>
+      </div>
     </Card>
   );
 }
